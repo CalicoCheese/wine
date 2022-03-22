@@ -20,6 +20,8 @@
 
 #import <Carbon/Carbon.h>
 
+#include "wine/hostaddrspace_enter.h"
+
 #import "cocoa_app.h"
 #import "cocoa_cursorclipping.h"
 #import "cocoa_event.h"

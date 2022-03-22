@@ -20,6 +20,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+ #ifdef __i386_on_x86_64__
+#if defined(__WINE_WINE_RBTREE_H) && defined(WINE_RBTREE_HOSTADDRSPACE) && defined(WINE_RBTREE_HOSTADDRSPACE_DISABLED)
+#error "rbtree.h was previously included without WINE_RBTREE_HOSTADDRSPACE but it's now defined"
+#endif
+
+#if defined(__WINE_WINE_RBTREE_H) && !defined(WINE_RBTREE_HOSTADDRSPACE) && defined(WINE_RBTREE_HOSTADDRSPACE_ENABLED)
+#error "rbtree.h was previously included with WINE_RBTREE_HOSTADDRSPACE but it's now not defined"
+#endif
+#endif
+
+#ifndef __WINE_WINE_RBTREE_H
+#define __WINE_WINE_RBTREE_H
+
+#include <stdint.h>
+#include <wine/32on64utils.h>
+
+#ifdef WINE_RBTREE_HOSTADDRSPACE
+#include <wine/hostaddrspace_enter.h>
+#define WINE_RBTREE_HOSTADDRSPACE_ENABLED
+#else
+#include <wine/winheader_enter.h>
+#define WINE_RBTREE_HOSTADDRSPACE_DISABLED
+#endif
+
 #ifndef __WINE_WINE_RBTREE_H
 #define __WINE_WINE_RBTREE_H
 
@@ -414,5 +438,14 @@ static inline void rb_replace(struct rb_tree *tree, struct rb_entry *dst, struct
 #define WINE_RB_ENTRY_VALUE RB_ENTRY_VALUE
 #define WINE_RB_FOR_EACH_ENTRY RB_FOR_EACH_ENTRY
 #define WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR RB_FOR_EACH_ENTRY_DESTRUCTOR
+
+#ifdef WINE_RBTREE_HOSTADDRSPACE
+#include <wine/hostaddrspace_exit.h>
+#else
+#include <wine/winheader_exit.h>
+#endif
+
+/* Undef WINE_RBTREE_HOSTADDRSPACE so we can detect if rbtree.h is included later without it re-defined */
+#undef WINE_RBTREE_HOSTADDRSPACE
 
 #endif  /* __WINE_WINE_RBTREE_H */

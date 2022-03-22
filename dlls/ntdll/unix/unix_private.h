@@ -26,11 +26,12 @@
 #include "unixlib.h"
 #include "wine/unixlib.h"
 #include "wine/server.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
 
 struct msghdr;
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__i386_on_x86_64__)
 static const WORD current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)
 static const WORD current_machine = IMAGE_FILE_MACHINE_AMD64;
@@ -61,6 +62,7 @@ struct ntdll_thread_data
     PRTL_THREAD_START_ROUTINE start;  /* thread entry point */
     void              *param;         /* thread entry point parameter */
     void              *jmp_buf;       /* setjmp buffer for exception handling */
+    int                esync_apc_fd;  /* fd to wait on for user APCs */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
@@ -96,6 +98,11 @@ extern void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *pKiRaiseUserExceptionDispatcher)(void) DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) DECLSPEC_HIDDEN;
+extern NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) DECLSPEC_HIDDEN;
+extern void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) DECLSPEC_HIDDEN;
+extern void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) DECLSPEC_HIDDEN;
+extern void *   (WINAPI *pRtlAllocateHeap)( HANDLE heap, ULONG flags, SIZE_T size ) DECLSPEC_HIDDEN;
+extern BOOLEAN  (WINAPI *pRtlFreeHeap)( HANDLE heap, ULONG flags, void *ptr ) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pKiUserCallbackDispatcher)(ULONG,void*,ULONG) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) DECLSPEC_HIDDEN;
@@ -110,23 +117,23 @@ struct _FILE_FS_DEVICE_INFORMATION;
 
 extern const char wine_build[] DECLSPEC_HIDDEN;
 
-extern const char *home_dir DECLSPEC_HIDDEN;
-extern const char *data_dir DECLSPEC_HIDDEN;
-extern const char *build_dir DECLSPEC_HIDDEN;
-extern const char *config_dir DECLSPEC_HIDDEN;
-extern const char *user_name DECLSPEC_HIDDEN;
-extern const char **dll_paths DECLSPEC_HIDDEN;
-extern const char **system_dll_paths DECLSPEC_HIDDEN;
+extern const char * HOSTPTR home_dir DECLSPEC_HIDDEN;
+extern const char * HOSTPTR data_dir DECLSPEC_HIDDEN;
+extern const char * HOSTPTR build_dir DECLSPEC_HIDDEN;
+extern const char * HOSTPTR config_dir DECLSPEC_HIDDEN;
+extern const char * HOSTPTR user_name DECLSPEC_HIDDEN;
+extern const char * HOSTPTR * HOSTPTR dll_paths DECLSPEC_HIDDEN;
+extern const char * HOSTPTR * HOSTPTRsystem_dll_paths DECLSPEC_HIDDEN;
 extern PEB *peb DECLSPEC_HIDDEN;
-extern USHORT *uctable DECLSPEC_HIDDEN;
-extern USHORT *lctable DECLSPEC_HIDDEN;
+extern USHORT * HOSTPTR uctable DECLSPEC_HIDDEN;
+extern USHORT * HOSTPTR lctable DECLSPEC_HIDDEN;
 extern SIZE_T startup_info_size DECLSPEC_HIDDEN;
 extern BOOL is_prefix_bootstrap DECLSPEC_HIDDEN;
 extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
 extern int main_argc DECLSPEC_HIDDEN;
-extern char **main_argv DECLSPEC_HIDDEN;
-extern char **main_envp DECLSPEC_HIDDEN;
-extern WCHAR **main_wargv DECLSPEC_HIDDEN;
+extern char * HOSTPTR * HOSTPTR main_argv DECLSPEC_HIDDEN;
+extern char * HOSTPTR * HOSTPTR main_envp DECLSPEC_HIDDEN;
+extern WCHAR * HOSTPTR * HOSTPTR main_wargv DECLSPEC_HIDDEN;
 extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
 extern unsigned int supported_machines_count DECLSPEC_HIDDEN;
 extern USHORT supported_machines[8] DECLSPEC_HIDDEN;
@@ -139,21 +146,28 @@ extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
 #ifndef _WIN64
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 #endif
-#ifdef __i386__
+#if defined(__i386__) || defined(__i386_on_x86_64__)
 extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
 #endif
 
-extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
+#ifdef __i386_on_x86_64__
+extern unsigned short wine_32on64_cs32;
+extern unsigned short wine_32on64_cs64;
+extern unsigned short wine_32on64_ds32;
+#endif
+extern int wine_needs_32on64(void);
+
+extern void init_environment( int argc, char * HOSTPTR * HOSTPTR argv, char * HOSTPTR * HOSTPTR envp ) DECLSPEC_HIDDEN;
+extern DWORD ntdll_umbstowcs( const char * HOSTPTR src, DWORD srclen, WCHAR * HOSTPTR dst, DWORD dstlen ) DECLSPEC_HIDDEN;
+extern int ntdll_wcstoumbs( const WCHAR * HOSTPTR src, DWORD srclen, char * HOSTPTR dst, DWORD dstlen, BOOL strict ) DECLSPEC_HIDDEN;
 extern void init_startup_info(void) DECLSPEC_HIDDEN;
 extern void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
                                   DWORD *info_size ) DECLSPEC_HIDDEN;
-extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
-extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
-                              void **addr_ptr, SIZE_T *size_ptr ) DECLSPEC_HIDDEN;
+extern char * HOSTPTR * HOSTPTR build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
+extern NTSTATUS exec_wineloader( char * HOSTPTR * HOSTPTR argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, void **module, SIZE_T *size ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,
-                               void **module ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_main_exe( const WCHAR * HOSTPTR dos_name, const char * HOSTPTR unix_name, const WCHAR *curdir, WCHAR **image, void **module ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_start_exe( WCHAR **image, void **module ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 
@@ -233,6 +247,9 @@ extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
+#ifdef __i386_on_x86_64__
+extern void signal_init_32on64_ldt(void) DECLSPEC_HIDDEN;
+#endif
 extern void signal_init_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void signal_init_process(void) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
@@ -449,5 +466,13 @@ static inline void init_unicode_string( UNICODE_STRING *str, const WCHAR *data )
     str->MaximumLength = str->Length + sizeof(WCHAR);
     str->Buffer = (WCHAR *)data;
 }
+
+#ifdef __i386_on_x86_64__
+#define RtlAllocateHeap(heap,flags,size)    (pRtlAllocateHeap(heap,flags,size))
+#define RtlFreeHeap(heap,flags,ptr)         (pRtlFreeHeap(heap,flags,ptr))
+#else
+#define RtlAllocateHeap(heap,flags,size)    (((flags) & HEAP_ZERO_MEMORY) ? calloc(1,size) : malloc(size))
+#define RtlFreeHeap(heap,flags,ptr)         (free(ptr))
+#endif
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */

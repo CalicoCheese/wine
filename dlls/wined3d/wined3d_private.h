@@ -30,8 +30,10 @@
 
 #ifdef USE_WIN32_OPENGL
 #define WINE_GLAPI __stdcall
+#define WINED3DPTR
 #else
 #define WINE_GLAPI
+#define WINED3DPTR HOSTPTR
 #endif
 
 #include <assert.h>
@@ -62,6 +64,10 @@
 #include "wined3d_vk.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
+#include "wine/static_strings.h"
+#if defined(__i386_on_x86_64__) && defined(USE_WIN32_OPENGL)
+#define WINE_GL_WIN32
+#endif
 #include "wine/wgl_driver.h"
 
 static inline size_t align(size_t addr, size_t alignment)
@@ -200,9 +206,9 @@ struct wined3d_d3d_limits
     float pointsize_max;
 };
 
-typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
-typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
-typedef void (WINE_GLAPI *wined3d_generic_attrib_func)(GLuint idx, const void *data);
+typedef void (WINE_GLAPI *WINED3DPTR wined3d_ffp_attrib_func)(const void *WINED3DPTR data);
+typedef void (WINE_GLAPI *WINED3DPTR wined3d_ffp_texcoord_func)(GLenum unit, const void *WINED3DPTR data);
+typedef void (WINE_GLAPI *WINED3DPTR wined3d_generic_attrib_func)(GLuint idx, const void *WINED3DPTR data);
 extern wined3d_ffp_attrib_func specular_func_3ubv DECLSPEC_HIDDEN;
 
 struct wined3d_ffp_attrib_ops
@@ -353,6 +359,40 @@ static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type 
     return minMipLookup[min_filter].mip[mip_filter];
 }
 
+#ifdef HAVE_IEEEFP_H
+#include <ieeefp.h>
+#endif
+
+#if !defined(HAVE_ISFINITE) && !defined(isfinite)
+static inline int isfinite(double x) { return finite(x); }
+#endif
+
+#if !defined(HAVE_ISINF) && !defined(isinf)
+static inline int isinf(double x) { return (!(finite(x) || isnand(x))); }
+#endif
+
+#if !defined(HAVE_ISNAN) && !defined(isnan)
+static inline int isnan(double x) { return isnand(x); }
+#endif
+
+#ifndef INFINITY
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+#endif
+
+#ifndef NAN
+static inline float __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+#endif
+
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
@@ -363,7 +403,7 @@ static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type 
  *
  * See GL_NV_half_float for a reference of the FLOAT16 / GL_HALF format
  */
-static inline float float_16_to_32(const unsigned short *in)
+static inline float float_16_to_32(const unsigned short *WINED3DPTR in)
 {
     const unsigned short s = ((*in) & 0x8000u);
     const unsigned short e = ((*in) & 0x7c00u) >> 10;
@@ -413,6 +453,12 @@ static inline unsigned int wined3d_popcount(unsigned int x)
     return ((x + (x >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
 #endif
 }
+
+static inline void wined3d_pause(void)
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__))
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+#endif
 
 static inline int wined3d_uint32_compare(uint32_t x, uint32_t y)
 {
@@ -2552,7 +2598,7 @@ struct wined3d_shader_resource_bindings
 
 struct wined3d_shader_descriptor_writes_vk
 {
-    VkWriteDescriptorSet *writes;
+    VkWriteDescriptorSet *WIN32PTR writes;
     SIZE_T size, count;
 };
 
@@ -3173,6 +3219,10 @@ enum wined3d_pci_device
     CARD_INTEL_UHD630               = 0x3e9b,
 };
 
+#ifndef USE_WIN32_OPENGL
+#include "wine/hostaddrspace_enter.h"
+#endif
+
 struct wined3d_fbo_ops
 {
     GLboolean (WINE_GLAPI *glIsRenderbuffer)(GLuint renderbuffer);
@@ -3207,6 +3257,10 @@ struct wined3d_fbo_ops
             GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
     void (WINE_GLAPI *glGenerateMipmap)(GLenum target);
 };
+
+#ifndef USE_WIN32_OPENGL
+#include "wine/hostaddrspace_exit.h"
+#endif
 
 struct wined3d_gl_limits
 {
@@ -3268,8 +3322,8 @@ struct wined3d_gl_info
     struct opengl_funcs gl_ops;
     struct wined3d_fbo_ops fbo_ops;
 
-    void (WINE_GLAPI *p_glDisableWINE)(GLenum cap);
-    void (WINE_GLAPI *p_glEnableWINE)(GLenum cap);
+    void (WINE_GLAPI *WINED3DPTR p_glDisableWINE)(GLenum cap);
+    void (WINE_GLAPI *WINED3DPTR p_glEnableWINE)(GLenum cap);
 };
 
 /* The driver names reflect the lowest GPU supported
@@ -3494,7 +3548,7 @@ struct wined3d_adapter_vk
 
     struct wined3d_vk_info vk_info;
     unsigned int device_extension_count;
-    const char **device_extensions;
+    const char * WINED3DPTR *device_extensions;
     VkPhysicalDevice physical_device;
 
     VkPhysicalDeviceLimits device_limits;
@@ -6737,5 +6791,47 @@ static inline bool wined3d_map_persistent(void)
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
 extern CRITICAL_SECTION wined3d_command_cs;
+
+static inline DWORD find_emulated_clipplanes(const struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+
+    if (!d3d_info->emulated_clipplanes)
+        return 0;
+    if (!state->render_states[WINED3D_RS_CLIPPING])
+        return 0;
+    /* With pixelshaders, emulate all enabled clipplanes (disabled per
+     * shader if no free texcoord is found). */
+    if (use_ps(state))
+        return state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+    if (context->lowest_disabled_stage >= d3d_info->limits.ffp_blend_stages)
+        return 0;
+    return state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+}
+
+static inline void wined3d_set_fpu_cw(WORD cw)
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__))
+    __asm__ volatile ("fnclex");
+    __asm__ volatile ("fldcw %0" : : "m" (cw));
+#elif defined(__i386__) && defined(_MSC_VER)
+    __asm fnclex;
+    __asm fldcw cw;
+#endif
+}
+
+static inline WORD wined3d_get_fpu_cw(void)
+{
+    WORD cw = 0;
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__))
+    __asm__ volatile ("fnstcw %0" : "=m" (cw));
+#elif defined(__i386__) && defined(_MSC_VER)
+    __asm fnstcw cw;
+#endif
+    return cw;
+}
+
+#define WINED3D_DEFAULT_FPU_CW 0x037f
 
 #endif

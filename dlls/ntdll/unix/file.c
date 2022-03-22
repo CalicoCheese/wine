@@ -114,6 +114,7 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 #include "wine/server.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "unix_private.h"
@@ -121,7 +122,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#include <wine/hostaddrspace_enter.h>
+
 #define MAX_DOS_DRIVES 26
+
+#define FILE_WRITE_TO_END_OF_FILE      ((LONGLONG)-1)
+#define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
 
 /* just in case... */
 #undef VFAT_IOCTL_READDIR_BOTH
@@ -225,6 +231,8 @@ static mode_t start_umask;
 
 /* at some point we may want to allow Winelib apps to set this */
 static const BOOL is_case_sensitive = FALSE;
+
+static struct file_identity windir;
 
 static pthread_mutex_t dir_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -377,7 +385,7 @@ static void *get_dir_data_space( struct dir_data *data, unsigned int size )
 }
 
 /* add a string to the directory data buffer */
-static const char *add_dir_data_nameA( struct dir_data *data, const char *name )
+static const char *add_dir_data_nameA( struct dir_data *data, const char * HOSTPTR name )
 {
     /* keep buffer data WCHAR-aligned */
     char *ptr = get_dir_data_space( data, (strlen( name ) + sizeof(WCHAR)) & ~(sizeof(WCHAR) - 1) );
@@ -395,7 +403,7 @@ static const WCHAR *add_dir_data_nameW( struct dir_data *data, const WCHAR *name
 
 /* add an entry to the directory names array */
 static BOOL add_dir_data_names( struct dir_data *data, const WCHAR *long_name,
-                                const WCHAR *short_name, const char *unix_name )
+                                const WCHAR *short_name, const char * HOSTPTR unix_name )
 {
     static const WCHAR empty[1];
     struct dir_data_names *names = data->names;
@@ -483,7 +491,6 @@ static void flush_dir_queue(void)
         free( dir );
     }
 }
-
 
 #ifdef __ANDROID__
 
@@ -1229,7 +1236,7 @@ static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer 
 {
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
-    LPCWSTR p, ext, end = name + length;
+    const WCHAR * HOSTPTR p, * HOSTPTR ext, * HOSTPTR hash_end, * HOSTPTR end = name + length;
     LPWSTR dst;
     unsigned short hash;
     int i;
@@ -1398,8 +1405,8 @@ static BOOLEAN is_legal_8dot3_name( const WCHAR *name, int len )
  *
  * Add a file to the directory data if it matches the mask.
  */
-static BOOL append_entry( struct dir_data *data, const char *long_name,
-                          const char *short_name, const UNICODE_STRING *mask )
+static BOOL append_entry( struct dir_data *data, const char * HOSTPTR long_name,
+                          const char * HOSTPTR short_name, const UNICODE_STRING *mask )
 {
     int long_len, short_len;
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN + 1];
@@ -1646,7 +1653,6 @@ static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, 
 #endif
 }
 
-
 /* fill in the file information that depends on the stat and attribute info */
 static NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
                                 FILE_INFORMATION_CLASS class )
@@ -1750,12 +1756,13 @@ static NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
     return STATUS_SUCCESS;
 }
 
+#include <wine/hostaddrspace_exit.h>
 
-static NTSTATUS server_get_unix_name( HANDLE handle, char **unix_name )
+static NTSTATUS server_get_unix_name( HANDLE handle, char * HOSTPTR * HOSTPTR unix_name )
 {
     data_size_t size = 1024;
     NTSTATUS ret;
-    char *name;
+    char * HOSTPTR name;
 
     for (;;)
     {
@@ -1782,9 +1789,11 @@ static NTSTATUS server_get_unix_name( HANDLE handle, char **unix_name )
     return ret;
 }
 
+#include <wine/hostaddrspace_enter.h>
+
 static NTSTATUS fill_name_info( const char *unix_name, FILE_NAME_INFORMATION *info, LONG *name_len )
 {
-    WCHAR *nt_name;
+    WCHAR * HOSTPTR nt_name;
     NTSTATUS status;
 
     if (!(status = unix_to_nt_file_name( unix_name, &nt_name )))
@@ -1809,6 +1818,7 @@ static NTSTATUS fill_name_info( const char *unix_name, FILE_NAME_INFORMATION *in
     return status;
 }
 
+#include <wine/hostaddrspace_exit.h>
 
 static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
                                       ULONG length, FILE_INFORMATION_CLASS info_class )
@@ -1849,6 +1859,7 @@ static NTSTATUS server_open_file_object( HANDLE *handle, ACCESS_MASK access, OBJ
     return status;
 }
 
+#include <wine/hostaddrspace_enter.h>
 
 /* retrieve device/inode number for all the drives */
 static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
@@ -1949,7 +1960,7 @@ static int find_dos_device( const char *path )
     return -1;
 }
 
-static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_unix_drive *drive, ULONG size )
+static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_unix_drive * WIN32PTR drive, ULONG size )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
@@ -1974,10 +1985,11 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
     else
         drive->letter = 'a' + letter;
 
-    init_unicode_string( &string, MOUNTMGR_DEVICE_NAME );
+    string.Buffer = (WCHAR * WIN32PTR)MOUNTMGR_DEVICE_NAME;
+    string.Length = sizeof(MOUNTMGR_DEVICE_NAME) - sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
-    status = server_open_file_object( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );
+    status = NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );
     if (status) return status;
 
     status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
@@ -2272,10 +2284,10 @@ static NTSTATUS read_directory_data( struct dir_data *data, int fd, const UNICOD
 
 
 /* compare file names for directory sorting */
-static int name_compare( const void *a, const void *b )
+static int name_compare( const void * HOSTPTR a, const void * HOSTPTR b )
 {
-    const struct dir_data_names *file_a = (const struct dir_data_names *)a;
-    const struct dir_data_names *file_b = (const struct dir_data_names *)b;
+    const struct dir_data_names * HOSTPTR file_a = (const struct dir_data_names * HOSTPTR)a;
+    const struct dir_data_names * HOSTPTR file_b = (const struct dir_data_names * HOSTPTR)b;
     int ret = wcsicmp( file_a->long_name, file_b->long_name );
     if (!ret) ret = wcscmp( file_a->long_name, file_b->long_name );
     return ret;
@@ -2323,6 +2335,7 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
     return data->count ? STATUS_SUCCESS : STATUS_NO_SUCH_FILE;
 }
 
+#include <wine/hostaddrspace_exit.h>
 
 /***********************************************************************
  *           get_cached_dir_data
@@ -2363,7 +2376,7 @@ static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, 
     if (entry >= dir_data_cache_size)
     {
         unsigned int size = max( dir_data_cache_initial_size, max( dir_data_cache_size * 2, entry + 1 ) );
-        struct dir_data **new_cache = realloc( dir_data_cache, size * sizeof(*new_cache) );
+        struct dir_data * HOSTPTR * HOSTPTR new_cache = realloc( dir_data_cache, size * sizeof(*new_cache) );
 
         if (!new_cache) return STATUS_NO_MEMORY;
         memset( new_cache + dir_data_cache_size, 0, (size - dir_data_cache_size) * sizeof(*new_cache) );
@@ -2480,8 +2493,8 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
  * The file found is appended to unix_name at pos.
  * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
  */
-static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, int length,
-                                  BOOLEAN check_case )
+static NTSTATUS find_file_in_dir( char * HOSTPTR unix_name, int pos, const WCHAR *name, int length,
+                                  BOOLEAN check_case, BOOLEAN *is_win_dir )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_name_8_dot_3;
@@ -2669,7 +2682,7 @@ static BOOL replace_path( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *str, ULONG pr
 static void init_redirects(void)
 {
     static const char system_dir[] = "/dosdevices/c:/windows/system32";
-    char *dir;
+    char * HOSTPTR dir;
     struct stat st;
 
     if (!(dir = malloc( strlen(config_dir) + sizeof(system_dir) ))) return;
@@ -2811,10 +2824,10 @@ void init_files(void)
  *
  * Get the Unix path of a DOS device.
  */
-static NTSTATUS get_dos_device( char **unix_name, int start_pos )
+static NTSTATUS get_dos_device( char * HOSTPTR *unix_name, int start_pos )
 {
     struct stat st;
-    char *new_name, *dev = *unix_name + start_pos;
+    char * HOSTPTR new_name, * HOSTPTR dev = *unix_name + start_pos;
 
     /* special case for drive devices */
     if (dev[0] && dev[1] == ':' && !dev[2]) strcpy( dev + 1, "::" );
@@ -2883,7 +2896,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
  *
  * Remove the last component of the path. Helper for find_drive_rootA.
  */
-static inline unsigned int remove_last_componentA( const char *path, unsigned int len )
+static inline unsigned int remove_last_componentA( const char * HOSTPTR path, unsigned int len )
 {
     int level = 0;
 
@@ -2917,7 +2930,7 @@ static inline unsigned int remove_last_componentA( const char *path, unsigned in
  * Return value is the drive, or -1 on error. On success, ppath is modified
  * to point to the beginning of the DOS path.
  */
-static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_ret )
+static NTSTATUS find_drive_rootA( const char * HOSTPTR *ppath, unsigned int len, int *drive_ret )
 {
     /* Starting with the full path, check if the device and inode match any of
      * the wine 'drives'. If not then remove the last path component and try
@@ -2925,8 +2938,8 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
      * since it's a directory that's ascended back out of.
      */
     int drive;
-    char *buffer;
-    const char *path = *ppath;
+    char * HOSTPTR buffer;
+    const char * HOSTPTR path = *ppath;
     struct stat st;
     struct file_identity info[MAX_DOS_DRIVES];
 
@@ -2974,14 +2987,14 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
  *
  * Recursively search directories from the dir queue for a given inode.
  */
-static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, dev_t dev )
+static NTSTATUS find_file_id( char * HOSTPTR *unix_name, ULONG *len, ULONGLONG file_id, dev_t dev )
 {
     unsigned int pos;
     DIR *dir;
     struct dirent *de;
     NTSTATUS status;
     struct stat st;
-    char *name = *unix_name;
+    char * HOSTPTR name = *unix_name;
 
     while (!(status = next_dir_in_queue( name )))
     {
@@ -3028,12 +3041,12 @@ static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, d
  *
  * Lookup a file from its file id instead of its name.
  */
-static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **unix_name_ret,
+static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char * HOSTPTR *unix_name_ret,
                                            UNICODE_STRING *nt_name )
 {
     enum server_fd_type type;
     int old_cwd, root_fd, needs_close;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     ULONG len;
     NTSTATUS status;
     ULONGLONG file_id;
@@ -3118,14 +3131,14 @@ done:
  *
  * Helper for nt_to_unix_file_name
  */
-static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer, int unix_len, int pos,
+static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char * HOSTPTR *buffer, int unix_len, int pos,
                                   UINT disposition, BOOL is_unix )
 {
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, '/', 0 };
     NTSTATUS status;
     int ret;
     struct stat st;
-    char *unix_name = *buffer;
+    char * HOSTPTR unix_name = *buffer;
     const WCHAR *ptr, *end;
 
     /* check syntax of individual components */
@@ -3158,7 +3171,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     ret = ntdll_wcstoumbs( name, name_len, unix_name + pos + 1, unix_len - pos - 1, TRUE );
     if (ret >= 0 && ret < unix_len - pos - 1)
     {
-        char *p;
+        char * HOSTPTR p;
         unix_name[pos + 1 + ret] = 0;
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
         if (!stat( unix_name, &st ))
@@ -3189,7 +3202,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 
         if (unix_len - pos < MAX_DIR_ENTRY_LEN + 2)
         {
-            char *new_name;
+            char *  HOSTPTR new_name;
             unix_len += 2 * MAX_DIR_ENTRY_LEN;
             if (!(new_name = realloc( unix_name, unix_len ))) return STATUS_NO_MEMORY;
             unix_name = *buffer = new_name;
@@ -3230,11 +3243,10 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     return status;
 }
 
-
 /******************************************************************************
  *           nt_to_unix_file_name_no_root
  */
-static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char **unix_name_ret,
+static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char * HOSTPTR *unix_name_ret,
                                               UINT disposition )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
@@ -3243,7 +3255,7 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
     NTSTATUS status = STATUS_SUCCESS;
     const WCHAR *name;
     struct stat st;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     int pos, ret, name_len, unix_len, prefix_len;
     WCHAR prefix[MAX_DIR_ENTRY_LEN + 1];
     BOOLEAN is_unix = FALSE;
@@ -3353,12 +3365,12 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */
-NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition )
+NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char * HOSTPTR *name_ret, UINT disposition )
 {
     enum server_fd_type type;
     int old_cwd, root_fd, needs_close;
     const WCHAR *name;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     int name_len, unix_len;
     NTSTATUS status;
 
@@ -3423,7 +3435,7 @@ NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, U
 NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *nameA, ULONG *size,
                                           UINT disposition )
 {
-    char *buffer = NULL;
+    char * HOSTPTR buffer = NULL;
     NTSTATUS status;
     UNICODE_STRING redir;
     OBJECT_ATTRIBUTES new_attr = *attr;
@@ -3457,15 +3469,14 @@ NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
     return status;
 }
 
-
 /******************************************************************
- *		collapse_path
+ *      collapse_path
  *
  * Get rid of . and .. components in the path.
  */
-static void collapse_path( WCHAR *path )
+static void collapse_path( WCHAR * HOSTPTR path )
 {
-    WCHAR *p, *start, *next;
+    WCHAR * HOSTPTR p, * HOSTPTR start, * HOSTPTR next;
 
     /* convert every / into a \ */
     for (p = path; *p; p++) if (*p == '/') *p = '\\';
@@ -3535,19 +3546,18 @@ static void collapse_path( WCHAR *path )
     *p = 0;
 }
 
-
 /******************************************************************
  *           unix_to_nt_file_name
  */
-NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
+NTSTATUS unix_to_nt_file_name( const char * HOSTPTR name, WCHAR * HOSTPTR *nt )
 {
     static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x',0};
     WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\',0};
     const WCHAR *prefix = unix_prefixW;
     unsigned int lenW, lenA = strlen(name);
-    const char *path = name;
+    const char * HOSTPTR path = name;
     NTSTATUS status;
-    WCHAR *buffer;
+    WCHAR * HOSTPTR buffer;
     int drive;
 
     status = find_drive_rootA( &path, lenA, &drive );
@@ -3575,9 +3585,9 @@ NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
 /******************************************************************
  *           wine_unix_to_nt_file_name
  */
-NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULONG *size )
+NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
 {
-    WCHAR *nt_name = NULL;
+    WCHAR * HOSTPTR nt_name = NULL;
     NTSTATUS status;
 
     if (name[0] != '/') return STATUS_INVALID_PARAMETER;  /* relative paths are not supported */
@@ -3599,14 +3609,14 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
  *
  * Simplified version of RtlGetFullPathName_U.
  */
-NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
+NTSTATUS get_full_path( const WCHAR * HOSTPTR name, const WCHAR * HOSTPTR curdir, WCHAR * HOSTPTR *path )
 {
-    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
-    static const WCHAR devW[] = {'\\','?','?','\\',0};
-    static const WCHAR unixW[] = {'u','n','i','x'};
-    WCHAR *ret, root[] = {'\\','?','?','\\','C',':','\\',0};
+    static const WCHAR HOSTPTR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
+    static const WCHAR HOSTPTR devW[] = {'\\','?','?','\\',0};
+    static const WCHAR HOSTPTR unixW[] = {'u','n','i','x'};
+    WCHAR * HOSTPTR ret, root[] = {'\\','?','?','\\','C',':','\\',0};
     NTSTATUS status = STATUS_SUCCESS;
-    const WCHAR *prefix;
+    const WCHAR * HOSTPTR prefix;
 
     if (IS_SEPARATOR(name[0]) && IS_SEPARATOR(name[1]))  /* \\ prefix */
     {
@@ -3662,7 +3672,7 @@ static NTSTATUS unmount_device( HANDLE handle )
     if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
     {
         struct stat st;
-        char *mount_point = NULL;
+        char * HOSTPTR mount_point = NULL;
 
         if (fstat( unix_fd, &st ) == -1 || !is_valid_mounted_device( &st ))
             status = STATUS_INVALID_PARAMETER;
@@ -3675,7 +3685,7 @@ static NTSTATUS unmount_device( HANDLE handle )
 #else
                 static const char umount[] = "umount >/dev/null 2>&1 ";
 #endif
-                char *cmd = malloc( strlen(mount_point)+sizeof(umount));
+                char * HOSTPTR cmd = malloc( strlen(mount_point)+sizeof(umount));
                 if (cmd)
                 {
                     strcpy( cmd, umount );
@@ -3694,6 +3704,15 @@ static NTSTATUS unmount_device( HANDLE handle )
         if (needs_close) close( unix_fd );
     }
     return status;
+}
+
+
+/***********************************************************************
+ *           set_show_dot_files
+ */
+void CDECL set_show_dot_files( BOOL enable )
+{
+    show_dot_files = enable;
 }
 
 
@@ -3740,7 +3759,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
 {
     OBJECT_ATTRIBUTES new_attr;
     UNICODE_STRING nt_name;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     BOOL created = FALSE;
     NTSTATUS status;
 
@@ -3920,7 +3939,7 @@ NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
 {
     HANDLE handle;
     NTSTATUS status;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
@@ -3944,7 +3963,7 @@ NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
 NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
                                            FILE_NETWORK_OPEN_INFORMATION *info )
 {
-    char *unix_name;
+    char * HOSTPTR unix_name;
     NTSTATUS status;
     UNICODE_STRING redir;
     OBJECT_ATTRIBUTES new_attr = *attr;
@@ -3989,7 +4008,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
  */
 NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
 {
-    char *unix_name;
+    char * HOSTPTR unix_name;
     NTSTATUS status;
     UNICODE_STRING redir;
     OBJECT_ATTRIBUTES new_attr = *attr;
@@ -4161,7 +4180,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     case FileAllInformation:
         {
             FILE_ALL_INFORMATION *info = ptr;
-            char *unix_name;
+            char * HOSTPTR unix_name;
 
             if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
             else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
@@ -4239,7 +4258,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     case FileNetworkOpenInformation:
         {
             FILE_NETWORK_OPEN_INFORMATION *info = ptr;
-            char *unix_name;
+            char * HOSTPTR unix_name;
 
             if (!(status = server_get_unix_name( handle, &unix_name )))
             {
@@ -4535,7 +4554,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_RENAME_INFORMATION *info = ptr;
             UNICODE_STRING name_str, redir;
             OBJECT_ATTRIBUTES attr;
-            char *unix_name;
+            char * HOSTPTR unix_name;
 
             name_str.Buffer = info->FileName;
             name_str.Length = info->FileNameLength;
@@ -4572,7 +4591,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_LINK_INFORMATION *info = ptr;
             UNICODE_STRING name_str, redir;
             OBJECT_ATTRIBUTES attr;
-            char *unix_name;
+            char * HOSTPTR unix_name;
 
             name_str.Buffer = info->FileName;
             name_str.Length = info->FileNameLength;
@@ -4616,6 +4635,15 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
 /***********************************************************************
  *                  Asynchronous file I/O                              *
  */
+
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
+
+struct async_fileio
+{
+    async_callback_t    *callback; /* must be the first field */
+    struct async_fileio *next;
+    HANDLE               handle;
+};
 
 struct async_fileio_read
 {
@@ -4670,11 +4698,13 @@ struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE
     while (io)
     {
         struct async_fileio *next = io->next;
-        free( io );
+        RtlFreeHeap( GetProcessHeap(), 0, io );
         io = next;
     }
 
-    if ((io = malloc( size )))
+    /* 32on64 FIXME: Maybe we can keep using malloc here, but changing all the uses of io seems
+     * troublesome. And I am not sure how it relates to an IO_STATUS_BLOCK. */
+    if ((io = RtlAllocateHeap( GetProcessHeap(), 0, size )))
     {
         io->callback = callback;
         io->handle   = handle;
@@ -6751,8 +6781,8 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
     case ObjectNameInformation:
     {
         OBJECT_NAME_INFORMATION *p = ptr;
-        char *unix_name;
-        WCHAR *nt_name;
+        char * HOSTPTR unix_name;
+        WCHAR * HOSTPTR nt_name;
 
         /* first try as a file object */
 

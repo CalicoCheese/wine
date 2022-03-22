@@ -41,6 +41,7 @@
 #include "wincon.h"
 #include "winternl.h"
 #include "wine/condrv.h"
+#include "esync.h"
 
 struct screen_buffer;
 
@@ -590,6 +591,8 @@ static void disconnect_console_server( struct console_server *server )
         list_remove( &call->entry );
         console_host_ioctl_terminate( call, STATUS_CANCELLED );
     }
+    if (do_esync())
+        esync_clear( server->esync_fd );
     while (!list_empty( &server->read_queue ))
     {
         struct console_host_ioctl *call = LIST_ENTRY( list_head( &server->read_queue ), struct console_host_ioctl, entry );
@@ -870,6 +873,7 @@ static void console_server_destroy( struct object *obj )
     assert( obj->ops == &console_server_ops );
     disconnect_console_server( server );
     if (server->fd) release_object( server->fd );
+    if (do_esync()) esync_close_fd( server->esync_fd );
 }
 
 static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name,
@@ -911,6 +915,13 @@ static int console_server_signaled( struct object *obj, struct wait_queue_entry 
     return !server->console || !list_empty( &server->queue );
 }
 
+static struct esync_fd *console_server_get_esync_fd( struct object *obj, enum esync_type *type )
+{
+    struct console_server *server = (struct console_server*)obj;
+    *type = ESYNC_MANUAL_SERVER;
+    return server->esync_fd;
+}
+
 static struct fd *console_server_get_fd( struct object* obj )
 {
     struct console_server *server = (struct console_server*)obj;
@@ -942,6 +953,10 @@ static struct object *create_console_server( void )
         return NULL;
     }
     allow_fd_caching(server->fd);
+    server->esync_fd = NULL;
+
+    if (do_esync())
+        server->esync_fd = esync_create_fd( 0, 0 );
 
     return &server->obj;
 }
@@ -1555,6 +1570,8 @@ DECL_HANDLER(get_next_console_request)
         /* set result of previous ioctl */
         ioctl = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
         list_remove( &ioctl->entry );
+        if (do_esync() && list_empty( &server->queue ))
+            esync_clear( server->esync_fd );
     }
 
     if (ioctl)
@@ -1640,6 +1657,8 @@ DECL_HANDLER(get_next_console_request)
     {
         set_error( STATUS_PENDING );
     }
+    if (do_esync() && list_empty( &server->queue ))
+        esync_clear( server->esync_fd );
 
     release_object( server );
 }

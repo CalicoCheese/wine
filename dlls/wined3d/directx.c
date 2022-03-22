@@ -3294,6 +3294,21 @@ static struct wined3d_adapter *wined3d_adapter_create(unsigned int ordinal, DWOR
         return wined3d_adapter_vk_create(ordinal, wined3d_creation_flags);
 
     return wined3d_adapter_gl_create(ordinal, wined3d_creation_flags);
+    if (wined3d_settings.renderer == WINED3D_RENDERER_OPENGL)
+        return wined3d_adapter_gl_create(ordinal, wined3d_creation_flags);
+
+#ifdef __APPLE__
+    if (!(wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
+    {
+        if ((adapter = wined3d_adapter_vk_create(ordinal, wined3d_creation_flags)))
+            ERR_(winediag)("Defaulting to the Vulkan renderer for d3d10/11 applications on macOS.\n");
+    }
+#endif
+
+    if (!adapter)
+        adapter = wined3d_adapter_gl_create(ordinal, wined3d_creation_flags);
+
+    return adapter;
 }
 
 static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}

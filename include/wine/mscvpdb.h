@@ -96,6 +96,7 @@
  * types, they are not completely linked together.
  */
 
+#include <wine/winheader_enter.h>
 #include "pshpack1.h"
 
 /* ======================================== *
@@ -2729,3 +2730,5 @@ typedef struct OMFSourceModule
     unsigned short  cSeg;
     unsigned long   baseSrcFile[1];
 } OMFSourceModule;
+
+#include <wine/winheader_exit.h>

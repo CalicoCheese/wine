@@ -8,6 +8,8 @@
 #ifndef __WINE_WINE_SERVER_PROTOCOL_H
 #define __WINE_WINE_SERVER_PROTOCOL_H
 
+#include <wine/winheader_enter.h>
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
@@ -5718,6 +5720,12 @@ enum request
     REQ_suspend_process,
     REQ_resume_process,
     REQ_get_next_thread,
+    REQ_create_esync,
+    REQ_open_esync,
+    REQ_get_esync_read_fd,
+    REQ_get_esync_write_fd,
+    REQ_esync_msgwait,
+    REQ_get_esync_apc_fd,
     REQ_NB_REQUESTS
 };
 
@@ -6000,6 +6008,12 @@ union generic_request
     struct suspend_process_request suspend_process_request;
     struct resume_process_request resume_process_request;
     struct get_next_thread_request get_next_thread_request;
+    struct create_esync_request create_esync_request;
+    struct open_esync_request open_esync_request;
+    struct get_esync_read_fd_request get_esync_read_fd_request;
+    struct get_esync_write_fd_request get_esync_write_fd_request;
+    struct esync_msgwait_request esync_msgwait_request;
+    struct get_esync_apc_fd_request get_esync_apc_fd_request;
 };
 union generic_reply
 {
@@ -6280,6 +6294,12 @@ union generic_reply
     struct suspend_process_reply suspend_process_reply;
     struct resume_process_reply resume_process_reply;
     struct get_next_thread_reply get_next_thread_reply;
+    struct create_esync_reply create_esync_reply;
+    struct open_esync_reply open_esync_reply;
+    struct get_esync_read_fd_reply get_esync_read_fd_reply;
+    struct get_esync_write_fd_reply get_esync_write_fd_reply;
+    struct esync_msgwait_reply esync_msgwait_reply;
+    struct get_esync_apc_fd_reply get_esync_apc_fd_reply;
 };
 
 /* ### protocol_version begin ### */
@@ -6287,5 +6307,7 @@ union generic_reply
 #define SERVER_PROTOCOL_VERSION 746
 
 /* ### protocol_version end ### */
+
+#include <wine/winheader_exit.h>
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

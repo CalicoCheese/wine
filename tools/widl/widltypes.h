@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "ndrtypes.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
 
 struct uuid

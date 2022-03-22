@@ -31,6 +31,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+#ifdef __i386_on_x86_64__
+#pragma clang default_addr_space(default)
+#endif
+
 #define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static void *wine_vk_find_struct_(void *s, VkStructureType t)
 {
@@ -222,12 +226,12 @@ static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
     free(phys_dev);
 }
 
-static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct VkInstance_T *instance,
+static struct VkPhysicalDevice_T * WIN32PTR wine_vk_physical_device_alloc(struct VkInstance_T *instance,
         VkPhysicalDevice phys_dev)
 {
-    struct VkPhysicalDevice_T *object;
+    struct VkPhysicalDevice_T * WIN32PTR object;
     uint32_t num_host_properties, num_properties = 0;
-    VkExtensionProperties *host_properties = NULL;
+    VkExtensionProperties * WIN32PTR host_properties = NULL;
     VkResult res;
     unsigned int i, j;
 
@@ -325,14 +329,14 @@ static void wine_vk_free_command_buffers(struct VkDevice_T *device,
 
 static void wine_vk_device_get_queues(struct VkDevice_T *device,
         uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags,
-        struct VkQueue_T* queues)
+        struct VkQueue_T * WIN32PTR queues)
 {
     VkDeviceQueueInfo2 queue_info;
     unsigned int i;
 
     for (i = 0; i < queue_count; i++)
     {
-        struct VkQueue_T *queue = &queues[i];
+        struct VkQueue_T * WIN32PTR queue = &queues[i];
 
         queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         queue->device = device;
@@ -407,7 +411,7 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
  */
 static void wine_vk_device_free(struct VkDevice_T *device)
 {
-    struct VkQueue_T *queue;
+    struct VkQueue_T * WIN32PTR queue;
 
     if (!device)
         return;
@@ -563,7 +567,7 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
     /* Wrap each native physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < phys_dev_count; i++)
     {
-        struct VkPhysicalDevice_T *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i]);
+        struct VkPhysicalDevice_T * WIN32PTR phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i]);
         if (!phys_dev)
         {
             ERR("Unable to allocate memory for physical device!\n");
@@ -580,14 +584,14 @@ static VkResult wine_vk_instance_load_physical_devices(struct VkInstance_T *inst
     return VK_SUCCESS;
 }
 
-static struct VkPhysicalDevice_T *wine_vk_instance_wrap_physical_device(struct VkInstance_T *instance,
+static struct VkPhysicalDevice_T * WIN32PTR wine_vk_instance_wrap_physical_device(struct VkInstance_T *instance,
         VkPhysicalDevice physical_device)
 {
     unsigned int i;
 
     for (i = 0; i < instance->phys_dev_count; ++i)
     {
-        struct VkPhysicalDevice_T *current = instance->phys_devs[i];
+        struct VkPhysicalDevice_T * WIN32PTR current = instance->phys_devs[i];
         if (current->phys_dev == physical_device)
             return current;
     }
@@ -694,8 +698,8 @@ NTSTATUS wine_vkCreateDevice(void *args)
     const VkAllocationCallbacks *allocator = params->pAllocator;
     VkDevice *device = params->pDevice;
     VkDeviceCreateInfo create_info_host;
-    struct VkQueue_T *next_queue;
-    struct VkDevice_T *object;
+    struct VkQueue_T * WIN32PTR next_queue;
+    struct VkDevice_T * WIN32PTR object;
     unsigned int i;
     VkResult res;
 
@@ -792,7 +796,7 @@ NTSTATUS wine_vkCreateInstance(void *args)
     VkInstance *instance = params->pInstance;
     VkInstanceCreateInfo create_info_host;
     const VkApplicationInfo *app_info;
-    struct VkInstance_T *object;
+    struct VkInstance_T * WIN32PTR object;
     VkResult res;
 
     if (allocator)
@@ -1064,7 +1068,7 @@ NTSTATUS wine_vkFreeCommandBuffers(void *args)
 
 static VkQueue wine_vk_device_find_queue(VkDevice device, const VkDeviceQueueInfo2 *info)
 {
-    struct VkQueue_T* queue;
+    struct VkQueue_T * WIN32PTR queue;
     uint32_t i;
 
     for (i = 0; i < device->queue_count; i++)
@@ -1874,3 +1878,7 @@ BOOL WINAPI wine_vk_is_available_device_function(VkDevice device, const char *na
 {
     return !!vk_funcs->p_vkGetDeviceProcAddr(device->device, name);
 }
+
+#ifdef __i386_on_x86_64__
+#pragma clang default_addr_space(ptr32)
+#endif

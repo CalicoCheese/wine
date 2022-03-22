@@ -93,7 +93,6 @@ static const char version_string[] = "Wine IDL Compiler version " PACKAGE_VERSIO
 			"Copyright 2002 Ove Kaaven\n";
 
 static struct target target;
-
 int debuglevel = DEBUGLEVEL_NONE;
 int parser_debug, yy_flex_debug;
 
@@ -254,6 +253,51 @@ static void add_widl_version_define(void)
 
     sprintf(version_str, "__WIDL__=0x%x", version);
     wpp_add_cmdline_define(version_str);
+}
+
+/* set the target platform */
+static void set_target( const char *target )
+{
+    static const struct
+    {
+        const char     *name;
+        enum target_cpu cpu;
+    } cpu_names[] =
+    {
+        { "i386",    CPU_i386 },
+        { "i486",    CPU_i386 },
+        { "i586",    CPU_i386 },
+        { "i686",    CPU_i386 },
+        { "i786",    CPU_i386 },
+        { "amd64",   CPU_x86_64 },
+        { "x86_64",  CPU_x86_64 },
+        { "powerpc", CPU_POWERPC },
+        { "arm",     CPU_ARM },
+        { "armv5",   CPU_ARM },
+        { "armv6",   CPU_ARM },
+        { "armv7",   CPU_ARM },
+        { "armv7a",  CPU_ARM },
+        { "arm64",   CPU_ARM64 },
+        { "aarch64", CPU_ARM64 },
+    };
+
+    unsigned int i;
+    char *p, *spec = xstrdup( target );
+
+    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
+
+    if (!(p = strchr( spec, '-' ))) error( "Invalid target specification '%s'\n", target );
+    *p++ = 0;
+    for (i = 0; i < ARRAY_SIZE( cpu_names ); i++)
+    {
+        if (!strcmp( cpu_names[i].name, spec ))
+        {
+            target_cpu = cpu_names[i].cpu;
+            free( spec );
+            return;
+        }
+    }
+    error( "Unrecognized CPU '%s'\n", spec );
 }
 
 /* clean things up when aborting on a signal */
@@ -572,8 +616,7 @@ static void option_callback( int optc, char *optarg )
         /* FIXME: Support robust option */
         break;
     case 'b':
-        if (!parse_target( optarg, &target ))
-            error( "Invalid target specification '%s'\n", optarg );
+      set_target( optarg );
       break;
     case 'c':
       do_everything = 0;
@@ -748,10 +791,32 @@ int main(int argc,char *argv[])
       }
   }
 
+  switch (target_cpu)
+  {
+  case CPU_i386:
+  case CPU_x86_32on64:
+      if (pointer_size == 8) target_cpu = CPU_x86_64;
+      else pointer_size = 4;
+      break;
+  case CPU_x86_64:
+      if (pointer_size == 4) target_cpu = CPU_i386;
+      else pointer_size = 8;
+      break;
+  case CPU_ARM64:
+      if (pointer_size == 4) error( "Cannot build 32-bit code for this CPU\n" );
+      pointer_size = 8;
+      break;
+  default:
+      if (pointer_size == 8) error( "Cannot build 64-bit code for this CPU\n" );
+      pointer_size = 4;
+      break;
+  }
+
   if (pointer_size)
       set_target_ptr_size( &target, pointer_size );
   else
       pointer_size = get_target_ptr_size( target );
+
 
   /* if nothing specified, try to guess output type from the output file name */
   if (output_name && do_everything && !do_header && !do_typelib && !do_proxies &&

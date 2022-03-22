@@ -19,6 +19,8 @@
 #ifndef __WINE_PROPVARUTIL_H
 #define __WINE_PROPVARUTIL_H
 
+#include "wine/winheader_enter.h"
+
 #include <shtypes.h>
 #include <shlwapi.h>
 
@@ -207,5 +209,7 @@ inline BOOL IsPropVariantString(REFPROPVARIANT propvar)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_PROPVARUTIL_H */

@@ -940,7 +940,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
     struct wined3d_device *device = resource->device;
     struct wined3d_context *context;
     struct wined3d_bo_address addr;
-    uint8_t *base;
+    uint8_t *WIN32PTR base;
     LONG count;
 
     TRACE("resource %p, sub_resource_idx %u, map_ptr %p, box %s, flags %#x.\n",

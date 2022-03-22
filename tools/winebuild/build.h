@@ -164,8 +164,24 @@ typedef struct
     struct apiset    apiset;             /* list of defined api sets */
 } DLLSPEC;
 
+enum target_cpu
+{
+    CPU_x86, CPU_x86_32on64, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64, CPU_LAST = CPU_ARM64
+};
+
+enum target_platform
+{
+    PLATFORM_UNSPECIFIED,
+    PLATFORM_APPLE,
+    PLATFORM_FREEBSD,
+    PLATFORM_SOLARIS,
+    PLATFORM_WINDOWS
+};
+
 extern char *target_alias;
 extern struct target target;
+extern enum target_cpu target_cpu;
+extern enum target_platform target_platform;
 
 static inline unsigned int get_ptr_size(void)
 {

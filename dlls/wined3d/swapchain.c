@@ -923,6 +923,13 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
     }
 
     image_count = desc->backbuffer_count;
+    /* For CW bug 18838. Create MoltenVK swapchains with 3 images, as
+     * recommended by the MoltenVK documentation. Performance of full-screen
+     * swapchains is atrocious with the only other supported image count of 2. */
+    if (vk_info->is_mvk)
+        image_count = 3;
+    else
+        image_count = desc->backbuffer_count;
     if (image_count < surface_caps.minImageCount)
         image_count = surface_caps.minImageCount;
     else if (surface_caps.maxImageCount && image_count > surface_caps.maxImageCount)

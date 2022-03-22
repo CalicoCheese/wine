@@ -653,4 +653,14 @@ static const struct vulkan_funcs *get_vulkan_driver(UINT version)
 const struct vulkan_funcs * CDECL macdrv_wine_get_vulkan_driver(UINT version)
 {
     return get_vulkan_driver( version );
+const struct vulkan_funcs * CDECL macdrv_wine_get_vulkan_driver(PHYSDEV dev, UINT version)
+{
+    const struct vulkan_funcs *ret;
+
+    if (!(ret = get_vulkan_driver( version )))
+    {
+        dev = GET_NEXT_PHYSDEV( dev, wine_get_vulkan_driver );
+        ret = dev->funcs->wine_get_vulkan_driver( dev, version );
+    }
+    return ret;
 }

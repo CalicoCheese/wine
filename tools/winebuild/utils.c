@@ -29,6 +29,49 @@
 
 #include "build.h"
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#include "build.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+# define PATH_SEPARATOR ';'
+#else
+# define PATH_SEPARATOR ':'
+#endif
+
+static struct strarray tmp_files;
+static struct strarray empty_strarray;
+static const char *output_file_source_name;
+
+static const struct
+{
+    const char *name;
+    enum target_cpu cpu;
+} cpu_names[] =
+{
+    { "i386",    CPU_i386 },
+    { "i486",    CPU_i386 },
+    { "i586",    CPU_i386 },
+    { "i686",    CPU_i386 },
+    { "i786",    CPU_i386 },
+    { "amd64",   CPU_x86_64 },
+    { "x86_64",  CPU_x86_64 },
+    { "x86_32on64",  CPU_x86_32on64 },
+    { "powerpc", CPU_POWERPC },
+    { "arm",     CPU_ARM },
+    { "armv5",   CPU_ARM },
+    { "armv6",   CPU_ARM },
+    { "armv7",   CPU_ARM },
+    { "armv7a",  CPU_ARM },
+    { "arm64",   CPU_ARM64 },
+    { "aarch64", CPU_ARM64 },
+};
+
 static struct strarray tmp_files;
 static const char *output_file_source_name;
 
@@ -607,7 +650,7 @@ int remove_stdcall_decoration( char *name )
 {
     char *p, *end = strrchr( name, '@' );
     if (!end || !end[1] || end == name) return -1;
-    if (target.cpu != CPU_i386) return -1;
+    if (target_cpu != CPU_i386 && target_cpu != CPU_x86_32on64) return -1;
     /* make sure all the rest is digits */
     for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
     *end = 0;
@@ -818,12 +861,14 @@ unsigned int get_alignment(unsigned int align)
 
     assert( !(align & (align - 1)) );
 
-    switch (target.cpu)
+    switch(target_cpu)
     {
     case CPU_i386:
     case CPU_x86_64:
-        if (target.platform != PLATFORM_APPLE) return align;
+    case CPU_x86_32on64:
+        if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
+    case CPU_POWERPC:
     case CPU_ARM:
     case CPU_ARM64:
         n = 0;
@@ -839,6 +884,33 @@ unsigned int get_alignment(unsigned int align)
 unsigned int get_page_size(void)
 {
     return 0x1000;  /* same on all platforms */
+}
+
+/* return the size of a pointer on the target CPU */
+unsigned int get_ptr_size(void)
+{
+    switch(target_cpu)
+    {
+    case CPU_i386:
+    case CPU_x86_32on64:
+    case CPU_POWERPC:
+    case CPU_ARM:
+        return 4;
+    case CPU_x86_64:
+    case CPU_ARM64:
+        return 8;
+    }
+    /* unreached */
+    assert(0);
+    return 0;
+}
+
+/* return the size of a pointer on the target CPU */
+unsigned int get_host_ptr_size(void)
+{
+    if (target_cpu == CPU_x86_32on64)
+        return 8;
+    return get_ptr_size();
 }
 
 /* return the total size in bytes of the arguments on the stack */
@@ -891,6 +963,16 @@ const char *asm_name( const char *sym )
     default:
         return sym;
     }
+}
+
+/* return the 32-bit-to-64-bit thunk name for a C function */
+const char *thunk32_name( const char *func )
+{
+    static const char *thunk_prefix = "wine";
+    static char *buffer;
+    free( buffer );
+    buffer = strmake( "%s_thunk_%s", thunk_prefix, func );
+    return buffer;
 }
 
 /* return an assembly function declaration for a C function name */

@@ -271,7 +271,7 @@ struct macdrv_win_data *get_win_data(HWND hwnd)
 
     if (!hwnd) return NULL;
     EnterCriticalSection(&win_data_section);
-    if (win_datas && (data = (struct macdrv_win_data*)CFDictionaryGetValue(win_datas, hwnd)))
+    if (win_datas && (data = ADDRSPACECAST(struct macdrv_win_data*, CFDictionaryGetValue(win_datas, hwnd))))
         return data;
     LeaveCriticalSection(&win_data_section);
     return NULL;
@@ -1182,7 +1182,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
         sync_window_region(data, (HRGN)1);
 
     TRACE("win %p/%p whole_rect %s frame %s\n", data->hwnd,
-          data->cocoa_window ? (void*)data->cocoa_window : (void*)data->cocoa_view,
+          data->cocoa_window ? (void* HOSTPTR)data->cocoa_window : (void* HOSTPTR)data->cocoa_view,
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_cgrect(frame));
 
     if (force_z_order || !(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW))

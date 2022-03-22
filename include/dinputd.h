@@ -19,6 +19,8 @@
 #ifndef __DINPUTD_INCLUDED__
 #define __DINPUTD_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
 
@@ -27,7 +29,6 @@
 #endif
 
 DEFINE_GUID(IID_IDirectInputJoyConfig8, 0xEB0D7DFA,0x1990,0x4F27,0xB4,0xD6,0xED,0xF2,0xEE,0xC4,0xA4,0x4C);
-DEFINE_GUID(IID_IDirectInputPIDDriver, 0xeec6993a,0xb3fd,0x11d2,0xa9,0x16,0x00,0xc0,0x4f,0xb9,0x86,0x38);
 
 typedef struct IDirectInputJoyConfig8 *LPDIRECTINPUTJOYCONFIG8;
 
@@ -242,5 +243,7 @@ DECLARE_INTERFACE_(IDirectInputJoyConfig8, IUnknown)
 #define IDirectInputJoyConfig8_OpenTypeKey(p,a,b,c)       (p)->OpenTypeKey(a,b,c)
 #define IDirectInputJoyConfig8_OpenAppStatusKey(p,a)      (p)->OpenAppStatusKey(a)
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DINPUTD_INCLUDED__ */

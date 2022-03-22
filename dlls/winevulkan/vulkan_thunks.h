@@ -14,6 +14,8 @@
 
 #define WINE_VK_VERSION VK_API_VERSION_1_3
 
+#include "wine/hostptraddrspace_enter.h"
+
 /* Functions for which we have custom implementations outside of the thunks. */
 NTSTATUS wine_vkAllocateCommandBuffers(void *args) DECLSPEC_HIDDEN;
 NTSTATUS wine_vkCreateCommandPool(void *args) DECLSPEC_HIDDEN;
@@ -2700,5 +2702,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetPhysicalDeviceToolProperties) \
     USE_VK_FUNC(vkGetPhysicalDeviceToolPropertiesEXT) \
     USE_VK_FUNC(vkGetPhysicalDeviceWin32PresentationSupportKHR)
+
+#include "wine/hostptraddrspace_exit.h"
 
 #endif /* __WINE_VULKAN_THUNKS_H */

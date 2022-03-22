@@ -24,6 +24,9 @@
 #ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
+
+#include "wine/hostaddrspace_enter.h"
+
 #include "macdrv_cocoa.h"
 
 static uint64_t dedicated_gpu_id;
@@ -582,6 +585,9 @@ int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** new_adapters, i
                 adapters[adapter_count].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
                 primary_index = adapter_count;
             }
+
+            if (CGDisplayIsActive(display_ids[i]))
+                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
 
             adapter_count++;
         }

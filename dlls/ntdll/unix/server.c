@@ -90,7 +90,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
-static const char *server_dir;
+static const char * HOSTPTR server_dir;
 
 unsigned int supported_machines_count = 0;
 USHORT supported_machines[8] = { 0 };
@@ -109,6 +109,28 @@ static pid_t server_pid;
 static pthread_mutex_t fd_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* atomically exchange a 64-bit value */
+#ifdef __i386_on_x86_64__
+#include <wine/hostaddrspace_enter.h>
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+static inline __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+#endif
+
+static inline LONG64 interlocked_xchg64( LONG64 * HOSTPTR dest, LONG64 val )
+{
+#ifdef _WIN64
+    return (LONG64)interlocked_xchg_ptr( (void **)dest, (void *)val );
+#else
+    LONG64 tmp = *dest;
+    while (interlocked_cmpxchg64( dest, val, tmp ) != tmp) tmp = *dest;
+    return tmp;
+#endif
+}
+#include <wine/hostaddrspace_exit.h>
+#else
+#define interlocked_cmpxchg64(dest,xchg,compare) InterlockedCompareExchange64(dest,xchg,compare)
 static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
 {
 #ifdef _WIN64
@@ -119,11 +141,12 @@ static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
     return tmp;
 #endif
 }
+#endif
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
 static void fatal_perror( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
-static void server_connect_error( const char *serverdir ) __attribute__((noreturn));
+static void server_connect_error( const char * HOSTPTR serverdir ) __attribute__((noreturn));
 #endif
 
 /* die on a fatal error; use only during initialization */
@@ -201,7 +224,7 @@ static unsigned int send_request( const struct __server_request_info *req )
         vec[0].iov_len = sizeof(req->u.req);
         for (i = 0; i < req->data_count; i++)
         {
-            vec[i+1].iov_base = (void *)req->data[i].ptr;
+            vec[i+1].iov_base = req->data[i].ptr ? (void *)req->data[i].ptr : (void * HOSTPTR)req->data[i].hostptr ;
             vec[i+1].iov_len = req->data[i].size;
         }
         if ((ret = writev( ntdll_get_thread_data()->request_fd, vec, i+1 )) ==
@@ -220,7 +243,7 @@ static unsigned int send_request( const struct __server_request_info *req )
  *
  * Read data from the reply buffer; helper for wait_reply.
  */
-static void read_reply_data( void *buffer, size_t size )
+static void read_reply_data( void * HOSTPTR buffer, size_t size )
 {
     int ret;
 
@@ -229,7 +252,7 @@ static void read_reply_data( void *buffer, size_t size )
         if ((ret = read( ntdll_get_thread_data()->reply_fd, buffer, size )) > 0)
         {
             if (!(size -= ret)) return;
-            buffer = (char *)buffer + ret;
+            buffer = (char * HOSTPTR)buffer + ret;
             continue;
         }
         if (!ret) break;
@@ -251,7 +274,7 @@ static inline unsigned int wait_reply( struct __server_request_info *req )
 {
     read_reply_data( &req->u.reply, sizeof(req->u.reply) );
     if (req->u.reply.reply_header.reply_size)
-        read_reply_data( req->reply_data, req->u.reply.reply_header.reply_size );
+        read_reply_data( req->reply_data ? req->reply_data : (void * HOSTPTR)req->reply_data_hostptr, req->u.reply.reply_header.reply_size );
     return req->u.reply.reply_header.error;
 }
 
@@ -750,6 +773,7 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
     }
 }
 
+#include "wine/hostptraddrspace_enter.h"
 
 /***********************************************************************
  *           wine_server_send_fd
@@ -861,6 +885,7 @@ static int receive_fd( obj_handle_t *handle )
     abort_thread(0);
 }
 
+#include "wine/hostptraddrspace_exit.h"
 
 /***********************************************************************/
 /* fd cache support */
@@ -882,7 +907,7 @@ C_ASSERT( sizeof(union fd_cache_entry) == sizeof(LONG64) );
 #define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(union fd_cache_entry))
 #define FD_CACHE_ENTRIES     128
 
-static union fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
+static union fd_cache_entry * HOSTPTR fd_cache[FD_CACHE_ENTRIES];
 static union fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
 
 static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
@@ -915,9 +940,9 @@ static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
         if (!entry) fd_cache[0] = fd_cache_initial_block;
         else
         {
-            void *ptr = anon_mmap_alloc( FD_CACHE_BLOCK_SIZE * sizeof(union fd_cache_entry),
+            void * HOSTPTR ptr = anon_mmap_alloc( FD_CACHE_BLOCK_SIZE * sizeof(union fd_cache_entry),
                                          PROT_READ | PROT_WRITE );
-            if (ptr == MAP_FAILED) return FALSE;
+            if (ptr == MAP_FAILED_HOSTPTR) return FALSE;
             fd_cache[entry] = ptr;
         }
     }
@@ -944,7 +969,7 @@ static inline NTSTATUS get_cached_fd( HANDLE handle, int *fd, enum server_fd_typ
 
     if (entry >= FD_CACHE_ENTRIES || !fd_cache[entry]) return STATUS_INVALID_HANDLE;
 
-    cache.data = InterlockedCompareExchange64( &fd_cache[entry][idx].data, 0, 0 );
+    cache.data = interlocked_cmpxchg64( &fd_cache[entry][idx].data, 0, 0 );
     if (!cache.data) return STATUS_INVALID_HANDLE;
 
     /* if fd type is invalid, fd stores an error value */
@@ -1108,9 +1133,9 @@ int server_pipe( int fd[2] )
 /***********************************************************************
  *           init_server_dir
  */
-static const char *init_server_dir( dev_t dev, ino_t ino )
+static const char * HOSTPTR init_server_dir( dev_t dev, ino_t ino )
 {
-    char *p, *dir;
+    char * HOSTPTR p, * HOSTPTR dir;
     size_t len = sizeof("/server-") + 2 * sizeof(dev) + 2 * sizeof(ino) + 2;
 
 #ifdef __ANDROID__  /* there's no /tmp dir on Android */
@@ -1144,7 +1169,7 @@ static const char *init_server_dir( dev_t dev, ino_t ino )
  */
 static int setup_config_dir(void)
 {
-    char *p;
+    char * HOSTPTR p;
     struct stat st;
     int fd_cwd = open( ".", O_RDONLY );
 
@@ -1190,7 +1215,7 @@ static int setup_config_dir(void)
  * Try to display a meaningful explanation of why we couldn't connect
  * to the server.
  */
-static void server_connect_error( const char *serverdir )
+static void server_connect_error( const char * HOSTPTR serverdir )
 {
     int fd;
     struct flock fl;
@@ -1416,7 +1441,7 @@ void process_exit_wrapper( int status )
 size_t server_init_process(void)
 {
     const char *arch = getenv( "WINEARCH" );
-    const char *env_socket = getenv( "WINESERVERSOCKET" );
+    const char * HOSTPTR env_socket = getenv( "WINESERVERSOCKET" );
     obj_handle_t version;
     unsigned int i;
     int ret, reply_pipe;
@@ -1434,7 +1459,7 @@ size_t server_init_process(void)
     }
     else
     {
-        const char *arch = getenv( "WINEARCH" );
+        const char * HOSTPTR arch = getenv( "WINEARCH" );
 
         if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ))
             fatal_error( "WINEARCH set to invalid value '%s', it must be either win32 or win64.\n", arch );

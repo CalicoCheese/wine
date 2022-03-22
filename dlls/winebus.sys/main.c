@@ -428,7 +428,7 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
     return TRUE;
 }
 
-static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD report_len)
+static void process_hid_report(DEVICE_OBJECT *device, BYTE * HOSTPTR report_buf, DWORD report_len)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     ULONG size = offsetof(struct hid_report, buffer[report_len]);

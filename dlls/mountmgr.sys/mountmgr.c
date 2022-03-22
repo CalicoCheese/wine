@@ -18,8 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef __APPLE__
+#include <CoreFoundation/CFString.h>
+#define LoadResource mac_LoadResource
+#define GetCurrentThread mac_GetCurrentThread
+#include <CoreServices/CoreServices.h>
+#undef LoadResource
+#undef GetCurrentThread
+#endif
+
 #include <stdarg.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define NONAMELESSUNION
 

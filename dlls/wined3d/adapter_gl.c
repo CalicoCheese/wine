@@ -403,7 +403,7 @@ static BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
     if (gl_info->gl_ops.gl.p_glGetError())
     {
         TRACE("OpenGL implementation does not allow indirect addressing offsets > 63\n");
-        TRACE("error: %s\n", debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        TRACE("error: %s\n", debugstr_a((const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = TRUE;
     } else TRACE("OpenGL implementation allows offsets > 63\n");
 
@@ -415,7 +415,7 @@ static BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
 }
 
 static BOOL match_amd_r300_to_500(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     return card_vendor == HW_VENDOR_AMD
@@ -425,7 +425,7 @@ static BOOL match_amd_r300_to_500(const struct wined3d_gl_info *gl_info, struct 
 }
 
 static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     return card_vendor == HW_VENDOR_NVIDIA
@@ -435,7 +435,7 @@ static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, struct wined3d
 }
 
 static BOOL match_apple(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* MacOS has various specialities in the extensions it advertises. Some
@@ -524,7 +524,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 }
 
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* Direct3D 9 cards support 40 single float varyings in hardware, most
@@ -540,7 +540,7 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, struct win
 }
 
 static BOOL match_not_dx10_capable(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     return !match_dx10_capable(gl_info, ctx, gl_renderer, gl_vendor, card_vendor, device);
@@ -548,7 +548,7 @@ static BOOL match_not_dx10_capable(const struct wined3d_gl_info *gl_info, struct
 
 /* A GL context is provided by the caller */
 static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLenum error;
@@ -576,7 +576,7 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, struc
 
 /* A GL context is provided by the caller */
 static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLuint prog;
@@ -606,7 +606,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, struct w
     if(pos != -1)
     {
         WARN("GL_NV_vertex_program2_option result.clip[] test failed\n");
-        TRACE("error: %s\n", debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        TRACE("error: %s\n", debugstr_a((const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = TRUE;
         while (gl_info->gl_ops.gl.p_glGetError());
     }
@@ -621,7 +621,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, struct w
 
 /* Context activation is done by the caller. */
 static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     char data[4 * 4 * 4];
@@ -673,7 +673,7 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, struct w
 
 /* Context activation is done by the caller. */
 static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     /* GL_RGBA16 uses GL_RGBA8 internally on Geforce 7 and older cards.
@@ -699,14 +699,14 @@ static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, struct wi
 }
 
 static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
 static BOOL match_r200(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (card_vendor != HW_VENDOR_AMD) return FALSE;
@@ -715,7 +715,7 @@ static BOOL match_r200(const struct wined3d_gl_info *gl_info, struct wined3d_cap
 }
 
 static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     DWORD data[4];
@@ -777,8 +777,8 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err_pos);
     if (err_pos != -1)
     {
-        const char *error_str;
-        error_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB);
+        const char *WINED3DPTR error_str;
+        error_str = (const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB);
         FIXME("Fog test program error at position %d: %s\n\n", err_pos, debugstr_a(error_str));
     }
 
@@ -813,7 +813,7 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
 }
 
 static BOOL match_broken_viewport_subpixel_bits(const struct wined3d_gl_info *gl_info,
-        struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        struct wined3d_caps_gl_ctx *ctx, const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (!gl_info->supported[ARB_VIEWPORT_ARRAY])
@@ -824,7 +824,7 @@ static BOOL match_broken_viewport_subpixel_bits(const struct wined3d_gl_info *gl
 }
 
 static BOOL match_no_independent_bit_depths(const struct wined3d_gl_info *gl_info,
-        struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        struct wined3d_caps_gl_ctx *ctx, const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     GLuint tex[2], fbo;
@@ -1033,7 +1033,7 @@ static const struct wined3d_gpu_description *query_gpu_description(const struct 
 
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor)
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor)
 {
     enum wined3d_pci_vendor card_vendor = ctx->gpu_description->vendor;
     enum wined3d_pci_device device = ctx->gpu_description->device;
@@ -1042,7 +1042,7 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
     static const struct driver_quirk
     {
         BOOL (*match)(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-                const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+                const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor gl_vendor,
                 enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device);
         void (*apply)(struct wined3d_gl_info *gl_info);
         const char *description;
@@ -1142,9 +1142,9 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
     test_pbo_functionality(gl_info);
 }
 
-static DWORD wined3d_parse_gl_version(const char *gl_version)
+static DWORD wined3d_parse_gl_version(const char *WINED3DPTR gl_version)
 {
-    const char *ptr = gl_version;
+    const char *WINED3DPTR ptr = gl_version;
     int major, minor;
 
     major = atoi(ptr);
@@ -1163,7 +1163,7 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
 }
 
 static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_info *gl_info,
-        const char *gl_vendor_string, const char *gl_renderer, const char *gl_version)
+        const char *WINED3DPTR gl_vendor_string, const char *WINED3DPTR gl_renderer, const char *WINED3DPTR gl_version)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -1206,7 +1206,7 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_in
     return GL_VENDOR_UNKNOWN;
 }
 
-static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_string, const char *gl_renderer)
+static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *WINED3DPTR gl_vendor_string, const char *WINED3DPTR gl_renderer)
 {
     if (strstr(gl_vendor_string, "NVIDIA")
             || strstr(gl_vendor_string, "Nouveau")
@@ -1245,6 +1245,15 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
             || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
             || strstr(gl_vendor_string, "VMware, Inc."))
         return HW_VENDOR_SOFTWARE;
+
+    /* Report the M1 GPU as an AMD card. Since Windows doesn't run on ARM Macs it is unlikely
+     * Applications expect a GPU made by Apple. This GPU seems more powerful than Intel's iGPUs,
+     * so don't claim it is an Intel card. All Intel CPU Macs since 2015 had Radeon dGPUs.
+     * If the Source Engine thinks it is running on an Nvidia card it will enable its depth-
+     * only prepass optimization, which is broken on M1 GPUs at the time of this commit.
+     * (cw bug 18625) */
+    if (strstr(gl_renderer, "Apple"))
+        return HW_VENDOR_AMD;
 
     FIXME("Received unrecognized GL_VENDOR %s. Returning HW_VENDOR_NVIDIA.\n", debugstr_a(gl_vendor_string));
 
@@ -1859,7 +1868,7 @@ intel_gl_vendor_table[] =
 };
 
 static enum wined3d_pci_device select_card_handler(const struct gl_vendor_selection *table,
-        unsigned int table_size, enum wined3d_gl_vendor gl_vendor, const char *gl_renderer)
+        unsigned int table_size, enum wined3d_gl_vendor gl_vendor, const char *WINED3DPTR gl_renderer)
 {
     unsigned int i, j;
 
@@ -1900,7 +1909,7 @@ card_vendor_table[] =
 };
 
 static enum wined3d_pci_device wined3d_guess_card(enum wined3d_feature_level feature_level,
-        const char *gl_renderer, enum wined3d_gl_vendor *gl_vendor,
+        const char *WINED3DPTR gl_renderer, enum wined3d_gl_vendor *WINED3DPTR gl_vendor,
         enum wined3d_pci_vendor *card_vendor)
 {
     /* A Direct3D device object contains the PCI id (vendor + device) of the
@@ -2030,12 +2039,12 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
     return &none_shader_backend;
 }
 
-static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *extensions,
+static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *WINED3DPTR extensions,
         const struct wined3d_extension_map *map, UINT entry_count)
 {
     while (*extensions)
     {
-        const char *start;
+        const char *WINED3DPTR start;
         size_t len;
         UINT i;
 
@@ -2067,14 +2076,14 @@ static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *
 static void enumerate_gl_extensions(struct wined3d_gl_info *gl_info,
         const struct wined3d_extension_map *map, unsigned int map_entries_count)
 {
-    const char *gl_extension_name;
+    const char *WINED3DPTR gl_extension_name;
     unsigned int i, j;
     GLint extensions_count;
 
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
     for (i = 0; i < extensions_count; ++i)
     {
-        gl_extension_name = (const char *)GL_EXTCALL(glGetStringi(GL_EXTENSIONS, i));
+        gl_extension_name = (const char *WINED3DPTR)GL_EXTCALL(glGetStringi(GL_EXTENSIONS, i));
         TRACE("- %s.\n", debugstr_a(gl_extension_name));
         for (j = 0; j < map_entries_count; ++j)
         {
@@ -3396,7 +3405,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_POLYGON_OFFSET_CLAMP,         MAKEDWORD_VERSION(4, 6)},
         {ARB_TEXTURE_FILTER_ANISOTROPIC,   MAKEDWORD_VERSION(4, 6)},
     };
-    const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
+    const char *WINED3DPTR gl_vendor_str, *WINED3DPTR gl_renderer_str, *WINED3DPTR gl_version_str;
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
     DWORD gl_version, gl_ext_emul_mask;
     const char *WGL_Extensions = NULL;
@@ -3407,7 +3416,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
     TRACE("adapter %p.\n", adapter);
 
-    gl_renderer_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_RENDERER);
+    gl_renderer_str = (const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_RENDERER);
     TRACE("GL_RENDERER: %s.\n", debugstr_a(gl_renderer_str));
     if (!gl_renderer_str)
     {
@@ -3415,7 +3424,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         return FALSE;
     }
 
-    gl_vendor_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_VENDOR);
+    gl_vendor_str = (const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_VENDOR);
     TRACE("GL_VENDOR: %s.\n", debugstr_a(gl_vendor_str));
     if (!gl_vendor_str)
     {
@@ -3424,7 +3433,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     }
 
     /* Parse the GL_VERSION field into major and minor information */
-    gl_version_str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_VERSION);
+    gl_version_str = (const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_VERSION);
     TRACE("GL_VERSION: %s.\n", debugstr_a(gl_version_str));
     if (!gl_version_str)
     {
@@ -3451,7 +3460,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     TRACE("GL extensions reported:\n");
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
-        const char *gl_extensions = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_EXTENSIONS);
+        const char *WINED3DPTR gl_extensions = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_EXTENSIONS);
 
         if (!gl_extensions)
         {
@@ -3715,7 +3724,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
     if (gl_info->supported[ARB_SHADING_LANGUAGE_100])
     {
-        const char *str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
+        const char *WINED3DPTR str = (const char *)gl_info->gl_ops.gl.p_glGetString(GL_SHADING_LANGUAGE_VERSION_ARB);
         unsigned int major, minor;
 
         TRACE("GLSL version string: %s.\n", debugstr_a(str));
@@ -3891,6 +3900,10 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     return TRUE;
 }
 
+#ifndef USE_WIN32_OPENGL
+#include "wine/hostaddrspace_enter.h"
+#endif
+
 static void WINE_GLAPI invalid_func(const void *data)
 {
     ERR("Invalid vertex attribute function called.\n");
@@ -4016,6 +4029,10 @@ static void WINE_GLAPI generic_float16_4(GLuint idx, const void *data)
 
     gl_info->gl_ops.ext.p_glVertexAttrib4f(idx, x, y, z, w);
 }
+
+#ifndef USE_WIN32_OPENGL
+#include "wine/hostaddrspace_exit.h"
+#endif
 
 static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
 {

@@ -1238,3 +1238,4 @@ LRESULT CALLBACK WAVEMAP_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
+

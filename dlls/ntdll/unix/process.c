@@ -72,16 +72,74 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
-
-static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE | (sizeof(void *) > sizeof(int) ?
+static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE | (
+#ifdef __i386_on_x86_64__
+                                                           0 ?
+#else
+                                                           sizeof(void *) > sizeof(int) ?
+#endif
                                                            MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION |
                                                            MEM_EXECUTE_OPTION_PERMANENT : 0);
 
 static UINT process_error_mode;
 
-static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
+/* CrossOver Hack 10523: shunt the loading to CrossOver */
+enum { /* must match definitions in Mac app code (WineLoader.m) */
+    REQUEST_LOAD_WINE = 0x52c17355,
+    RESPONSE_SUCCESS,
+    REQUEST_LOAD_WINE_64BIT,
+};
+
+/***********************************************************************
+ *           get_alternate_loader
+ *
+ * Get the name of the alternate (32 or 64 bit) Wine loader.
+ */
+static const char * HOSTPTR get_alternate_loader( char * HOSTPTR * HOSTPTR ret_env )
 {
-    char **argv, *arg, *src, *dst;
+    char * HOSTPTR env;
+    const char * HOSTPTR loader = NULL;
+    const char * HOSTPTR loader_env = getenv( "WINELOADER" );
+
+    *ret_env = NULL;
+
+    if (loader_env)
+    {
+        int len = strlen( loader_env );
+        if (!wine_is_64bit())
+        {
+            if (!(env = malloc( sizeof("WINELOADER=") + len + 2 ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            len += sizeof("WINELOADER=") - 1;
+            if (!strcmp( env + len - 6, "32on64" )) env[len - 6] = 0;
+            strcat( env, "64" );
+        }
+        else
+        {
+            if (!(env = malloc( sizeof("WINELOADER=") + len + 6 ))) return NULL;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            len += sizeof("WINELOADER=") - 1;
+            if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
+            if (wine_needs_32on64())
+                strcat( env, "32on64" );
+        }
+        if (!loader)
+        {
+            if ((loader = strrchr( env, '/' ))) loader++;
+            else loader = env;
+        }
+        *ret_env = env;
+    }
+    if (!loader) loader = wine_is_64bit() ? wine_needs_32on64() ? "wine32on64" : "wine" : "wine64";
+    return loader;
+}
+
+
+static char * HOSTPTR * HOSTPTR build_argv( const UNICODE_STRING *cmdline, int reserved )
+{
+    char * HOSTPTR * HOSTPTR argv, * HOSTPTR arg, * HOSTPTR src, * HOSTPTR dst;
     int argc, in_quotes = 0, bcount = 0, len = cmdline->Length / sizeof(WCHAR);
 
     if (!(src = malloc( len * 3 + 1 ))) return NULL;
@@ -90,7 +148,7 @@ static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 
     argc = reserved + 2 + len / 2;
     argv = malloc( argc * sizeof(*argv) + len );
-    arg = dst = (char *)(argv + argc);
+    arg = dst = (char * HOSTPTR)(argv + argc);
     argc = reserved;
     while (*src)
     {
@@ -186,6 +244,10 @@ static BOOL get_so_file_info( int fd, pe_image_info_t *info )
             unsigned int cputype;
             unsigned int cpusubtype;
             unsigned int filetype;
+            unsigned int ncmds;
+            unsigned int sizeofcmds;
+            unsigned int flags;
+            unsigned int reserved;
         } macho;
         IMAGE_DOS_HEADER mz;
     } header;
@@ -240,6 +302,30 @@ static BOOL get_so_file_info( int fd, pe_image_info_t *info )
         case 0x0000000c: info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
         case 0x0100000c: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
+        if (header.macho.magic == 0xfeedfacf && info->cpu == CPU_x86_64)
+        {
+            struct segment_command_64
+            {
+                unsigned int    cmd;
+                unsigned int    cmdsize;
+                char            segname[16];
+            } seg;
+
+            offset.QuadPart = sizeof(header.macho);
+
+            while (header.macho.ncmds--)
+            {
+                if (NtReadFile( handle, 0, NULL, NULL, &io, &seg, sizeof(seg), &offset, 0 ) ||
+                    io.Information < sizeof(seg))
+                    break;
+                if (seg.cmd == 0x19 /*LC_SEGMENT_64*/ && !strcmp(seg.segname, "WINE_32on64"))
+                {
+                    info->cpu = CPU_x86;
+                    break;
+                }
+                offset.QuadPart += seg.cmdsize;
+            }
+        }
         if (header.macho.filetype == 8) return TRUE;
     }
     return FALSE;
@@ -269,6 +355,12 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
         if (is_builtin_path( attr->ObjectName, &info->machine ))
         {
             TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
+            /* assume current arch */
+#if defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__)
+            info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
+#else
+            info->cpu = client_cpu;
+#endif
             return STATUS_SUCCESS;
         }
         return status;
@@ -306,7 +398,7 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
 /***********************************************************************
  *           get_env_size
  */
-static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **winedebug )
+static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char * HOSTPTR *winedebug )
 {
     WCHAR *ptr = params->Environment;
 
@@ -338,7 +430,7 @@ static WCHAR *get_nt_pathname( const UNICODE_STRING *str )
     const WCHAR *name = str->Buffer;
     WCHAR *ret;
 
-    if (!(ret = malloc( str->Length + 8 * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, str->Length + 8 * sizeof(WCHAR) ))) return NULL;
 
     wcscpy( ret, ntprefixW );
     if (name[0] == '\\' && name[1] == '\\')
@@ -429,7 +521,11 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
     NTSTATUS status = STATUS_SUCCESS;
     int stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
-    char **argv;
+    char * HOSTPTR * HOSTPTR argv;
+    char * HOSTPTR wineloader = NULL;
+    const char * HOSTPTR loader = NULL;
+
+    if (!wine_is_64bit() ^ !is_child_64bit) loader = get_alternate_loader( &wineloader );
 
     if (wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL ) &&
         isatty(0) && is_unix_console_handle( params->hStdInput ))
@@ -549,8 +645,8 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, int unixdir,
 {
     pid_t pid;
     int fd[2], stdin_fd = -1, stdout_fd = -1;
-    char **argv, **envp;
-    char *unix_name;
+    char * HOSTPTR * HOSTPTR argv, * HOSTPTR * HOSTPTR envp;
+    char * HOSTPTR unix_name;
     NTSTATUS status;
 
     status = nt_to_unix_file_name( attr, &unix_name, FILE_OPEN );
@@ -685,8 +781,8 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     HANDLE file_handle, process_info = 0, process_handle = 0, thread_handle = 0;
     struct object_attributes *objattr;
     data_size_t attr_len;
-    char *winedebug = NULL;
-    startup_info_t *startup_info = NULL;
+    char * HOSTPTR winedebug = NULL;
+    startup_info_t * HOSTPTR startup_info = NULL;
     ULONG startup_info_size, env_size;
     int unixdir, socketfd[2] = { -1, -1 };
     pe_image_info_t pe_info;
@@ -1558,7 +1654,7 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         break;
 
     case ProcessExecuteFlags:
-        if (is_win64 || size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER;
+        if (wine_is_64bit() || size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER;
         if (execute_flags & MEM_EXECUTE_OPTION_PERMANENT) return STATUS_ACCESS_DENIED;
         else
         {

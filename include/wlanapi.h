@@ -20,6 +20,7 @@
 #define _WLAN_WLANAPI_H
 
 #include <windot11.h>
+#include "wine/winheader_enter.h"
 
 typedef enum _WLAN_INTERFACE_STATE
 {
@@ -106,6 +107,22 @@ typedef enum _DOT11_CIPHER_ALGORITHM
     DOT11_CIPHER_ALGO_IHV_START = 0x80000000,
     DOT11_CIPHER_ALGO_IHV_END = 0xFFFFFFFF
 } DOT11_CIPHER_ALGORITHM, *PDOT11_CIPHER_ALGORITHM;
+
+typedef enum _DOT11_PHY_TYPE
+{
+    dot11_phy_type_unknown = 0x00,
+    dot11_phy_type_any = 0x00,
+    dot11_phy_type_fhss = 0x01,
+    dot11_phy_type_dsss = 0x02,
+    dot11_phy_type_irbaseband = 0x03,
+    dot11_phy_type_ofdm = 0x04,
+    dot11_phy_type_hrdsss = 0x05,
+    dot11_phy_type_erp = 0x06,
+    dot11_phy_type_ht = 0x07,
+    dot11_phy_type_vht = 0x08,
+    dot11_phy_type_IHV_start = 0x80000000,
+    dot11_phy_type_IHV_end = 0xFFFFFFFF
+} DOT11_PHY_TYPE, *PDOT11_PHY_TYPE;
 
 #define WLAN_MAX_PHY_TYPE_NUMBER 8
 
@@ -253,5 +270,7 @@ DWORD WINAPI WlanScan(HANDLE, const GUID *, const DOT11_SSID *, const WLAN_RAW_D
 DWORD WINAPI WlanRegisterNotification(HANDLE, DWORD, BOOL, WLAN_NOTIFICATION_CALLBACK, void *, void *, DWORD *);
 DWORD WINAPI WlanGetAvailableNetworkList(HANDLE, const GUID *, DWORD, void *, WLAN_AVAILABLE_NETWORK_LIST **);
 DWORD WINAPI WlanQueryInterface(HANDLE, const GUID *, WLAN_INTF_OPCODE, void *, DWORD *, void **, WLAN_OPCODE_VALUE_TYPE *);
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WLAN_WLANAPI_H */

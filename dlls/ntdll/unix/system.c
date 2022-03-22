@@ -237,7 +237,7 @@ SYSTEM_CPU_INFORMATION cpu_info = { 0 };
  * This a set of mutually exclusive #if define()s each providing its own get_cpuinfo() to be called
  * from init_cpu_info();
  */
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__)
 
 BOOL xstate_compaction_enabled = FALSE;
 
@@ -324,7 +324,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
     unsigned int regs[4], regs2[4], regs3[4];
 
-#if defined(__i386__)
+#if defined(__i386__)  || defined(__i386_on_x86_64__)
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
 #elif defined(__x86_64__)
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;

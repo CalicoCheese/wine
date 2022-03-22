@@ -19,9 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+%top{
+#ifdef __i386_on_x86_64__
+#pragma clang default_addr_space(default)
+#endif
+}
+
 %option noinput nounput always-interactive 8bit prefix="dbg_"
 
 %{
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -32,7 +39,7 @@
 
 #undef YY_INPUT
 
-static char** local_lexemes /* = NULL */;
+static char* WIN32PTR * WIN32PTR local_lexemes /* = NULL */;
 static int next_lexeme /* = 0 */;
 static int alloc_lexeme /* = 0 */;
 

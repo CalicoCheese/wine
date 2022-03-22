@@ -53,6 +53,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#include "wine/hostaddrspace_enter.h"
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 
@@ -78,6 +79,9 @@ static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datu
 static int (*pgnutls_privkey_export_x509)(gnutls_privkey_t, gnutls_x509_privkey_t *);
 
 static void *libgnutls_handle;
+#include "wine/hostaddrspace_exit.h"
+
+static void * HOSTPTR libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_alert_get);
 MAKE_FUNCPTR(gnutls_alert_get_name);
@@ -1005,7 +1009,7 @@ static NTSTATUS schan_set_dtls_timeouts( void *args )
     return SEC_E_OK;
 }
 
-static inline void reverse_bytes(BYTE *buf, ULONG len)
+static inline void reverse_bytes(BYTE * HOSTPTR buf, ULONG len)
 {
     BYTE tmp;
     ULONG i;

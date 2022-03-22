@@ -54,6 +54,7 @@
 #include "winnls.h"
 #include "wine/condrv.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "unix_private.h"
 #include "error.h"
 
@@ -61,16 +62,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
 PEB *peb = NULL;
 WOW_PEB *wow_peb = NULL;
-USHORT *uctable = NULL, *lctable = NULL;
+USHORT * HOSTPTR uctable = NULL, * HOSTPTR lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
 
 static const WCHAR bootstrapW[] = {'W','I','N','E','B','O','O','T','S','T','R','A','P','M','O','D','E'};
 
 int main_argc = 0;
-char **main_argv = NULL;
-char **main_envp = NULL;
+char * HOSTPTR * HOSTPTR main_argv = NULL;
+char * HOSTPTR * HOSTPTR main_envp = NULL;
 WCHAR **main_wargv = NULL;
+WCHAR **main_wargv_win32ptr = NULL;
 
 static LCID user_lcid, system_lcid;
 static LANGID user_ui_language, system_ui_language;
@@ -98,11 +100,11 @@ enum nls_section_type
     NLS_SECTION_NORMALIZE = 12
 };
 
-static char *get_nls_file_path( ULONG type, ULONG id )
+static char * HOSTPTR get_nls_file_path( ULONG type, ULONG id )
 {
-    const char *dir = build_dir ? build_dir : data_dir;
+    const char * HOSTPTR dir = build_dir ? build_dir : data_dir;
     const char *name = NULL;
-    char *path, tmp[16];
+    char * HOSTPTR path, tmp[16];
 
     switch (type)
     {
@@ -126,11 +128,11 @@ static char *get_nls_file_path( ULONG type, ULONG id )
     return path;
 }
 
-static void *read_nls_file( ULONG type, ULONG id )
+static void * HOSTPTR read_nls_file( ULONG type, ULONG id )
 {
-    char *path = get_nls_file_path( type, id );
+    char * HOSTPTR path = get_nls_file_path( type, id );
     struct stat st;
-    void *data, *ret = NULL;
+    void * HOSTPTR data, * HOSTPTR ret = NULL;
     int fd;
 
     if ((fd = open( path, O_RDONLY )) != -1)
@@ -163,7 +165,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING valueW;
     WCHAR buffer[ARRAY_SIZE(sortdirW) + 16];
-    char *p, *path = get_nls_file_path( type, id );
+    char * HOSTPTR p, * HOSTPTR path = get_nls_file_path( type, id );
 
     if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
 
@@ -214,7 +216,7 @@ static NTSTATUS get_nls_section_name( ULONG type, ULONG id, WCHAR name[32] )
 }
 
 
-static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
+static int get_utf16( const WCHAR * HOSTPTR src, unsigned int srclen, unsigned int *ch )
 {
     if (IS_HIGH_SURROGATE( src[0] ))
     {
@@ -232,6 +234,8 @@ static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
 #ifdef __APPLE__
 
 /* The Apple filesystem enforces NFD so we need the compose tables to put it back into NFC */
+
+#include <wine/hostaddrspace_enter.h>
 
 struct norm_table
 {
@@ -286,7 +290,7 @@ static BYTE rol( BYTE val, BYTE count )
 }
 
 
-static BYTE get_char_props( const struct norm_table *info, unsigned int ch )
+static BYTE get_char_props( const struct norm_table * HOSTPTR info, unsigned int ch )
 {
     const BYTE *level1 = (const BYTE *)((const USHORT *)info + info->props_level1);
     const BYTE *level2 = (const BYTE *)((const USHORT *)info + info->props_level2);
@@ -298,7 +302,7 @@ static BYTE get_char_props( const struct norm_table *info, unsigned int ch )
 
 static BYTE get_combining_class( const struct norm_table *info, unsigned int c )
 {
-    const BYTE *classes = (const BYTE *)((const USHORT *)info + info->classes);
+    const BYTE * HOSTPTR classes = (const BYTE * HOSTPTR)((const USHORT * HOSTPTR )info + info->classes);
     BYTE class = get_char_props( info, c ) & 0x3f;
 
     if (class == 0x3f) return 0;
@@ -392,6 +396,8 @@ static unsigned int compose_string( const struct norm_table *info, WCHAR *str, u
     }
     return srclen;
 }
+
+#include <wine/hostaddrspace_exit.h>
 
 #elif defined(__ANDROID__)  /* Android always uses UTF-8 */
 
@@ -520,6 +526,7 @@ static inline SIZE_T get_env_length( const WCHAR *env )
 
 
 #define STARTS_WITH(var,str) (!strncmp( var, str, sizeof(str) - 1 ))
+#include <wine/hostaddrspace_enter.h>
 
 /***********************************************************************
  *           is_special_env_var
@@ -527,7 +534,7 @@ static inline SIZE_T get_env_length( const WCHAR *env )
  * Check if an environment variable needs to be handled specially when
  * passed through the Unix environment (i.e. prefixed with "WINE").
  */
-static BOOL is_special_env_var( const char *var )
+static BOOL is_special_env_var( const char * HOSTPTR var )
 {
     return (STARTS_WITH( var, "PATH=" ) ||
             STARTS_WITH( var, "PWD=" ) ||
@@ -607,11 +614,12 @@ static unsigned int decode_utf8_char( unsigned char ch, const char **str, const 
     return ~0;
 }
 
+#include <wine/hostaddrspace_exit.h>
 
 /******************************************************************
  *      ntdll_umbstowcs  (ntdll.so)
  */
-DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
+DWORD ntdll_umbstowcs( const char * HOSTPTR src, DWORD srclen, WCHAR *  HOSTPTR dst, DWORD dstlen )
 {
     DWORD reslen;
 
@@ -656,7 +664,7 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 /******************************************************************
  *      ntdll_wcstoumbs  (ntdll.so)
  */
-int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
+int ntdll_wcstoumbs( const WCHAR * HOSTPTR src, DWORD srclen, char * HOSTPTR dst, DWORD dstlen, BOOL strict )
 {
     DWORD i, reslen;
 
@@ -697,7 +705,7 @@ int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BO
     }
     else  /* utf-8 */
     {
-        char *end;
+        char * HOSTPTR end;
         unsigned int val;
 
         for (end = dst + dstlen; srclen; srclen--, src++)
@@ -805,11 +813,11 @@ const char *ntdll_get_data_dir(void)
  *
  * Build the environment of a new child process.
  */
-char **build_envp( const WCHAR *envW )
+char * HOSTPTR * HOSTPTR build_envp( const WCHAR *envW )
 {
     static const char * const unix_vars[] = { "PATH", "TEMP", "TMP", "HOME" };
-    char **envp;
-    char *env, *p;
+    char * HOSTPTR * HOSTPTR envp;
+    char * HOSTPTR env, * HOSTPTR p;
     int count = 1, length, lenW;
     unsigned int i;
 
@@ -832,8 +840,8 @@ char **build_envp( const WCHAR *envW )
 
     if ((envp = malloc( count * sizeof(*envp) + length )))
     {
-        char **envptr = envp;
-        char *dst = (char *)(envp + count);
+        char * HOSTPTR * HOSTPTR envptr = envp;
+        char * HOSTPTR dst = (char * HOSTPTR)(envp + count);
 
         /* some variables must not be modified, so we get them directly from the unix env */
         for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
@@ -873,9 +881,9 @@ char **build_envp( const WCHAR *envW )
  *
  * Change the process name in the ps output.
  */
-static void set_process_name( const char *name )
+static void set_process_name( const char * HOSTPTR name )
 {
-    char *p;
+    char * HOSTPTR p;
 
 #ifdef HAVE_SETPROCTITLE
     setproctitle("-%s", name );
@@ -912,7 +920,7 @@ static void rebuild_argv(void)
     if (shift_strings)
     {
         int offset = main_argv[1] - main_argv[0];
-        char *end = main_argv[main_argc - 1] + strlen(main_argv[main_argc - 1]) + 1;
+        char * HOSTPTR end = main_argv[main_argc - 1] + strlen(main_argv[main_argc - 1]) + 1;
         memmove( main_argv[0], main_argv[1], end - main_argv[1] );
         memset( end - offset, 0, offset );
         for (i = 1; i < main_argc; i++) main_argv[i - 1] = main_argv[i] - offset;
@@ -996,16 +1004,16 @@ static void prepend_argv( const char **args, int count )
  *
  * Build the Unicode argv array, replacing argv[0] by the image name.
  */
-static WCHAR **build_wargv( const WCHAR *image )
+static WCHAR * HOSTPTR * HOSTPTR build_wargv( const WCHAR * HOSTPTR image )
 {
     int argc;
-    WCHAR *p, **wargv;
+    WCHAR * HOSTPTR p, * HOSTPTR * HOSTPTR wargv;
     DWORD total = wcslen(image) + 1;
 
     for (argc = 1; main_argv[argc]; argc++) total += strlen(main_argv[argc]) + 1;
 
     wargv = malloc( total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
-    p = (WCHAR *)(wargv + argc + 1);
+    p = (WCHAR * HOSTPTR)(wargv + argc + 1);
     wargv[0] = p;
     wcscpy( p, image );
     total -= wcslen( p ) + 1;
@@ -1021,10 +1029,32 @@ static WCHAR **build_wargv( const WCHAR *image )
     return wargv;
 }
 
+#ifdef __i386_on_x86_64__
+static WCHAR ** build_wargv_win32ptr( WCHAR * HOSTPTR * HOSTPTR wargv )
+{
+    unsigned int argc;
+    WCHAR *p, **wargv_win32;
+    unsigned int total = 0;
+
+    for (argc = 0; wargv[argc]; argc++) total += strlenW(wargv[argc]) + 1;
+
+    wargv_win32 = RtlAllocateHeap( GetProcessHeap(), 0, total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv_win32) );
+    p = (WCHAR *)(wargv_win32 + argc + 1);
+    for (argc = 0; wargv[argc]; argc++)
+    {
+        unsigned int len = strlenW(wargv[argc]);
+        strcpyW( p, wargv[argc] );
+        wargv_win32[argc] = p;
+        p += len + 1;
+    }
+    wargv_win32[argc] = NULL;
+    return wargv_win32;
+}
+#endif
 
 /* Unix format is: lang[_country][.charset][@modifier]
  * Windows format is: lang[-script][-country][_modifier] */
-static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
+static BOOL unix_to_win_locale( const char * HOSTPTR unix_name, char *win_name )
 {
     static const char sep[] = "_.@";
     char buffer[LOCALE_NAME_MAX_LENGTH];
@@ -1150,9 +1180,9 @@ static void init_locale(void)
 /***********************************************************************
  *              init_environment
  */
-void init_environment( int argc, char *argv[], char *envp[] )
+void init_environment( int argc, char * HOSTPTR * HOSTPTR argv, char * HOSTPTR * HOSTPTR envp )
 {
-    USHORT *case_table;
+    USHORT * HOSTPTR case_table;
 
     init_unix_codepage();
     init_locale();
@@ -1185,10 +1215,19 @@ static const char overrides_help_message[] =
  *
  * Return the initial environment.
  */
-static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
+static WCHAR * HOSTPTR get_initial_environment( SIZE_T *pos, SIZE_T *size )
 {
-    char **e;
+    char * HOSTPTR * HOSTPTR e;
     WCHAR *env, *ptr, *end;
+
+#ifdef __i386_on_x86_64__
+    if (!main_wargv_win32ptr)
+        main_wargv_win32ptr = build_wargv_win32ptr( main_wargv );
+
+    *wargv = main_wargv_win32ptr;
+#else
+    *wargv = main_wargv;
+#endif
 
     /* estimate needed size */
     *size = 1;
@@ -1199,7 +1238,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
     end = env + *size - 1;
     for (e = main_envp; *e && ptr < end; e++)
     {
-        char *str = *e;
+        char * HOSTPTR str = *e;
 
         /* skip Unix special variables and use the Wine variants instead */
         if (!strncmp( str, "WINE", 4 ))
@@ -1221,7 +1260,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
 }
 
 
-static WCHAR *find_env_var( WCHAR *env, SIZE_T size, const WCHAR *name, SIZE_T namelen )
+static WCHAR * HOSTPTR find_env_var( WCHAR * HOSTPTR env, SIZE_T size, const WCHAR * HOSTPTR name, SIZE_T namelen )
 {
     WCHAR *p = env;
 
@@ -1233,9 +1272,9 @@ static WCHAR *find_env_var( WCHAR *env, SIZE_T size, const WCHAR *name, SIZE_T n
     return NULL;
 }
 
-static WCHAR *get_env_var( WCHAR *env, SIZE_T size, const WCHAR *name, SIZE_T namelen )
+static WCHAR * HOSTPTR get_env_var( WCHAR * HOSTPTR env, SIZE_T size, const WCHAR * HOSTPTR name, SIZE_T namelen )
 {
-    WCHAR *ret = NULL, *var = find_env_var( env, size, name, namelen );
+    WCHAR * HOSTPTR ret = NULL, * HOSTPTR var = find_env_var( env, size, name, namelen );
 
     if (var)
     {
@@ -1246,10 +1285,10 @@ static WCHAR *get_env_var( WCHAR *env, SIZE_T size, const WCHAR *name, SIZE_T na
 }
 
 /* set an environment variable, replacing it if it exists */
-static void set_env_var( WCHAR **env, SIZE_T *pos, SIZE_T *size,
+static void set_env_var( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size,
                          const WCHAR *name, SIZE_T namelen, const WCHAR *value )
 {
-    WCHAR *p;
+    WCHAR * HOSTPTR p;
     SIZE_T len;
 
     /* remove existing string */
@@ -1273,7 +1312,7 @@ static void set_env_var( WCHAR **env, SIZE_T *pos, SIZE_T *size,
     *pos += namelen + len + 2;
 }
 
-static void append_envW( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const WCHAR *value )
+static void append_envW( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size, const char * HOSTPTR name, const WCHAR * HOSTPTR value )
 {
     WCHAR nameW[32];
 
@@ -1281,7 +1320,7 @@ static void append_envW( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *nam
     set_env_var( env, pos, size, nameW, wcslen(nameW), value );
 }
 
-static void append_envA( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const char *value )
+static void append_envA( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size, const char * HOSTPTR name, const char * HOSTPTR value )
 {
     if (value)
     {
@@ -1295,9 +1334,9 @@ static void append_envA( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *nam
 }
 
 /* set an environment variable for one of the wine path variables */
-static void add_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const char *path )
+static void add_path_var( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size, const char *name, const char *path )
 {
-    WCHAR *nt_name = NULL;
+    WCHAR * HOSTPTR nt_name = NULL;
 
     if (path && unix_to_nt_file_name( path, &nt_name )) return;
     append_envW( env, pos, size, name, nt_name );
@@ -1305,15 +1344,15 @@ static void add_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *na
 }
 
 
-static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
+static void add_system_dll_path_var( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size )
 {
-    WCHAR *path = NULL;
+    WCHAR * HOSTPTR path = NULL;
     size_t path_len = 0;
     DWORD i;
 
     for (i = 0; system_dll_paths[i]; ++i)
     {
-        WCHAR *nt_name = NULL;
+        WCHAR * HOSTPTR nt_name = NULL;
 
         if (!unix_to_nt_file_name( system_dll_paths[i], &nt_name ))
         {
@@ -1339,9 +1378,9 @@ static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
  *
  * Add the environment variables that can differ between processes.
  */
-static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
+static void add_dynamic_environment( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size )
 {
-    const char *overrides = getenv( "WINEDLLOVERRIDES" );
+    const char * HOSTPTR overrides = getenv( "WINEDLLOVERRIDES" );
     DWORD i;
     char str[22];
 
@@ -1373,11 +1412,11 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 }
 
 
-static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T src_len )
+static WCHAR * HOSTPTR expand_value( WCHAR * HOSTPTR env, SIZE_T size, const WCHAR * HOSTPTR src, SIZE_T src_len )
 {
     SIZE_T len, retlen = src_len + 1, count = 0;
-    const WCHAR *var;
-    WCHAR *ret;
+    const WCHAR * HOSTPTR var;
+    WCHAR * HOSTPTR ret;
 
     ret = malloc( retlen * sizeof(WCHAR) );
     while (src_len)
@@ -1435,12 +1474,12 @@ static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T sr
  * helper for add_registry_environment().
  * Note that Windows happily truncates the value if it's too big.
  */
-static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HANDLE key )
+static void add_registry_variables( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size, HANDLE key )
 {
     static const WCHAR pathW[] = {'P','A','T','H'};
     NTSTATUS status;
     DWORD index = 0, info_size, namelen, datalen;
-    WCHAR *data, *value, *p;
+    WCHAR * HOSTPTR data, * HOSTPTR value, * HOSTPTR p;
     WCHAR buffer[offsetof(KEY_VALUE_FULL_INFORMATION, Name[1024]) / sizeof(WCHAR)];
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
 
@@ -1480,12 +1519,12 @@ static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HAND
 /***********************************************************************
  *           get_registry_value
  */
-static WCHAR *get_registry_value( WCHAR *env, SIZE_T pos, HKEY key, const WCHAR *name )
+static WCHAR * HOSTPTR get_registry_value( WCHAR * HOSTPTR env, SIZE_T pos, HKEY key, const WCHAR *name )
 {
     WCHAR buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[1024 * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     DWORD len, size = sizeof(buffer) - sizeof(WCHAR);
-    WCHAR *ret = NULL;
+    WCHAR * HOSTPTR ret = NULL;
     UNICODE_STRING nameW;
 
     init_unicode_string( &nameW, name );
@@ -1512,7 +1551,7 @@ static WCHAR *get_registry_value( WCHAR *env, SIZE_T pos, HKEY key, const WCHAR 
  *
  * Set the environment variables specified in the registry.
  */
-static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
+static void add_registry_environment( WCHAR * HOSTPTR *env, SIZE_T *pos, SIZE_T *size )
 {
     static const WCHAR syskeyW[] = {'\\','R','e','g','i','s','t','r','y',
         '\\','M','a','c','h','i','n','e',
@@ -1543,7 +1582,7 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    WCHAR *value;
+    WCHAR * HOSTPTR value;
     HANDLE key;
 
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
@@ -1694,14 +1733,14 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
  *
  * Get the current directory at startup.
  */
-static WCHAR *get_initial_directory(void)
+static WCHAR * HOSTPTR get_initial_directory(void)
 {
     static const WCHAR backslashW[] = {'\\',0};
     static const WCHAR windows_dir[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',0};
-    const char *pwd;
-    char *cwd;
+    const char * HOSTPTR pwd;
+    char * HOSTPTR cwd;
     int size;
-    WCHAR *ret = NULL;
+    WCHAR * HOSTPTR ret = NULL;
 
     /* try to get it from the Unix cwd */
 
@@ -1735,7 +1774,7 @@ static WCHAR *get_initial_directory(void)
             if (len && ret[len - 1] != '\\')
             {
                 /* add trailing backslash */
-                WCHAR *tmp = malloc( (len + 2) * sizeof(WCHAR) );
+                WCHAR * HOSTPTR tmp = malloc( (len + 2) * sizeof(WCHAR) );
                 wcscpy( tmp, ret );
                 wcscat( tmp, backslashW );
                 free( ret );
@@ -1779,11 +1818,11 @@ static WCHAR *get_initial_directory(void)
  *   'a\b'   == 'a\b'
  *   'a\\b'  == 'a\\b'
  */
-static WCHAR *build_command_line( WCHAR **wargv )
+static WCHAR * HOSTPTR build_command_line( WCHAR * HOSTPTR * HOSTPTR wargv )
 {
     int len;
-    WCHAR **arg, *ret;
-    LPWSTR p;
+    WCHAR * HOSTPTR * HOSTPTR arg, * HOSTPTR ret;
+    LPWSTR HOSTPTR p;
 
     len = 1;
     for (arg = wargv; *arg; arg++) len += 3 + 2 * wcslen( *arg );
@@ -1844,7 +1883,7 @@ static WCHAR *build_command_line( WCHAR **wargv )
 /***********************************************************************
  *           run_wineboot
  */
-static void run_wineboot( WCHAR *env, SIZE_T size )
+static void run_wineboot( WCHAR * HOSTPTR env, SIZE_T size )
 {
     static const WCHAR eventW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
         '\\','_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
@@ -1923,7 +1962,7 @@ wait:
 }
 
 
-static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
+static inline void copy_unicode_string( WCHAR * HOSTPTR *src, WCHAR * HOSTPTR *dst, UNICODE_STRING * HOSTPTR str, UINT len )
 {
     str->Buffer = *dst;
     str->Length = len;
@@ -1934,31 +1973,31 @@ static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING
     *dst += len / sizeof(WCHAR) + 1;
 }
 
-static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *str )
+static inline void put_unicode_string( WCHAR * HOSTPTR src, WCHAR * HOSTPTR *dst, UNICODE_STRING * HOSTPTR str )
 {
     copy_unicode_string( &src, dst, str, wcslen(src) * sizeof(WCHAR) );
 }
 
-static inline WCHAR *get_dos_path( WCHAR *nt_path )
+static inline WCHAR * HOSTPTR get_dos_path( WCHAR * HOSTPTR nt_path )
 {
     if (nt_path[4] && nt_path[5] == ':') return nt_path + 4; /* skip the \??\ prefix */
     nt_path[1] = '\\'; /* change \??\ to \\?\ */
     return nt_path;
 }
 
-static inline const WCHAR *get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
-                                              const UNICODE_STRING *str )
+static inline const WCHAR * HOSTPTR get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
+                                              const UNICODE_STRING * HOSTPTR str )
 {
     if (params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED) return str->Buffer;
-    return (const WCHAR *)((const char *)params + (UINT_PTR)str->Buffer);
+    return (const WCHAR * HOSTPTR)((const char * HOSTPTR)params + (UINT_PTR)str->Buffer);
 }
 
-static inline DWORD append_string( void **ptr, const RTL_USER_PROCESS_PARAMETERS *params,
-                                   const UNICODE_STRING *str )
+static inline DWORD append_string( void * HOSTPTR *ptr, const RTL_USER_PROCESS_PARAMETERS *params,
+                                   const UNICODE_STRING * HOSTPTR str )
 {
-    const WCHAR *buffer = get_params_string( params, str );
+    const WCHAR * HOSTPTR buffer = get_params_string( params, str );
     memcpy( *ptr, buffer, str->Length );
-    *ptr = (WCHAR *)*ptr + str->Length / sizeof(WCHAR);
+    *ptr = (WCHAR * HOSTPTR)*ptr + str->Length / sizeof(WCHAR);
     return str->Length;
 }
 
@@ -1980,7 +2019,7 @@ static inline void dup_unicode_string( const UNICODE_STRING *src, WCHAR **dst, U
 /*************************************************************************
  *		get_dword_option
  */
-static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
+static ULONG get_dword_option( HANDLE key, const WCHAR * HOSTPTR name, ULONG defval )
 {
     UNICODE_STRING str;
     ULONG size;
@@ -2173,9 +2212,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     static const WCHAR pathW[] = {'P','A','T','H'};
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     SIZE_T size, env_pos, env_size;
-    WCHAR *dst, *image, *cmdline, *path, *bootstrap;
-    WCHAR *env = get_initial_environment( &env_pos, &env_size );
-    WCHAR *curdir = get_initial_directory();
+    WCHAR * HOSTPTR dst, * HOSTPTR image, * HOSTPTR cmdline, * HOSTPTR path, * HOSTPTR bootstrap;
+    WCHAR * HOSTPTR env = get_initial_environment( &env_pos, &env_size );
+    WCHAR * HOSTPTR curdir = get_initial_directory();
     NTSTATUS status;
 
     /* store the initial PATH value */
@@ -2264,7 +2303,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
  */
 void init_startup_info(void)
 {
-    WCHAR *src, *dst, *env, *image;
+    WCHAR * HOSTPTR src, * HOSTPTR dst, * HOSTPTR env, * HOSTPTR image;
     void *module = NULL;
     NTSTATUS status;
     SIZE_T size, info_size, env_size, env_pos;
@@ -2291,7 +2330,7 @@ void init_startup_info(void)
     assert( !status );
 
     env = malloc( env_size * sizeof(WCHAR) );
-    memcpy( env, (char *)info + info_size, env_size * sizeof(WCHAR) );
+    memcpy( env, (char * HOSTPTR)info + info_size, env_size * sizeof(WCHAR) );
     env_pos = env_size - 1;
     add_dynamic_environment( &env, &env_pos, &env_size );
     is_prefix_bootstrap = !!find_env_var( env, env_pos, bootstrapW, ARRAY_SIZE(bootstrapW) );
@@ -2331,8 +2370,8 @@ void init_startup_info(void)
     params->dwFlags         = info->flags;
     params->wShowWindow     = info->show;
 
-    src = (WCHAR *)(info + 1);
-    dst = (WCHAR *)(params + 1);
+    src = (WCHAR * HOSTPTR)(info + 1);
+    dst = (WCHAR * HOSTPTR)(params + 1);
 
     /* curdir is special */
     copy_unicode_string( &src, &dst, &params->CurrentDirectory.DosPath, info->curdir_len );
@@ -2354,7 +2393,7 @@ void init_startup_info(void)
         src += (info->runtime_len + 1) / sizeof(WCHAR);
         dst += (info->runtime_len + 1) / sizeof(WCHAR);
     }
-    assert( (char *)src == (char *)info + info_size );
+    assert( (char * HOSTPTR)src == (char * HOSTPTR)info + info_size );
 
     params->Environment = dst;
     params->EnvironmentSize = env_pos * sizeof(WCHAR);
@@ -2385,7 +2424,7 @@ void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCES
     startup_info_t *info;
     UNICODE_STRING dos_image = *nt_image;
     DWORD size;
-    void *ptr;
+    void * HOSTPTR ptr;
 
     dos_image.Buffer = get_dos_path( nt_image->Buffer );
     dos_image.Length = nt_image->Length - (dos_image.Buffer - nt_image->Buffer) * sizeof(WCHAR);

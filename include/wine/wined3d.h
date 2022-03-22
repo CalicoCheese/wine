@@ -28,6 +28,7 @@
 
 #include <stdbool.h>
 #include "wine/list.h"
+#include "wine/winheader_enter.h"
 
 #define WINED3D_OK                                              S_OK
 
@@ -2967,5 +2968,7 @@ static inline void wined3d_box_set(struct wined3d_box *box, unsigned int left, u
     box->front = front;
     box->back = back;
 }
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WINED3D_H */

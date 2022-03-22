@@ -84,7 +84,7 @@ typedef struct schan_session_opaque *schan_session;
 typedef struct schan_credentials
 {
     ULONG credential_use;
-    void *credentials;
+    void * HOSTPTR credentials;
     DWORD enabled_protocols;
 } schan_credentials;
 

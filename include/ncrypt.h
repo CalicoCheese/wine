@@ -19,6 +19,8 @@
 #ifndef __NCRYPT_H__
 #define __NCRYPT_H__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -120,5 +122,7 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE, const WCHAR *, BYTE *, D
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __NCRYPT_H__ */

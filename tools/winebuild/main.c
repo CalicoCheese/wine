@@ -50,6 +50,34 @@ int data_only = 0;
 
 struct target target = { 0 };
 
+#ifdef __i386__
+enum target_cpu target_cpu = CPU_i386;
+#elif defined(__i386_on_x86_64__)
+enum target_cpu target_cpu = CPU_x86_32on64;
+#elif defined(__x86_64__)
+enum target_cpu target_cpu = CPU_x86_64;
+#elif defined(__powerpc__)
+enum target_cpu target_cpu = CPU_POWERPC;
+#elif defined(__arm__)
+enum target_cpu target_cpu = CPU_ARM;
+#elif defined(__aarch64__)
+enum target_cpu target_cpu = CPU_ARM64;
+#else
+#error Unsupported CPU
+#endif
+
+#ifdef __APPLE__
+enum target_platform target_platform = PLATFORM_APPLE;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+enum target_platform target_platform = PLATFORM_FREEBSD;
+#elif defined(__sun)
+enum target_platform target_platform = PLATFORM_SOLARIS;
+#elif defined(_WIN32)
+enum target_platform target_platform = PLATFORM_WINDOWS;
+#else
+enum target_platform target_platform = PLATFORM_UNSPECIFIED;
+#endif
+
 char *target_alias = NULL;
 
 char *input_file_name = NULL;
@@ -100,6 +128,20 @@ enum exec_mode_values
 
 static enum exec_mode_values exec_mode = MODE_NONE;
 
+static const struct
+{
+    const char *name;
+    enum target_platform platform;
+} platform_names[] =
+{
+    { "macos",   PLATFORM_APPLE },
+    { "darwin",  PLATFORM_APPLE },
+    { "freebsd", PLATFORM_FREEBSD },
+    { "solaris", PLATFORM_SOLARIS },
+    { "mingw32", PLATFORM_WINDOWS },
+    { "windows", PLATFORM_WINDOWS },
+    { "winnt",   PLATFORM_WINDOWS }
+};
 
 /* set the dll file name from the input file name */
 static void set_dll_file_name( const char *name, DLLSPEC *spec )
@@ -171,10 +213,52 @@ static void set_syscall_table( const char *id, DLLSPEC *spec )
 /* set the target CPU and platform */
 static void set_target( const char *name )
 {
+    unsigned int i;
+    char *p, *spec = xstrdup( name );
+
+    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
+
     target_alias = xstrdup( name );
 
-    if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
-    if (target.cpu == CPU_ARM && is_pe()) thumb_mode = 1;
+    /* get the CPU part */
+
+    if ((p = strchr( spec, '-' )))
+    {
+        int cpu;
+
+        *p++ = 0;
+        cpu = get_cpu_from_name( spec );
+        if (cpu == -1) fatal_error( "Unrecognized CPU '%s'\n", spec );
+        target_cpu = cpu;
+    }
+    else if (!strcmp( spec, "mingw32" ))
+    {
+        target_cpu = CPU_i386;
+        p = spec;
+    }
+    else
+        fatal_error( "Invalid target specification '%s'\n", name );
+
+    /* get the OS part */
+
+    target_platform = PLATFORM_UNSPECIFIED;  /* default value */
+    for (;;)
+    {
+        for (i = 0; i < ARRAY_SIZE(platform_names); i++)
+        {
+            if (!strncmp( platform_names[i].name, p, strlen(platform_names[i].name) ))
+            {
+                target_platform = platform_names[i].platform;
+                break;
+            }
+        }
+        if (target_platform != PLATFORM_UNSPECIFIED || !(p = strchr( p, '-' ))) break;
+        p++;
+    }
+
+    free( spec );
+
+    if (target_cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
@@ -218,6 +302,7 @@ static const char usage_str[] =
 "   -l, --library=LIB         Import the specified library\n"
 "   -L, --library-path=DIR    Look for imports libraries in DIR\n"
 "   -m16, -m32, -m64          Force building 16-bit, 32-bit resp. 64-bit code\n"
+"   -mwine32                  Force building 32-bit-on-64-bit hybrid code\n"
 "   -M, --main-module=MODULE  Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM           Command to use to get undefined symbols (default: nm)\n"
 "       --nxcompat=y|n        Set the NX compatibility flag (default: yes)\n"
@@ -400,6 +485,7 @@ static void option_callback( int optc, char *optarg )
         if (!strcmp( optarg, "16" )) main_spec->type = SPEC_WIN16;
         else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
         else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
+        else if (!strcmp( optarg, "wine32" )) { force_pointer_size = 8; target_cpu = CPU_x86_32on64; }
         else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
         else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
@@ -534,6 +620,22 @@ static void option_callback( int optc, char *optarg )
     case '?':
         fprintf( stderr, "winebuild: %s\n\n", optarg );
         usage(1);
+        break;
+    }
+
+    switch (target_cpu)
+    {
+    case CPU_i386:
+        if (force_pointer_size == 8) target_cpu = CPU_x86_64;
+        break;
+    case CPU_x86_64:
+        if (force_pointer_size == 4) target_cpu = CPU_i386;
+        break;
+    case CPU_x86_32on64:
+        break;
+    default:
+        if (force_pointer_size == 8)
+            fatal_error( "Cannot build 64-bit code for this CPU\n" );
         break;
     }
 }

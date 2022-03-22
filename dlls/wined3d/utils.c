@@ -25,6 +25,11 @@
  */
 
 #include <stdio.h>
+/* CrossOver Hack #18775 */
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 
 #include "wined3d_private.h"
 
@@ -2408,7 +2413,7 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
         "{\n"
         "    gl_FragData[0] = out_color;\n"
         "}\n";
-    const char *source[2];
+    const char *WINED3DPTR source[2];
     GLuint vs_id, fs_id;
     unsigned int i;
 
@@ -2484,6 +2489,31 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
     checkGLcall("draw quad");
 }
 
+/* CrossOver Hack #18775: glCheckFramebufferStatus() throws a Metal exception
+ * for GL_TEXTURE_CUBE_MAP and GL_RGB_422_APPLE.
+ */
+#ifdef __APPLE__
+static int apple_silicon_status;
+static BOOL CALLBACK init_is_apple_silicon(INIT_ONCE* once, void* param, void** context)
+{
+    /* returns 0 for native process or on error, 1 for translated */
+    int ret = 0;
+    size_t size = sizeof(ret);
+    if (sysctlbyname("sysctl.proc_translated", &ret, &size, NULL, 0) == -1)
+        apple_silicon_status = 0;
+    else
+        apple_silicon_status = ret;
+
+    return TRUE;
+}
+static int is_apple_silicon(void)
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&once, init_is_apple_silicon, NULL, NULL);
+    return apple_silicon_status;
+}
+#endif
+
 /* Context activation is done by the caller. */
 static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_format_gl *format)
 {
@@ -2527,6 +2557,23 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
 
         status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
         checkGLcall("Framebuffer format check");
+        /* CrossOver Hack #18775: glCheckFramebufferStatus() throws a Metal exception
+         * for GL_TEXTURE_CUBE_MAP and GL_RGB_422_APPLE on Apple Silicon.
+         * Manually return GL_FRAMEBUFFER_UNSUPPORTED.
+         */
+#ifdef __APPLE__
+        if (is_apple_silicon() &&
+            type == WINED3D_GL_RES_TYPE_TEX_CUBE &&
+            format->format == GL_RGB_422_APPLE)
+        {
+            status = GL_FRAMEBUFFER_UNSUPPORTED;
+        }
+        else
+#endif
+        {
+            status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            checkGLcall("Framebuffer format check");
+        }
 
         if (status == GL_FRAMEBUFFER_COMPLETE)
         {
@@ -3416,6 +3463,7 @@ static void init_format_filter_info(struct wined3d_adapter *adapter,
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             || !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
+        WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
         if (vendor == HW_VENDOR_NVIDIA && gl_info->supported[ARB_TEXTURE_FLOAT])
         {
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");

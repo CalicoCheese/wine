@@ -36,6 +36,7 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/server.h"
 #include "ntdll_misc.h"
 #include "ddk/wdm.h"
 
@@ -134,6 +135,7 @@ typedef struct _wine_modref
     struct file_id        id;
     ULONG                 CheckSum;
     BOOL                  system;
+    BOOL                  is_hybrid;
 } WINE_MODREF;
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
@@ -187,9 +189,9 @@ static LDR_DDAG_NODE *node_ntdll, *node_kernel32;
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD flags, WINE_MODREF** pwm, BOOL system );
 static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved );
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path );
+                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path, BOOL hybrid);
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                  DWORD exp_size, const char *name, int hint, LPCWSTR load_path );
+                                  DWORD exp_size, const char *name, int hint, LPCWSTR load_path, BOOL hybrid);
 
 /* convert PE image VirtualAddress to Real Address */
 static inline void *get_rva( HMODULE module, DWORD va )
@@ -825,13 +827,22 @@ static NTSTATUS walk_node_dependencies( LDR_DDAG_NODE *node, void *context,
     return status;
 }
 
+static BOOL is_hybrid_module( const WINE_MODREF *wm )
+{
+#ifdef __i386__ /* will only be true for 32on64 */
+    return (wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->is_hybrid;
+#else
+    return FALSE;
+#endif
+}
+
 /*************************************************************************
  *		find_forwarded_export
  *
  * Find the final function pointer for a forwarded function.
  * The loader_section must be locked while calling this function.
  */
-static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path )
+static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path, BOOL hybrid )
 {
     const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
@@ -839,6 +850,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     WCHAR mod_name[256];
     const char *end = strrchr(forward, '.');
     FARPROC proc = NULL;
+    int import_hybrid = 0;
 
     if (!end) return NULL;
     if (build_import_name( mod_name, forward, end - forward )) return NULL;
@@ -868,24 +880,36 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
             return NULL;
         }
     }
+    if (hybrid) import_hybrid = is_hybrid_module(wm);
     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.DllBase, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
         const char *name = end + 1;
-
-        if (*name == '#') { /* ordinal */
-            proc = find_ordinal_export( wm->ldr.DllBase, exports, exp_size,
-                                        atoi(name+1) - exports->Base, load_path );
-        } else
-            proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path );
+        if (!hybrid || import_hybrid)
+        {
+            if (*name == '#')  /* ordinal */
+                proc = find_ordinal_export( wm->ldr.DllBase, exports, exp_size, atoi(name+1) - exports->Base, load_path, hybrid );
+            else
+                proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path, hybrid );
+        }
+        else
+        {
+            proc = NULL;
+        }
     }
 
     if (!proc)
     {
-        ERR("function not found for forward '%s' used by %s."
-            " If you are using builtin %s, try using the native one instead.\n",
-            forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
-            debugstr_w(get_modref(module)->ldr.BaseDllName.Buffer) );
+        if (hybrid)
+            TRACE(" 64-bit implement not found for forward '%s' used by %s."
+                  " %s may be a 32-bit native PE DLL.\n",
+                  forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
+                  debugstr_w(wm->ldr.BaseDllName.Buffer) );
+        else
+            ERR("function not found for forward '%s' used by %s."
+                " If you are using builtin %s, try using the native one instead.\n",
+                forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
+                debugstr_w(get_modref(module)->ldr.BaseDllName.Buffer) );
     }
     return proc;
 }
@@ -899,16 +923,22 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
  * The loader_section must be locked while calling this function.
  */
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path )
+                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path, BOOL hybrid )
 {
     FARPROC proc;
     const DWORD *functions = get_rva( module, exports->AddressOfFunctions );
+    DWORD index;
 
     if (ordinal >= exports->NumberOfFunctions)
     {
-        TRACE("	ordinal %d out of range!\n", ordinal + exports->Base );
+        if (hybrid)
+            TRACE(" index %d out of range!\n", ordinal );
+        else
+            TRACE("	ordinal %d out of range!\n", ordinal + exports->Base );
         return NULL;
     }
+    index = ordinal;
+    if (hybrid) index += exports->NumberOfFunctions;
     if (!functions[ordinal]) return NULL;
 
     proc = get_rva( module, functions[ordinal] );
@@ -916,7 +946,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     /* if the address falls into the export dir, it's a forward */
     if (((const char *)proc >= (const char *)exports) && 
         ((const char *)proc < (const char *)exports + exp_size))
-        return find_forwarded_export( module, (const char *)proc, load_path );
+        return find_forwarded_export( module, (const char *)proc, load_path, hybrid );
 
     if (TRACE_ON(snoop))
     {
@@ -962,7 +992,7 @@ static int find_name_in_exports( HMODULE module, const IMAGE_EXPORT_DIRECTORY *e
  * The loader_section must be locked while calling this function.
  */
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                  DWORD exp_size, const char *name, int hint, LPCWSTR load_path )
+                                  DWORD exp_size, const char *name, int hint, LPCWSTR load_path, BOOL hybrid )
 {
     const WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
     const DWORD *names = get_rva( module, exports->AddressOfNames );
@@ -973,12 +1003,12 @@ static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *
     {
         char *ename = get_rva( module, names[hint] );
         if (!strcmp( ename, name ))
-            return find_ordinal_export( module, exports, exp_size, ordinals[hint], load_path );
+            return find_ordinal_export( module, exports, exp_size, ordinals[hint], load_path, hybrid );
     }
 
     /* then do a binary search */
     if ((ordinal = find_name_in_exports( module, exports, name )) == -1) return NULL;
-    return find_ordinal_export( module, exports, exp_size, ordinal, load_path );
+    return find_ordinal_export( module, exports, exp_size, ordinal, load_path, hybrid );
 
 }
 
@@ -1003,6 +1033,57 @@ void * WINAPI RtlFindExportedRoutineByName( HMODULE module, const char *name )
     return get_rva( module, functions[ordinal] );
 }
 
+#ifdef __i386__
+
+FARPROC CDECL __wine_get_extra_proc( HMODULE module, LPCSTR function )
+{
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+    FARPROC proc = NULL;
+
+    if (!module) module = NtCurrentTeb()->Peb->ImageBaseAddress;
+    RtlEnterCriticalSection( &loader_section );
+
+    /* check if the module itself is invalid to return the proper error */
+    if (!get_modref( module )) proc = NULL;
+    else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                      IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+    {
+        LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+        if ((ULONG_PTR)function >> 16)
+        {
+            ANSI_STRING name;
+            RtlInitAnsiString( &name, function );
+            proc = find_named_export( module, exports, exp_size, name.Buffer, -1, load_path, TRUE );
+        }
+        else
+        {
+            proc = find_ordinal_export( module, exports, exp_size, LOWORD(function) - exports->Base, load_path, TRUE );
+        }
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    return proc;
+}
+
+int CDECL __wine_is_module_hybrid( HMODULE module )
+{
+    WINE_MODREF *wm;
+    int ret = 0;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if (!(wm = get_modref( module )))
+        ret = 0;
+    else
+        ret = is_hybrid_module(wm);
+
+    RtlLeaveCriticalSection( &loader_section );
+
+    return ret;
+}
+
+#endif
 
 /*************************************************************************
  *		import_dll
@@ -1059,6 +1140,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
     while (import_list[protect_size].u1.Ordinal) protect_size++;
     protect_base = thunk_list;
     protect_size *= sizeof(*thunk_list);
+    if (is_hybrid_module(get_modref(module))) protect_size *= 2;
     NtProtectVirtualMemory( NtCurrentProcess(), &protect_base,
                             &protect_size, PAGE_READWRITE, &protect_old );
 
@@ -1098,7 +1180,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
             int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
             thunk_list->u1.Function = (ULONG_PTR)find_ordinal_export( imp_mod, exports, exp_size,
-                                                                      ordinal - exports->Base, load_path );
+                                                                      ordinal - exports->Base, load_path, FALSE );
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, IntToPtr(ordinal) );
@@ -1114,7 +1196,25 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
             pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
             thunk_list->u1.Function = (ULONG_PTR)find_named_export( imp_mod, exports, exp_size,
                                                                     (const char*)pe_name->Name,
-                                                                    pe_name->Hint, load_path );
+                                                                    pe_name->Hint, load_path, FALSE );
+            if (!thunk_list->u1.Function && is_hybrid_module(get_modref(module)) &&
+                 !strcmp(name, "ntdll.dll") && !strcmp((const char*)pe_name->Name, "__wine_dbg_header_HOSTPTR"))
+            {
+                thunk_list->u1.Function = (ULONG_PTR)unix_funcs->dlsym_unix_ntdll( "wine_thunk___wine_dbg_header_HOSTPTR" );
+            }
+            else
+            if (!thunk_list->u1.Function && is_hybrid_module(get_modref(module)) &&
+                 !strcmp(name, "ntdll.dll") && !strcmp((const char*)pe_name->Name, "__wine_dbg_strdup_HOSTPTR"))
+            {
+                thunk_list->u1.Function = (ULONG_PTR)unix_funcs->dlsym_unix_ntdll( "wine_thunk___wine_dbg_strdup_HOSTPTR" );
+            }
+            else
+            if (!thunk_list->u1.Function && is_hybrid_module(get_modref(module)) &&
+                 !strcmp(name, "ntdll.dll") && !strcmp((const char*)pe_name->Name, "__wine_dbg_output_HOSTPTR"))
+            {
+                thunk_list->u1.Function = (ULONG_PTR)unix_funcs->dlsym_unix_ntdll( "wine_thunk___wine_dbg_output_HOSTPTR" );
+            }
+            else
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
@@ -1127,6 +1227,45 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
         }
         import_list++;
         thunk_list++;
+    }
+
+    if (is_hybrid_module(get_modref(module)))
+    {
+        /* fill the additional import table */
+        const IMAGE_THUNK_DATA *extra_import_list = import_list + 1;
+        IMAGE_THUNK_DATA *extra_thunk_list = thunk_list + 1;
+
+        while (extra_import_list->u1.Ordinal)
+        {
+            /* 32on64: maybe below line needs to be (is_hybrid_module(wmImp) || !strcmp(name, "ntdll.dll")) */
+            if (is_hybrid_module(wmImp) && !TRACE_ON(relay))
+            {
+                if (IMAGE_SNAP_BY_ORDINAL(extra_import_list->u1.Ordinal))
+                {
+                    int ordinal = IMAGE_ORDINAL(extra_import_list->u1.Ordinal);
+
+                    extra_thunk_list->u1.Function = (ULONG_PTR)find_ordinal_export( imp_mod, exports, exp_size,
+                                                                                    ordinal - exports->Base, load_path, TRUE );
+                    TRACE_(imports)("extra imports --- Ordinal %s.%d = %p\n", name, ordinal, (void *)extra_thunk_list->u1.Function );
+                }
+                else  /* import by name */
+                {
+                    IMAGE_IMPORT_BY_NAME *pe_name;
+                    pe_name = get_rva( module, (DWORD)extra_import_list->u1.AddressOfData );
+                    extra_thunk_list->u1.Function = (ULONG_PTR)find_named_export( imp_mod, exports, exp_size,
+                                                                                  (const char*)pe_name->Name,
+                                                                                  pe_name->Hint, load_path, TRUE );
+                    TRACE_(imports)("extra imports --- %s %s.%d = %p\n",
+                                    pe_name->Name, name, pe_name->Hint, (void *)extra_thunk_list->u1.Function);
+                }
+            }
+            else
+            {
+                extra_thunk_list->u1.Function = 0;
+            }
+            extra_import_list++;
+            extra_thunk_list++;
+        }
     }
 
 done:
@@ -2083,7 +2222,7 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
  */
 static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, void **module,
                               const SECTION_IMAGE_INFORMATION *image_info, const struct file_id *id,
-                              DWORD flags, BOOL system, WINE_MODREF **pwm )
+                              DWORD flags, BOOL is_hybrid, BOOL system, WINE_MODREF **pwm )
 {
     static const char builtin_signature[] = "Wine builtin DLL";
     char *signature = (char *)((IMAGE_DOS_HEADER *)*module + 1);
@@ -2109,6 +2248,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
     if (image_info->LoaderFlags) wm->ldr.Flags |= LDR_COR_IMAGE;
     if (image_info->u.s.ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
     wm->system = system;
+    wm->is_hybrid = is_hybrid;
 
     set_security_cookie( *module, map_size );
 
@@ -2587,7 +2727,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
 #ifdef _WIN64
     if (!convert_to_pe64( module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
 #endif
-    if (!status) status = build_module( load_path, nt_name, &module, image_info, id, flags, system, pwm );
+    if (!status) status = build_module( load_path, nt_name, &module, image_info, id, flags, FALSE, system, pwm );
     if (status && module) NtUnmapViewOfSection( NtCurrentProcess(), module );
     return status;
 }
@@ -2603,9 +2743,10 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     NTSTATUS status;
     WINE_MODREF *wm;
     UNICODE_STRING win_name = *nt_name;
+    BOOL is_hybrid;
 
     TRACE( "trying %s as so lib\n", debugstr_us(&win_name) );
-    if ((status = unix_funcs->load_so_dll( &win_name, &module )))
+    if ((status = unix_funcs->load_so_dll( &win_name, &module, &is_hybrid )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
         if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
@@ -2622,7 +2763,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     {
         SECTION_IMAGE_INFORMATION image_info = { 0 };
 
-        if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, FALSE, &wm )))
+        if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, is_hybrid, FALSE, &wm )))
         {
             if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
             return status;
@@ -2667,7 +2808,7 @@ static WINE_MODREF *build_main_module(void)
 #endif
     status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
     if (status) goto failed;
-    status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, FALSE, &wm );
+    status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, is_hybrid_module(wm), FALSE, &wm );
     RtlFreeUnicodeString( &nt_name );
     if (!status) return wm;
 failed:

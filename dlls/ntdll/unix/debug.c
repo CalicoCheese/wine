@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,8 @@
 #include "winternl.h"
 #include "unix_private.h"
 #include "wine/debug.h"
+
+#include "wine/hostptraddrspace_enter.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
@@ -216,7 +219,16 @@ static void init_options(void)
  *
  * Get the flags to use for a given channel, possibly setting them too in case of lazy init
  */
+#ifdef __i386_on_x86_64__
 unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
+{
+    return __wine_dbg_get_channel_flags( (struct __wine_debug_channel * HOSTPTR)channel );
+}
+
+unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel * HOSTPTR channel ) __attribute__((overloadable))
+#else
+unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
+#endif
 {
     int min, max, pos, res;
 
@@ -240,7 +252,16 @@ unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel 
 /***********************************************************************
  *		__wine_dbg_strdup  (NTDLL.@)
  */
+#ifdef __i386_on_x86_64__
+const char * __cdecl __wine_dbg_strdup( const char * WIN32PTR str )
+{
+    return __wine_dbg_strdup( (const char *)str );
+}
+
+const char * __cdecl __wine_dbg_strdup( const char *str ) __attribute__((overloadable))
+#else
 const char * __cdecl __wine_dbg_strdup( const char *str )
+#endif
 {
     struct debug_info *info = get_info();
     unsigned int pos = info->str_pos;
@@ -253,17 +274,18 @@ const char * __cdecl __wine_dbg_strdup( const char *str )
 }
 
 /***********************************************************************
- *		__wine_dbg_write  (NTDLL.@)
- */
-int WINAPI __wine_dbg_write( const char *str, unsigned int len )
-{
-    return write( 2, str, len );
-}
-
-/***********************************************************************
  *		__wine_dbg_output  (NTDLL.@)
  */
+#ifdef __i386_on_x86_64__
+int __cdecl __wine_dbg_output( const char * WIN32PTR str )
+{
+    return __wine_dbg_output( (const char *)str );
+}
+
+int __cdecl __wine_dbg_output( const char *str ) __attribute__((overloadable))
+#else
 int __cdecl __wine_dbg_output( const char *str )
+#endif
 {
     struct debug_info *info = get_info();
     const char *end = strrchr( str, '\n' );
@@ -283,8 +305,19 @@ int __cdecl __wine_dbg_output( const char *str )
 /***********************************************************************
  *		__wine_dbg_header  (NTDLL.@)
  */
+#ifdef __i386_on_x86_64__
+int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                               const char * WIN32PTR function )
+{
+    return __wine_dbg_header( cls, (struct __wine_debug_channel * HOSTPTR)channel, (const char *)function );
+}
+
+int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel * HOSTPTR channel,
+                               const char *function ) __attribute__((overloadable))
+#else
 int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                                const char *function )
+#endif
 {
     static const char * const classes[] = { "fixme", "err", "warn", "trace" };
     struct debug_info *info = get_info();

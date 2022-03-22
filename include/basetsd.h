@@ -22,6 +22,8 @@
 #ifndef _BASETSD_H_
 #define _BASETSD_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -36,7 +38,7 @@ extern "C" {
  * 64-bit.
  */
 
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if (defined(__x86_64__) || !defined(__i386_on_x86_64__)) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
 #define _WIN64
 #endif
 
@@ -57,7 +59,7 @@ extern "C" {
 #    define __int32 int
 #  endif
 #  ifndef __int64
-#    if defined(_WIN64) && !defined(__MINGW64__)
+#    if defined(_WIN64) || defined(__i386_on_x86_64__) && !defined(__MINGW64__)
 #      define __int64 long
 #    else
 #      define __int64 long long
@@ -108,6 +110,9 @@ typedef /* [public] */ signed __int3264   INT_PTR, *PINT_PTR;
 typedef /* [public] */ signed __int3264   LONG_PTR, *PLONG_PTR;
 typedef /* [public] */ unsigned __int3264 UINT_PTR, *PUINT_PTR;
 typedef /* [public] */ unsigned __int3264 ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR                   DWORD_PTR, *PDWORD_PTR;
+
+typedef ULONG_PTR ULONG_HOSTPTR;
 
 #elif defined(_WIN64)
 
@@ -117,6 +122,21 @@ typedef signed __int64   INT_PTR, *PINT_PTR;
 typedef signed __int64   LONG_PTR, *PLONG_PTR;
 typedef unsigned __int64 UINT_PTR, *PUINT_PTR;
 typedef unsigned __int64 ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR        DWORD_PTR, *PDWORD_PTR;
+
+typedef ULONG_PTR ULONG_HOSTPTR;
+
+#elif defined(__i386_on_x86_64__)
+
+#define __int3264 __int32
+
+typedef __int32          INT_PTR, *PINT_PTR;
+typedef unsigned __int32 UINT_PTR, *PUINT_PTR;
+typedef __int32          LONG_PTR, *PLONG_PTR;
+typedef unsigned __int32 ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR        DWORD_PTR, *PDWORD_PTR;
+
+typedef unsigned __int64 ULONG_HOSTPTR;
 
 #else
 
@@ -259,8 +279,13 @@ static inline void *ULongToPtr(ULONG32 ul)
 #define MININT_PTR 0x80000000
 #define MAXUINT_PTR 0xffffffff
 
+#ifdef __i386_on_x86_64__
+typedef int SHANDLE_PTR;
+typedef unsigned int HANDLE_PTR;
+#else
 typedef long SHANDLE_PTR;
 typedef unsigned long HANDLE_PTR;
+#endif
 typedef signed short HALF_PTR, *PHALF_PTR;
 typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 
@@ -292,6 +317,7 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
+
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
@@ -301,7 +327,7 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
 /* Architecture dependent settings. */
 /* These are hardcoded to avoid dependencies on config.h in Winelib apps. */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__i386_on_x86_64__)
 # undef  WORDS_BIGENDIAN
 #elif defined(__x86_64__)
 # undef  WORDS_BIGENDIAN
@@ -332,5 +358,7 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* !defined(_BASETSD_H_) */

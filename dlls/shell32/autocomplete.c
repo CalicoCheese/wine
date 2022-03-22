@@ -165,25 +165,25 @@ static inline int sort_strs_cmpfn_impl(WCHAR *a, WCHAR *b, enum prefix_filtering
 {
     WCHAR *str1 = filter_str_prefix(a, pfx_filter);
     WCHAR *str2 = filter_str_prefix(b, pfx_filter);
-    return wcsicmp(str1, str2);
+    return strcmpi(str1, str2);
 }
 
-static int __cdecl sort_strs_cmpfn_none(const void *a, const void *b)
+static int sort_strs_cmpfn_none(const void * HOSTPTR a, const void * HOSTPTR b)
 {
-    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_none);
+    return sort_strs_cmpfn_impl(*ADDRSPACECAST(WCHAR* const*, a), *ADDRSPACECAST(WCHAR* const*, b), prefix_filtering_none);
 }
 
-static int __cdecl sort_strs_cmpfn_protocol(const void *a, const void *b)
+static int sort_strs_cmpfn_protocol(const void * HOSTPTR a, const void * HOSTPTR b)
 {
-    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_protocol);
+    return sort_strs_cmpfn_impl(*ADDRSPACECAST(WCHAR* const*, a), *ADDRSPACECAST(WCHAR* const*, b), prefix_filtering_protocol);
 }
 
-static int __cdecl sort_strs_cmpfn_all(const void *a, const void *b)
+static int sort_strs_cmpfn_all(const void * HOSTPTR a, const void * HOSTPTR b)
 {
-    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_all);
+    return sort_strs_cmpfn_impl(*ADDRSPACECAST(WCHAR* const*, a), *ADDRSPACECAST(WCHAR* const*, b), prefix_filtering_all);
 }
 
-static int (* __cdecl sort_strs_cmpfn[])(const void*, const void*) =
+static int (*const sort_strs_cmpfn[])(const void* HOSTPTR, const void* HOSTPTR) =
 {
     sort_strs_cmpfn_none,
     sort_strs_cmpfn_protocol,

@@ -168,6 +168,9 @@ enum {
     - (BOOL) handleEvent:(NSEvent*)anEvent;
     - (void) didSendEvent:(NSEvent*)anEvent;
 
+    // CrossOver Hack 10912: Mac Edit menu
+    - (BOOL) isEditMenuAction:(SEL)selector;
+
 @end
 
 

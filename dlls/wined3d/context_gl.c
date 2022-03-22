@@ -3072,8 +3072,8 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
 
             for (i = 0; i < range_count; ++i)
                 GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
-                        src_bo->b.buffer_offset + (GLintptr)src->addr + ranges[i].offset,
-                        dst_bo->b.buffer_offset + (GLintptr)dst->addr + ranges[i].offset, ranges[i].size));
+                        (WINEGLDEF(GLintptr))src_bo->b.buffer_offset + (GLintptr)src->addr + ranges[i].offset,
+                        (WINEGLDEF(GLintptr))dst_bo->b.buffer_offset + (GLintptr)dst->addr + ranges[i].offset, ranges[i].size));
             checkGLcall("direct buffer copy");
 
             wined3d_context_gl_reference_bo(context_gl, src_bo);
@@ -4572,7 +4572,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
         struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(indirect->buffer->buffer_object);
 
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, bo_gl->id));
-        GL_EXTCALL(glDispatchComputeIndirect(bo_gl->b.buffer_offset + (GLintptr)indirect->offset));
+        GL_EXTCALL(glDispatchComputeIndirect((WINEGLDEF(GLintptr))bo_gl->b.buffer_offset + (GLintptr)indirect->offset));
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
         wined3d_context_gl_reference_bo(context_gl, bo_gl);
     }

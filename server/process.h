@@ -89,8 +89,11 @@ struct process
     const struct rawinput_device *rawinput_mouse; /* rawinput mouse device, if any */
     const struct rawinput_device *rawinput_kbd;   /* rawinput keyboard device, if any */
     struct list          kernel_object;   /* list of kernel object pointers */
-    pe_image_info_t      image_info;      /* main exe image info */
+    struct esync_fd     *esync_fd;        /* esync file descriptor (signaled on exit) */
 };
+
+#define CPU_FLAG(cpu) (1 << (cpu))
+#define CPU_64BIT_MASK (CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_ARM64))
 
 /* process functions */
 

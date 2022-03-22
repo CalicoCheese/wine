@@ -3333,7 +3333,7 @@ static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum tar
         if (pos != -1)
         {
             FIXME_(d3d_shader)("Program error at position %d: %s\n\n", pos,
-                    debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+                    debugstr_a((const char *WINED3DPTR)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
             ptr = src;
             while ((line = get_line(&ptr))) FIXME_(d3d_shader)("    %.*s", (int)(ptr - line), line);
             FIXME_(d3d_shader)("\n");

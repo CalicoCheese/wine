@@ -22,6 +22,8 @@
 #ifndef __WINE_WINSOCKAPI_STDLIB_H
 #define __WINE_WINSOCKAPI_STDLIB_H
 
+#include "wine/winheader_enter.h"
+
 /*
  * This section defines the items that conflict with the Unix headers.
  */
@@ -1310,5 +1312,7 @@ typedef DWORD (WINAPI *LPFN_WSAWAITFORMULTIPLEEVENTS)(DWORD,const WSAEVENT*,BOOL
 #undef WS
 #undef WS_API_PROTOTYPES
 #undef WS_API_TYPEDEFS
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINSOCK2API__ */

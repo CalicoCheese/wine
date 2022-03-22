@@ -19,6 +19,8 @@
 
 #include "vulkan_private.h"
 
+#include "wine/hostptraddrspace_enter.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -1758,7 +1760,7 @@ static inline void convert_VkMemoryRequirements2KHR_host_to_win(const VkMemoryRe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = ADDRSPACECAST(void * WIN32PTR, in->pNext);
     convert_VkMemoryRequirements_host_to_win(&in->memoryRequirements, &out->memoryRequirements);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -1801,7 +1803,7 @@ static inline void convert_VkMemoryRequirements2_host_to_win(const VkMemoryRequi
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = ADDRSPACECAST(void * WIN32PTR, in->pNext);
     convert_VkMemoryRequirements_host_to_win(&in->memoryRequirements, &out->memoryRequirements);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -2006,7 +2008,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win(const VkImageFor
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = ADDRSPACECAST(void * WIN32PTR, in->pNext);
     convert_VkImageFormatProperties_host_to_win(&in->imageFormatProperties, &out->imageFormatProperties);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -2054,7 +2056,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = ADDRSPACECAST(void * WIN32PTR, in->pNext);
     convert_VkPhysicalDeviceMemoryProperties_host_to_win(&in->memoryProperties, &out->memoryProperties);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -2206,7 +2208,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win(const VkPhysi
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = ADDRSPACECAST(void * WIN32PTR, in->pNext);
     convert_VkPhysicalDeviceProperties_host_to_win(&in->properties, &out->properties);
 }
 #endif /* USE_STRUCT_CONVERSION */

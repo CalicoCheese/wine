@@ -62,7 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 static pthread_mutex_t sdl_cs = PTHREAD_MUTEX_INITIALIZER;
 static struct sdl_bus_options options;
 
-static void *sdl_handle = NULL;
+static void * HOSTPTR sdl_handle = NULL;
 static UINT quit_event = -1;
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
@@ -113,11 +113,11 @@ MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 MAKE_FUNCPTR(SDL_RegisterEvents);
 MAKE_FUNCPTR(SDL_PushEvent);
 MAKE_FUNCPTR(SDL_GetTicks);
-static int (*pSDL_JoystickRumble)(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms);
-static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
-static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
-static Uint16 (*pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
-static SDL_JoystickType (*pSDL_JoystickGetType)(SDL_Joystick * joystick);
+static int ( * pSDL_JoystickRumble)(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms);
+static Uint16 (* HOSTPTR pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
+static Uint16 (* HOSTPTR pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
+static Uint16 (* HOSTPTR pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
+static SDL_JoystickType (* pSDL_JoystickGetType)(SDL_Joystick * joystick);
 
 /* internal bits for extended rumble support, SDL_Haptic types are 16-bits */
 #define WINE_SDL_JOYSTICK_RUMBLE  0x40000000 /* using SDL_JoystickRumble API */

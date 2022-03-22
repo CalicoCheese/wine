@@ -145,9 +145,9 @@ static DWORD CFNumberToDWORD(CFNumberRef num)
     return dwNum;
 }
 
-static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
-        IOReturn result, void *sender, IOHIDReportType type,
-        uint32_t reportID, uint8_t *report, CFIndex report_length)
+static void handle_IOHIDDeviceIOHIDReportCallback(void * HOSTPTR context,
+        IOReturn result, void * HOSTPTR sender, IOHIDReportType type,
+        uint32_t reportID, uint8_t * HOSTPTR report, CFIndex report_length)
 {
     struct unix_device *iface = (struct unix_device *)context;
     bus_event_queue_input_report(&event_queue, iface, report, report_length);
@@ -267,7 +267,7 @@ static const struct raw_device_vtbl iohid_device_vtbl =
     iohid_device_set_feature_report,
 };
 
-static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
+static void handle_DeviceMatchingCallback(void * HOSTPTR context, IOReturn result, void * HOSTPTR sender, IOHIDDeviceRef IOHIDDevice)
 {
     struct device_desc desc =
     {
@@ -351,7 +351,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
 }
 
-static void handle_RemovalCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
+static void handle_RemovalCallback(void * HOSTPTR context, IOReturn result, void * HOSTPTR sender, IOHIDDeviceRef IOHIDDevice)
 {
     struct iohid_device *impl;
 

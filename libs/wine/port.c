@@ -85,7 +85,7 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
-#elif defined(__x86_64__) && defined(__GNUC__)
+#elif (defined(__x86_64__) || defined(__i386_on_x86_64__)) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "pushq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")

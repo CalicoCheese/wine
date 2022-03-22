@@ -28,12 +28,28 @@
 #endif
 #import <QuartzCore/QuartzCore.h>
 
+#include "wine/hostaddrspace_enter.h"
+
 #import "cocoa_window.h"
 
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 #import "cocoa_event.h"
 #import "cocoa_opengl.h"
+
+
+#if !defined(MAC_OS_X_VERSION_10_7) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+enum {
+    NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7,
+    NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8,
+    NSWindowFullScreenButton = 7,
+    NSWindowStyleMaskFullScreen = 1 << 14,
+};
+
+@interface NSWindow (WineFullScreenExtensions)
+    - (void) toggleFullScreen:(id)sender;
+@end
+#endif
 
 
 #if !defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
@@ -470,6 +486,23 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         return NSFocusRingTypeNone;
     }
+
+    /* CX HACK 16565 */
+    /* These two methods work together to prevent the app from being activated
+     * when a window is clicked. */
+    - (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent *)event
+    {
+        return ((WineWindow *)self.window).preventAppActivation;
+    }
+
+    - (void)mouseDown:(NSEvent *)event
+    {
+        if (((WineWindow *)self.window).preventAppActivation)
+            [NSApp preventWindowOrdering];
+
+        [super mouseDown:event];
+    }
+    /* END HACK */
 
 @end
 
@@ -3235,7 +3268,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
  * title bar, close box, etc.).
  */
 macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
-        CGRect frame, void* hwnd, macdrv_event_queue queue)
+        CGRect frame, void* WIN32PTR hwnd, macdrv_event_queue queue)
 {
     __block WineWindow* window;
 
@@ -3275,7 +3308,7 @@ void macdrv_destroy_cocoa_window(macdrv_window w)
  *
  * Get the hwnd that was set for the window at creation.
  */
-void* macdrv_get_window_hwnd(macdrv_window w)
+void* WIN32PTR macdrv_get_window_hwnd(macdrv_window w)
 {
     WineWindow* window = (WineWindow*)w;
     return window.hwnd;
@@ -3426,7 +3459,7 @@ void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
 /***********************************************************************
  *              macdrv_set_window_surface
  */
-void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex)
+void macdrv_set_window_surface(macdrv_window w, void * WIN32PTR surface, pthread_mutex_t *mutex)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineWindow* window = (WineWindow*)w;
@@ -3919,7 +3952,7 @@ uint32_t macdrv_window_background_color(void)
 /***********************************************************************
  *              macdrv_send_text_input_event
  */
-void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* data, int* done)
+void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* WIN32PTR data, int* done)
 {
     OnMainThreadAsync(^{
         BOOL ret;
@@ -3976,5 +4009,16 @@ void macdrv_clear_ime_text(void)
         }
         if (window)
             [[window contentView] clearMarkedText];
+    });
+}
+
+/* CX HACK 16565 */
+void macdrv_force_popup_order_front(macdrv_window w)
+{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
+        window.level = NSPopUpMenuWindowLevel;
+        [window orderFrontRegardless];
     });
 }

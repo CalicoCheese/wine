@@ -21,6 +21,9 @@
 #ifndef __WINE_CORECRT_H
 #define __WINE_CORECRT_H
 
+#include "wine/winheader_enter.h"
+#include "wine/32on64utils.h"
+
 #ifndef __WINE_USE_MSVCRT
 #define __WINE_USE_MSVCRT
 #endif
@@ -37,8 +40,12 @@
 # define WIN32
 #endif
 
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if ((defined(__x86_64__) && !defined(__i386_on_x86_64__)) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
 #define _WIN64
+#endif
+
+#if !defined(_MSC_VER) && !defined(__int32)
+# define __int32 int
 #endif
 
 #ifndef _MSVCR_VER
@@ -62,12 +69,20 @@
 #    define __int32 int
 #  endif
 #  ifndef __int64
-#    if defined(_WIN64) && !defined(__MINGW64__)
+#    if (defined(_WIN64) || defined(__i386_on_x86_64__)) && !defined(__MINGW64__)
 #      define __int64 long
 #    else
 #      define __int64 long long
 #    endif
 #  endif
+#endif
+
+#if !defined(_MSC_VER) && !defined(__int3264)
+# if defined(_WIN64)
+#  define __int3264 __int64
+# else
+#  define __int3264 __int32
+# endif
 #endif
 
 #ifndef NULL
@@ -94,6 +109,8 @@
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
+# elif defined(__i386_on_x86_64__)
+#   define __stdcall __attribute__((stdcall32)) __attribute__((__force_align_arg_pointer__))
 # elif defined(__x86_64__) && defined (__GNUC__)
 #  if __has_attribute(__force_align_arg_pointer__)
 #   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
@@ -117,21 +134,32 @@
 #  else
 #   define __cdecl __attribute__((__cdecl__))
 #  endif
+# elif defined(__i386_on_x86_64__)
+#   define __cdecl __attribute__((cdecl32)) __attribute__((__force_align_arg_pointer__))
 # else
 #  define __cdecl __stdcall
 # endif
 #endif
 
-#if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
-# include <stdarg.h>
-# undef va_list
-# undef va_start
-# undef va_end
-# undef va_copy
-# define va_list __builtin_ms_va_list
-# define va_start(list,arg) __builtin_ms_va_start(list,arg)
-# define va_end(list) __builtin_ms_va_end(list)
-# define va_copy(dest,src) __builtin_ms_va_copy(dest,src)
+#if defined(__i386_on_x86_64__)
+#  define __ms_va_list __builtin_va_list32
+#  define __ms_va_start(list,arg) __builtin_va_start32(list,arg)
+#  define __ms_va_end(list) __builtin_va_end32(list)
+#  define __ms_va_copy(dest,src) __builtin_va_copy32(dest,src)
+# elif (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
+#  define __ms_va_list __builtin_ms_va_list
+#  define __ms_va_start(list,arg) __builtin_ms_va_start(list,arg)
+#  define __ms_va_end(list) __builtin_ms_va_end(list)
+#  define __ms_va_copy(dest,src) __builtin_ms_va_copy(dest,src)
+# else
+#  define __ms_va_list va_list
+#  define __ms_va_start(list,arg) va_start(list,arg)
+#  define __ms_va_end(list) va_end(list)
+#  ifdef va_copy
+#   define __ms_va_copy(dest,src) va_copy(dest,src)
+#  else
+#   define __ms_va_copy(dest,src) ((dest) = (src))
+#  endif
 #endif
 
 #ifndef WINAPIV

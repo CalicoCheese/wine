@@ -79,7 +79,7 @@
 
 struct target
 {
-    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64 } cpu;
+    enum { CPU_i386, CPU_x86_64, CPU_x86_32on64, CPU_ARM, CPU_ARM64, CPU_POWERPC } cpu;
 
     enum
     {
@@ -379,6 +379,8 @@ static inline struct target get_default_target(void)
     target.cpu = CPU_i386;
 #elif defined(__x86_64__)
     target.cpu = CPU_x86_64;
+#elif defined(__i386_on_x86_64__)
+    target.cpu = CPU_x86_32on64;
 #elif defined(__arm__)
     target.cpu = CPU_ARM;
 #elif defined(__aarch64__)

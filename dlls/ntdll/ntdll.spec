@@ -1646,6 +1646,12 @@
 @ cdecl -norelay __wine_dbg_output(str)
 @ cdecl -norelay __wine_dbg_strdup(str)
 
+# 32on64 FIXME: This won't work...
+@ cdecl -norelay -arch=x86_32on64 __wine_dbg_get_channel_flags_HOSTPTR(int64)
+@ cdecl -norelay -arch=x86_32on64 __wine_dbg_header_HOSTPTR(long int64 int64)
+@ cdecl -norelay -arch=x86_32on64 __wine_dbg_output_HOSTPTR(int64)
+@ cdecl -norelay -arch=x86_32on64 -ret64 __wine_dbg_strdup_HOSTPTR(int64)
+
 # Version
 @ cdecl wine_get_version()
 @ cdecl wine_get_build_id()
@@ -1654,3 +1660,7 @@
 # Filesystem
 @ stdcall -syscall wine_nt_to_unix_file_name(ptr ptr ptr long)
 @ stdcall -syscall wine_unix_to_nt_file_name(str ptr ptr)
+
+# Loader
+@ cdecl -arch=i386 __wine_get_extra_proc(ptr ptr)
+@ cdecl -arch=i386 __wine_is_module_hybrid(ptr)

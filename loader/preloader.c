@@ -104,7 +104,7 @@
 
 static struct wine_preload_info preload_info[] =
 {
-#if defined(__i386__) || defined(__arm__)
+#if defined(__i386__) || defined(__arm__) || defined(__i386_on_x86_64__)
     { (void *)0x00000000, 0x00010000 },  /* low 64k */
     { (void *)0x00010000, 0x00100000 },  /* DOS area */
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
@@ -334,7 +334,7 @@ static inline int wld_prctl( int code, long arg )
     return SYSCALL_RET(ret);
 }
 
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(__i386_on_x86_64__)
 
 void *thread_data[256];
 
@@ -915,7 +915,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 #ifdef __i386__
     if( header->e_machine != EM_386 )
         fatal_error("%s: not an i386 ELF binary... don't know how to load it\n", name );
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(__i386_on_x86_64__)
     if( header->e_machine != EM_X86_64 )
         fatal_error("%s: not an x86-64 ELF binary... don't know how to load it\n", name );
 #elif defined(__aarch64__)

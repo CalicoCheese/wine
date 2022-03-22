@@ -202,7 +202,7 @@ ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *dat
     LDAPControlW **clientctrls, WCHAR **retoid, struct berval **retdata )
 {
     ULONG ret = LDAP_NO_MEMORY;
-    char *oidU = NULL, *retoidU = NULL;
+    char *oidU = NULL, * HOSTPTR retoidU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct bervalU *retdataU, *dataU = NULL;
 

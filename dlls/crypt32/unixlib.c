@@ -21,6 +21,7 @@
 #endif
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -28,7 +29,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 #ifdef HAVE_SECURITY_SECURITY_H
 #include <Security/Security.h>
 #endif
@@ -42,14 +45,19 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wincrypt.h"
+#include "snmp.h"
 #include "crypt32_private.h"
+
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 #ifdef SONAME_LIBGNUTLS
 
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+#include "wine/hostptraddrspace_enter.h"
 
 /* Not present in gnutls version < 3.0 */
 int gnutls_pkcs12_simple_parse(gnutls_pkcs12_t p12, const char *password,
@@ -60,7 +68,7 @@ int gnutls_pkcs12_simple_parse(gnutls_pkcs12_t p12, const char *password,
 int gnutls_x509_privkey_get_pk_algorithm2(gnutls_x509_privkey_t, unsigned int*);
 
 static void *libgnutls_handle;
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+#define MAKE_FUNCPTR(f) static typeof(f) * HOSTPTR p##f
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
@@ -80,6 +88,8 @@ static void gnutls_log( int level, const char *msg )
     TRACE( "<%d> %s", level, msg );
 }
 
+#include "wine/hostptraddrspace_exit.h"
+
 static NTSTATUS process_attach( void *args )
 {
     const char *env_str;
@@ -95,7 +105,21 @@ static NTSTATUS process_attach( void *args )
         setenv("GNUTLS_SYSTEM_PRIORITY_FILE", "/dev/null", 0);
     }
 
-    if (!(libgnutls_handle = dlopen( SONAME_LIBGNUTLS, RTLD_NOW )))
+    if (1) { /* CROSSOVER HACK - bug 10151 */
+    const char *libgnutls_name_candidates[] = {SONAME_LIBGNUTLS,
+                                               "libgnutls.so.30",
+                                               "libgnutls.so.28",
+                                               "libgnutls-deb0.so.28",
+                                               "libgnutls.so.26",
+                                               NULL};
+    int i;
+    for (i=0; libgnutls_name_candidates[i] && !libgnutls_handle; i++)
+        libgnutls_handle = dlopen(libgnutls_name_candidates[i], RTLD_NOW);
+    }
+    else {
+        ㅣibgnutls_handle = dlopen( SONAME_LIBGNUTLS, RTLD_NOW );
+
+    if (!libgnutls_handle)
     {
         ERR_(winediag)( "failed to load libgnutls, no support for pfx import/export\n" );
         return STATUS_DLL_NOT_FOUND;

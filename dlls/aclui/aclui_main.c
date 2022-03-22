@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+
 #define COBJMACROS
 #include "initguid.h"
 #include "windef.h"

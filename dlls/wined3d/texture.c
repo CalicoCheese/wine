@@ -160,6 +160,30 @@ static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct wined
     f->b = ((r->bottom * 2.0f) / h) - 1.0f;
 }
 
+static void prepare_blit_quirks(const struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
+{
+    /* ATI Macs blend blits even though GL_EXT_framebuffer_blit says that this
+     * operation does not blend. This sometimes even happens if GL_BLEND is
+     * disabled, although in my glut test case blending has to be enabled for
+     * the bug to occur. While we're at it, disable blending.
+     *
+     * Tracked by crossover hacks bug 5391. */
+    gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+    gl_info->gl_ops.gl.p_glBlendFunc(GL_ONE, GL_ZERO);
+    device_invalidate_state(device, STATE_BLEND);
+
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
+        gl_info->gl_ops.gl.p_glAlphaFunc(GL_ALWAYS, 0.0);
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
+    }
+
+    gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
+    gl_info->gl_ops.gl.p_glStencilFunc(GL_ALWAYS, 0, 0);
+    device_invalidate_state(device, STATE_DEPTH_STENCIL);
+}
+
 void texture2d_get_blt_info(const struct wined3d_texture_gl *texture_gl,
         unsigned int sub_resource_idx, const RECT *rect, struct wined3d_blt_info *info)
 {
@@ -548,6 +572,9 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
+
+    if (gl_info->quirks & WINED3D_CX_QUIRK_BLIT)
+        prepare_blit_quirks(device, gl_info);
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, GL_COLOR_BUFFER_BIT, gl_filter);

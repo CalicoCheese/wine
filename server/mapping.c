@@ -685,7 +685,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     off_t pos;
     int size, opt_size;
     size_t mz_size, clr_va, clr_size;
-    unsigned int i;
+    unsigned int i, cpu_mask = get_supported_cpu_mask();
 
     /* load the headers */
 
@@ -714,8 +714,26 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     switch (nt.opt.hdr32.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-        if (!is_machine_32bit( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
-        if (!is_machine_supported( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+        switch (nt.FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_I386:
+            mapping->image.cpu = CPU_x86;
+            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_ARM:
+        case IMAGE_FILE_MACHINE_THUMB:
+        case IMAGE_FILE_MACHINE_ARMNT:
+            mapping->image.cpu = CPU_ARM;
+            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_POWERPC:
+            mapping->image.cpu = CPU_POWERPC;
+            if (cpu_mask & CPU_FLAG(CPU_POWERPC)) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        default:
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
+    
 
         clr_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         clr_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
@@ -745,9 +763,20 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         break;
 
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        if (!is_machine_64bit( native_machine )) return STATUS_INVALID_IMAGE_WIN_64;
-        if (!is_machine_64bit( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
-        if (!is_machine_supported( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+        if (!(cpu_mask & CPU_64BIT_MASK)) return STATUS_INVALID_IMAGE_WIN_64;
+        switch (nt.FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_AMD64:
+            mapping->image.cpu = CPU_x86_64;
+            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_ARM64:
+            mapping->image.cpu = CPU_ARM64;
+            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        default:
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
 
         clr_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
@@ -769,6 +798,38 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_size     = nt.opt.hdr64.SizeOfHeaders;
         mapping->image.checksum        = nt.opt.hdr64.CheckSum;
         mapping->image.image_flags     = 0;
+        if (!(cpu_mask & CPU_64BIT_MASK)) return STATUS_INVALID_IMAGE_WIN_64;
+        switch (nt.FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_AMD64:
+            mapping->image.cpu = CPU_x86_64;
+            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_ARM64:
+            mapping->image.cpu = CPU_ARM64;
+            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        default:
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
+        clr_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
+        clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
+
+        mapping->image.base           = nt.opt.hdr64.ImageBase;
+        mapping->image.entry_point    = nt.opt.hdr64.ImageBase + nt.opt.hdr64.AddressOfEntryPoint;
+        mapping->image.map_size       = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
+        mapping->image.stack_size     = nt.opt.hdr64.SizeOfStackReserve;
+        mapping->image.stack_commit   = nt.opt.hdr64.SizeOfStackCommit;
+        mapping->image.subsystem      = nt.opt.hdr64.Subsystem;
+        mapping->image.subsystem_low  = nt.opt.hdr64.MinorSubsystemVersion;
+        mapping->image.subsystem_high = nt.opt.hdr64.MajorSubsystemVersion;
+        mapping->image.dll_charact    = nt.opt.hdr64.DllCharacteristics;
+        mapping->image.contains_code  = (nt.opt.hdr64.SizeOfCode ||
+                                         nt.opt.hdr64.AddressOfEntryPoint ||
+                                         nt.opt.hdr64.SectionAlignment & page_mask);
+        mapping->image.header_size    = nt.opt.hdr64.SizeOfHeaders;
+        mapping->image.checksum       = nt.opt.hdr64.CheckSum;
+        mapping->image.image_flags    = 0;
         if (nt.opt.hdr64.SectionAlignment & page_mask)
             mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
         if ((nt.opt.hdr64.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
@@ -810,12 +871,12 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         (clr.Flags & COMIMAGE_FLAGS_ILONLY))
     {
         mapping->image.image_flags |= IMAGE_FLAGS_ComPlusILOnly;
-        if (nt.opt.hdr32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        if (nt.opt.hdr32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            !(clr.Flags & COMIMAGE_FLAGS_32BITREQUIRED))
         {
-            if (!(clr.Flags & COMIMAGE_FLAGS_32BITREQUIRED))
-                mapping->image.image_flags |= IMAGE_FLAGS_ComPlusNativeReady;
-            if (clr.Flags & COMIMAGE_FLAGS_32BITPREFERRED)
-                mapping->image.image_flags |= IMAGE_FLAGS_ComPlusPrefer32bit;
+            mapping->image.image_flags |= IMAGE_FLAGS_ComPlusNativeReady;
+            if (cpu_mask & CPU_FLAG(CPU_x86_64)) mapping->image.cpu = CPU_x86_64;
+            else if (cpu_mask & CPU_FLAG(CPU_ARM64)) mapping->image.cpu = CPU_ARM64;
         }
     }
 

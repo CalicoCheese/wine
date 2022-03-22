@@ -54,6 +54,9 @@ struct thread
     struct process        *process;
     thread_id_t            id;            /* thread id */
     struct list            mutex_list;    /* list of currently owned mutexes */
+    struct esync_fd       *esync_fd;      /* esync file descriptor (signalled on exit) */
+    struct esync_fd       *esync_apc_fd;  /* esync apc fd (signalled when APCs are present) */
+    struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     unsigned int           system_regs;   /* which system regs have been set */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
@@ -120,6 +123,8 @@ extern int thread_add_inflight_fd( struct thread *thread, int client, int server
 extern int thread_get_inflight_fd( struct thread *thread, int client );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
+extern int is_cpu_supported( enum cpu_type cpu );
+extern unsigned int get_supported_cpu_mask(void);
 extern int suspend_thread( struct thread *thread );
 extern int resume_thread( struct thread *thread );
 

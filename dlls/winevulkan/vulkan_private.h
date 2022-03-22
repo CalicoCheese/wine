@@ -21,10 +21,15 @@
 #define __WINE_VULKAN_PRIVATE_H
 
 /* Perform vulkan struct conversion on 32-bit x86 platforms. */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__i386_on_x86_64__)
 #define USE_STRUCT_CONVERSION
 #endif
 #define VK_NO_PROTOTYPES
+
+/* 32on64 FIXME: made WINE_VK_HOST 32on64-only to fix 32-bit crashes on Linux. */
+#ifdef __i386_on_x86_64__
+#define WINE_VK_HOST
+#endif
 
 #include <pthread.h>
 
@@ -32,6 +37,10 @@
 
 #include "vulkan_loader.h"
 #include "vulkan_thunks.h"
+
+#define WINE_LIST_HOSTADDRSPACE
+
+#include "wine/hostptraddrspace_enter.h"
 
 /* Some extensions have callbacks for those we need to be able to
  * get the wine wrapper for a native handle
@@ -60,7 +69,7 @@ struct VkDevice_T
     struct VkPhysicalDevice_T *phys_dev; /* parent */
     VkDevice device; /* native device */
 
-    struct VkQueue_T* queues;
+    struct VkQueue_T* WIN32PTR queues;
     uint32_t queue_count;
 
     struct wine_vk_mapping mapping;
@@ -89,7 +98,7 @@ struct VkInstance_T
     /* We cache devices as we need to wrap them as they are
      * dispatchable objects.
      */
-    struct VkPhysicalDevice_T **phys_devs;
+    struct VkPhysicalDevice_T * WIN32PTR * WIN32PTR phys_devs;
     uint32_t phys_dev_count;
 
     VkBool32 enable_wrapper_list;
@@ -216,5 +225,7 @@ extern const struct unix_funcs loader_funcs;
 
 BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name) DECLSPEC_HIDDEN;
 BOOL WINAPI wine_vk_is_available_device_function(VkDevice device, const char *name) DECLSPEC_HIDDEN;
+
+#include "wine/hostptraddrspace_exit.h"
 
 #endif /* __WINE_VULKAN_PRIVATE_H */

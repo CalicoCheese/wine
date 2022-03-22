@@ -21,6 +21,8 @@
 #ifndef _WINNT_
 #define _WINNT_
 
+#include "wine/winheader_enter.h"
+
 #include <basetsd.h>
 #include <guiddef.h>
 #include <winapifamily.h>
@@ -6544,5 +6546,7 @@ static FORCEINLINE void YieldProcessor(void)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _WINNT_ */

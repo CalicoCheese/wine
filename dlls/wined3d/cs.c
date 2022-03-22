@@ -4037,6 +4037,7 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
     const struct wined3d_format *format = resource->format;
     struct wined3d_deferred_upload *upload;
+    uint8_t * WIN32PTR map_ptr;
     uint8_t *sysmem;
     size_t size;
 
@@ -4061,11 +4062,15 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
 
     if (flags & WINED3D_MAP_NOOVERWRITE)
     {
-        if (!(upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
-            return false;
+        const struct wined3d_deferred_upload *upload;
 
-        upload->upload_flags = 0;
-        map_desc->data = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+        if ((upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
+        {
+            map_ptr = (uint8_t * WIN32PTR)(UINT_PTR)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+            address->buffer_object = 0;
+            address->addr = map_ptr;
+            return map_ptr;
+        }
         return true;
     }
 
@@ -4092,7 +4097,7 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
     upload->sysmem = sysmem;
     upload->box = *box;
 
-    map_desc->data = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+    map_desc->data = (void * WIN32PTR)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
     return true;
 }
 
@@ -4106,7 +4111,7 @@ static bool wined3d_deferred_context_unmap_upload_bo(struct wined3d_device_conte
     {
         *box = upload->box;
         bo->addr.buffer_object = 0;
-        bo->addr.addr = (uint8_t *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+        bo->addr.addr = (uint8_t * WIN32PTR)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
         bo->flags = upload->upload_flags;
         return true;
     }

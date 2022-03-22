@@ -549,7 +549,9 @@ void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL 
 /* Context activation is done by the caller. */
 static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLuint shader, const char *src)
 {
+    WORD old_fpu_cw = wined3d_get_fpu_cw();
     const char *ptr, *line;
+    const char *WINED3DPTR source[1] = {src};
 
     TRACE("Compiling shader object %u.\n", shader);
 
@@ -559,10 +561,14 @@ static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLuint sh
         while ((line = get_info_log_line(&ptr))) TRACE_(d3d_shader)("    %.*s", (int)(ptr - line), line);
     }
 
-    GL_EXTCALL(glShaderSource(shader, 1, &src, NULL));
+    GL_EXTCALL(glShaderSource(shader, 1, source, NULL));
     checkGLcall("glShaderSource");
+    if (old_fpu_cw != WINED3D_DEFAULT_FPU_CW)
+        wined3d_set_fpu_cw(WINED3D_DEFAULT_FPU_CW);
     GL_EXTCALL(glCompileShader(shader));
     checkGLcall("glCompileShader");
+    if (old_fpu_cw != WINED3D_DEFAULT_FPU_CW)
+        wined3d_set_fpu_cw(old_fpu_cw);
     print_glsl_info_log(gl_info, shader, FALSE);
 }
 
@@ -815,7 +821,7 @@ static void shader_glsl_load_program_resources(const struct wined3d_context_gl *
     shader_glsl_load_samplers(&context_gl->c, priv, program_id, reg_maps);
 }
 
-static void append_transform_feedback_varying(const char **varyings, unsigned int *varying_count,
+static void append_transform_feedback_varying(const char *WINED3DPTR *varyings, unsigned int *varying_count,
         char **strings, unsigned int *strings_length, struct wined3d_string_buffer *buffer)
 {
     if (varyings && *strings)
@@ -834,7 +840,7 @@ static void append_transform_feedback_varying(const char **varyings, unsigned in
     ++(*varying_count);
 }
 
-static void append_transform_feedback_skip_components(const char **varyings,
+static void append_transform_feedback_skip_components(const char *WINED3DPTR *varyings,
         unsigned int *varying_count, char **strings, unsigned int *strings_length,
         struct wined3d_string_buffer *buffer, unsigned int component_count)
 {
@@ -853,7 +859,7 @@ static void append_transform_feedback_skip_components(const char **varyings,
 }
 
 static BOOL shader_glsl_generate_transform_feedback_varyings(struct wined3d_string_buffer *buffer,
-        const char **varyings, unsigned int *varying_count, char *strings, unsigned int *strings_length,
+        const char *WINED3DPTR *varyings, unsigned int *varying_count, char *strings, unsigned int *strings_length,
         GLenum buffer_mode, struct wined3d_shader *shader)
 {
     const struct wined3d_stream_output_desc *so_desc = shader->u.gs.so_desc;
@@ -949,7 +955,7 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context_gl 
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_string_buffer *buffer;
     unsigned int i, count, length;
-    const char **varyings;
+    const char *WINED3DPTR *varyings;
     char *strings;
     GLenum mode;
 
@@ -1487,6 +1493,16 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context_gl *cont
     struct wined3d_matrix matrix;
     struct wined3d_vec4 plane;
 
+    /* With macOS clip planes emulation, the generated shader
+     * hardcodes the enabled clip planes. That means the compiler
+     * might optimize away clip_planes[] elements known not to be
+     * used. Trying to upload unused clip plane uniforms is thus a bad
+     * idea, since the computed uniform location will either be
+     * unused, thus invalid, or used by some other uniform, which is
+     * potentially dangerous. */
+    if (!(state->render_states[WINED3D_RS_CLIPPLANEENABLE] & 1 << index))
+        return;
+
     plane = state->clip_planes[index];
 
     /* Clip planes are affected by the view transform in d3d for FFP draws. */
@@ -1498,6 +1514,7 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context_gl *cont
     }
 
     GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &plane.x));
+    checkGLcall("glUniform4fv");
 }
 
 /* Context activation is done by the caller (state handler). */
@@ -10487,6 +10504,16 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
     /* Link the program */
     TRACE("Linking GLSL shader program %u.\n", program_id);
     GL_EXTCALL(glLinkProgram(program_id));
+
+    old_fpu_cw = wined3d_get_fpu_cw();
+    if (old_fpu_cw != WINED3D_DEFAULT_FPU_CW)
+        wined3d_set_fpu_cw(WINED3D_DEFAULT_FPU_CW);
+
+    GL_EXTCALL(glLinkProgram(program_id));
+
+    if (old_fpu_cw != WINED3D_DEFAULT_FPU_CW)
+        wined3d_set_fpu_cw(old_fpu_cw);
+
     shader_glsl_validate_link(gl_info, program_id);
 
     shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
@@ -11219,6 +11246,21 @@ static void shader_glsl_get_caps(const struct wined3d_adapter *adapter, struct s
         caps->wined3d_caps |= WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION;
     if (shader_glsl_full_ffp_varyings(gl_info))
         caps->wined3d_caps |= WINED3D_SHADER_CAP_FULL_FFP_VARYINGS;
+
+    /* Do not advertise VS clipping if the no vs clipping quirk is set. On a
+     * proper GL driver this should not matter, but on a proper GL driver we
+     * don't need the quirk in the first place.
+     *
+     * ATI cards on OSX clip based on gl_Position if a clipplane is enabled.
+     * This would be almost perfect for our use, except that the Z fixup
+     * makes the clip position invalid. Don't try to make use of this bug
+     * though by disabling the Z fixup, I consider it a bad idea to depend on
+     * a bug, and disabling the Z fixup will break geometry position vs depth
+     * clear position, and it will reduce the Z buffer precision.
+     *
+     * Tracked by crossover hacks bug 5366. */
+    if (gl_info->quirks & WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN)
+        caps->wined3d_caps &= ~WINED3D_SHADER_CAP_VS_CLIPPING;
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
@@ -12825,7 +12867,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     enum complex_fixup complex_fixup = get_complex_fixup(args->fixup);
     struct wined3d_string_buffer *buffer, *output;
     GLuint program, vshader_id, fshader_id;
-    const char *tex_type = NULL, *swizzle = NULL, *ptr;
+    const char *tex_type = NULL, *swizzle = NULL, *WINED3DPTR ptr;
     unsigned int i;
     GLint loc;
 

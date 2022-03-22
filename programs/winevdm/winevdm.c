@@ -318,17 +318,17 @@ static VOID pif_cmd( char *filename, char *cmdline)
  * Build the command line of a process from the argv array.
  * Copied from ENV_BuildCommandLine.
  */
-static char *build_command_line( char **argv )
+static char *build_command_line( char * HOSTPTR * HOSTPTR argv )
 {
     int len;
-    char *p, **arg, *cmd_line;
+    char *p, * HOSTPTR * HOSTPTR arg, *cmd_line;
 
     len = 0;
     for (arg = argv; *arg; arg++)
     {
         BOOL has_space;
         int bcount;
-        char* a;
+        char* HOSTPTR a;
 
         has_space=FALSE;
         bcount=0;
@@ -363,7 +363,7 @@ static char *build_command_line( char **argv )
     for (arg = argv; *arg; arg++)
     {
         BOOL has_space,has_quote;
-        char* a;
+        char* HOSTPTR a;
 
         /* Check for quotes and spaces in this argument */
         has_space=has_quote=FALSE;
@@ -444,7 +444,7 @@ int main( int argc, char *argv[] )
     WORD showCmd[2];
     char buffer[MAX_PATH];
     STARTUPINFOA info;
-    char *cmdline, *appname, **first_arg;
+    char *cmdline, *appname, * HOSTPTR * HOSTPTR first_arg;
     char *p;
 
     if (!argv[1]) usage();

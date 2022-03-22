@@ -21,6 +21,7 @@
 
 #include <basetsd.h>
 #include <specstrings.h>
+#include "wine/winheader_enter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,5 +84,6 @@ typedef struct _RTL_BALANCED_NODE
 } RTL_BALANCED_NODE, *PRTL_BALANCED_NODE;
 
 #define RTL_BALANCED_NODE_RESERVED_PARENT_MASK 3
+#include "wine/winheader_exit.h"
 
 #endif /* _NTDEF_ */

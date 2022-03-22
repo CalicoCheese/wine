@@ -32,6 +32,23 @@
 # endif
 #endif
 
+enum target_cpu
+{
+    CPU_x86, CPU_x86_32on64, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64
+};
+
+enum target_platform
+{
+    PLATFORM_UNSPECIFIED,
+    PLATFORM_APPLE,
+    PLATFORM_ANDROID,
+    PLATFORM_SOLARIS,
+    PLATFORM_WINDOWS,
+    PLATFORM_MINGW,
+    PLATFORM_CYGWIN
+};
+
+
 void DECLSPEC_NORETURN error(const char* s, ...);
 
 typedef enum { 

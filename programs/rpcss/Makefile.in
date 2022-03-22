@@ -1,7 +1,7 @@
 MODULE    = rpcss.exe
 IMPORTS   = rpcrt4 advapi32
 
-EXTRADLLFLAGS = -mconsole -municode
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	epmp.c \

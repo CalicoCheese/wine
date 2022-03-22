@@ -40,6 +40,15 @@ static const char builtin_signature[] = "Wine builtin DLL";
 static const char fakedll_signature[] = "Wine placeholder DLL";
 static int is_builtin;
 
+#ifdef __i386_on_x86_64__
+#undef IMAGE_FIRST_SECTION
+#define IMAGE_FIRST_SECTION(ntheader) \
+  ((IMAGE_SECTION_HEADER*)(ULONG_HOSTPTR)((const BYTE *)&((const IMAGE_NT_HEADERS *)(ntheader))->OptionalHeader + \
+                           ((const IMAGE_NT_HEADERS *)(ntheader))->FileHeader.SizeOfOptionalHeader))
+#endif
+
+static const IMAGE_NT_HEADERS32*        PE_nt_headers;
+
 const char *get_machine_str(int mach)
 {
     switch (mach)

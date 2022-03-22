@@ -20,6 +20,8 @@
 #define _WDMDDK_
 #define _NTDDK_
 
+#include "wine/winheader_enter.h"
+
 #include <ntstatus.h>
 #include <devpropdef.h>
 
@@ -1953,5 +1955,7 @@ static inline void ExInitializeFastMutex( FAST_MUTEX *mutex )
     mutex->Contention = 0;
     KeInitializeEvent( &mutex->Event, SynchronizationEvent, FALSE );
 }
+
+#include "wine/winheader_exit.h"
 
 #endif

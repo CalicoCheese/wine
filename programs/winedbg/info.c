@@ -174,10 +174,10 @@ static void module_print_info(const struct info_module *module, BOOL is_embedded
                is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
 }
 
-static int __cdecl module_compare(const void* p1, const void* p2)
+static int __cdecl module_compare(const void* HOSTPTR p1, const void* HOSTPTR p2)
 {
-    struct info_module *left = (struct info_module *)p1;
-    struct info_module *right = (struct info_module *)p2;
+    struct info_module * HOSTPTR left = (struct info_module *)p1;
+    struct info_module * HOSTPTR right = (struct info_module *)p2;
     LONGLONG val = left->mi.BaseOfImage - right->mi.BaseOfImage;
 
     if (val < 0) return -1;

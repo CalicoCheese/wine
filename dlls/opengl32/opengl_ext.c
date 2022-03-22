@@ -377,8 +377,12 @@ static void WINAPI glBindBuffersBase( GLenum target, GLuint first, GLsizei count
 static void WINAPI glBindBuffersRange( GLenum target, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizeiptr *sizes )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLintptr) *temp0 = mirror_intptr_array(offsets, count);
+  WINEGLHOST(GLsizeiptr) *temp1 = mirror_intptr_array(sizes, count);
   TRACE( "(%d, %d, %d, %p, %p, %p)\n", target, first, count, buffers, offsets, sizes );
-  funcs->ext.p_glBindBuffersRange( target, first, count, buffers, offsets, sizes );
+  funcs->ext.p_glBindBuffersRange( target, first, count, buffers, temp0, temp1 );
+  gl_temp_free(temp0);
+  gl_temp_free(temp1);
 }
 
 static void WINAPI glBindFragDataLocation( GLuint program, GLuint color, const GLchar *name )
@@ -601,8 +605,10 @@ static void WINAPI glBindVertexBuffer( GLuint bindingindex, GLuint buffer, GLint
 static void WINAPI glBindVertexBuffers( GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLintptr) *temp0 = mirror_intptr_array(offsets, count);
   TRACE( "(%d, %d, %p, %p, %p)\n", first, count, buffers, offsets, strides );
-  funcs->ext.p_glBindVertexBuffers( first, count, buffers, offsets, strides );
+  funcs->ext.p_glBindVertexBuffers( first, count, buffers, temp0, strides );
+  gl_temp_free(temp0);
 }
 
 static void WINAPI glBindVertexShaderEXT( GLuint id )
@@ -1616,8 +1622,10 @@ static void WINAPI glCompileShaderARB( GLhandleARB shaderObj )
 static void WINAPI glCompileShaderIncludeARB( GLuint shader, GLsizei count, const GLchar *const*path, const GLint *length )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)path, count);
   TRACE( "(%d, %d, %p, %p)\n", shader, count, path, length );
-  funcs->ext.p_glCompileShaderIncludeARB( shader, count, path, length );
+  funcs->ext.p_glCompileShaderIncludeARB( shader, count, temp, length );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glCompressedMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits )
@@ -2295,8 +2303,10 @@ static GLuint WINAPI glCreateShaderProgramEXT( GLenum type, const GLchar *string
 static GLuint WINAPI glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar *const*strings )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)strings, count);
   TRACE( "(%d, %d, %p)\n", type, count, strings );
-  return funcs->ext.p_glCreateShaderProgramv( type, count, strings );
+  return funcs->ext.p_glCreateShaderProgramv( type, count, temp );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glCreateStatesNV( GLsizei n, GLuint *states )
@@ -2960,8 +2970,10 @@ static void WINAPI glDrawCommandsAddressNV( GLenum primitiveMode, const GLuint64
 static void WINAPI glDrawCommandsNV( GLenum primitiveMode, GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, GLuint count )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLintptr) *temp0 = mirror_intptr_array(indirects, count);
   TRACE( "(%d, %d, %p, %p, %d)\n", primitiveMode, buffer, indirects, sizes, count );
-  funcs->ext.p_glDrawCommandsNV( primitiveMode, buffer, indirects, sizes, count );
+  funcs->ext.p_glDrawCommandsNV( primitiveMode, buffer, temp0, sizes, count );
+  gl_temp_free(temp0);
 }
 
 static void WINAPI glDrawCommandsStatesAddressNV( const GLuint64 *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
@@ -2974,8 +2986,10 @@ static void WINAPI glDrawCommandsStatesAddressNV( const GLuint64 *indirects, con
 static void WINAPI glDrawCommandsStatesNV( GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLintptr) *temp0 = mirror_intptr_array(indirects, count);
   TRACE( "(%d, %p, %p, %p, %p, %d)\n", buffer, indirects, sizes, states, fbos, count );
-  funcs->ext.p_glDrawCommandsStatesNV( buffer, indirects, sizes, states, fbos, count );
+  funcs->ext.p_glDrawCommandsStatesNV( buffer, temp0, sizes, states, fbos, count );
+  gl_temp_free(temp0);
 }
 
 static void WINAPI glDrawElementArrayAPPLE( GLenum mode, GLint first, GLsizei count )
@@ -4409,15 +4423,19 @@ static void WINAPI glGetBufferParameterui64vNV( GLenum target, GLenum pname, GLu
 static void WINAPI glGetBufferPointerv( GLenum target, GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", target, pname, params );
-  funcs->ext.p_glGetBufferPointerv( target, pname, params );
+  funcs->ext.p_glGetBufferPointerv( target, pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetBufferPointervARB( GLenum target, GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", target, pname, params );
-  funcs->ext.p_glGetBufferPointervARB( target, pname, params );
+  funcs->ext.p_glGetBufferPointervARB( target, pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, void *data )
@@ -5326,15 +5344,19 @@ static void WINAPI glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname
 static void WINAPI glGetNamedBufferPointerv( GLuint buffer, GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", buffer, pname, params );
-  funcs->ext.p_glGetNamedBufferPointerv( buffer, pname, params );
+  funcs->ext.p_glGetNamedBufferPointerv( buffer, pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", buffer, pname, params );
-  funcs->ext.p_glGetNamedBufferPointervEXT( buffer, pname, params );
+  funcs->ext.p_glGetNamedBufferPointervEXT( buffer, pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, void *data )
@@ -5732,22 +5754,28 @@ static void WINAPI glGetPixelTransformParameterivEXT( GLenum target, GLenum pnam
 static void WINAPI glGetPointerIndexedvEXT( GLenum target, GLuint index, void **data )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", target, index, data );
-  funcs->ext.p_glGetPointerIndexedvEXT( target, index, data );
+  funcs->ext.p_glGetPointerIndexedvEXT( target, index, &temp );
+  *data = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetPointeri_vEXT( GLenum pname, GLuint index, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", pname, index, params );
-  funcs->ext.p_glGetPointeri_vEXT( pname, index, params );
+  funcs->ext.p_glGetPointeri_vEXT( pname, index, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetPointervEXT( GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %p)\n", pname, params );
-  funcs->ext.p_glGetPointervEXT( pname, params );
+  funcs->ext.p_glGetPointervEXT( pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary )
@@ -6285,8 +6313,10 @@ static void WINAPI glGetTexParameterIuivEXT( GLenum target, GLenum pname, GLuint
 static void WINAPI glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, void **params )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", target, pname, params );
-  funcs->ext.p_glGetTexParameterPointervAPPLE( target, pname, params );
+  funcs->ext.p_glGetTexParameterPointervAPPLE( target, pname, &temp );
+  *params = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed *params )
@@ -6495,8 +6525,10 @@ static GLint WINAPI glGetUniformBufferSizeEXT( GLuint program, GLint location )
 static void WINAPI glGetUniformIndices( GLuint program, GLsizei uniformCount, const GLchar *const*uniformNames, GLuint *uniformIndices )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)uniformNames, uniformCount);
   TRACE( "(%d, %d, %p, %p)\n", program, uniformCount, uniformNames, uniformIndices );
-  funcs->ext.p_glGetUniformIndices( program, uniformCount, uniformNames, uniformIndices );
+  funcs->ext.p_glGetUniformIndices( program, uniformCount, temp, uniformIndices );
+  gl_temp_free(temp);
 }
 
 static GLint WINAPI glGetUniformLocation( GLuint program, const GLchar *name )
@@ -6656,8 +6688,10 @@ static void WINAPI glGetVariantIntegervEXT( GLuint id, GLenum value, GLint *data
 static void WINAPI glGetVariantPointervEXT( GLuint id, GLenum value, void **data )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", id, value, data );
-  funcs->ext.p_glGetVariantPointervEXT( id, value, data );
+  funcs->ext.p_glGetVariantPointervEXT( id, value, &temp );
+  *data = ADDRSPACECAST(void *, temp);
 }
 
 static GLint WINAPI glGetVaryingLocationNV( GLuint program, const GLchar *name )
@@ -6698,15 +6732,19 @@ static void WINAPI glGetVertexArrayIntegervEXT( GLuint vaobj, GLenum pname, GLin
 static void WINAPI glGetVertexArrayPointeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, void **param )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %d, %p)\n", vaobj, index, pname, param );
-  funcs->ext.p_glGetVertexArrayPointeri_vEXT( vaobj, index, pname, param );
+  funcs->ext.p_glGetVertexArrayPointeri_vEXT( vaobj, index, pname, &temp );
+  *param = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetVertexArrayPointervEXT( GLuint vaobj, GLenum pname, void **param )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", vaobj, pname, param );
-  funcs->ext.p_glGetVertexArrayPointervEXT( vaobj, pname, param );
+  funcs->ext.p_glGetVertexArrayPointervEXT( vaobj, pname, &temp );
+  *param = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetVertexArrayiv( GLuint vaobj, GLenum pname, GLint *param )
@@ -6796,22 +6834,28 @@ static void WINAPI glGetVertexAttribLui64vNV( GLuint index, GLenum pname, GLuint
 static void WINAPI glGetVertexAttribPointerv( GLuint index, GLenum pname, void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", index, pname, pointer );
-  funcs->ext.p_glGetVertexAttribPointerv( index, pname, pointer );
+  funcs->ext.p_glGetVertexAttribPointerv( index, pname, &temp );
+  *pointer = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetVertexAttribPointervARB( GLuint index, GLenum pname, void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", index, pname, pointer );
-  funcs->ext.p_glGetVertexAttribPointervARB( index, pname, pointer );
+  funcs->ext.p_glGetVertexAttribPointervARB( index, pname, &temp );
+  *pointer = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetVertexAttribPointervNV( GLuint index, GLenum pname, void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  void * HOSTPTR temp = NULL;
   TRACE( "(%d, %d, %p)\n", index, pname, pointer );
-  funcs->ext.p_glGetVertexAttribPointervNV( index, pname, pointer );
+  funcs->ext.p_glGetVertexAttribPointervNV( index, pname, &temp );
+  *pointer = ADDRSPACECAST(void *, temp);
 }
 
 static void WINAPI glGetVertexAttribdv( GLuint index, GLenum pname, GLdouble *params )
@@ -7895,8 +7939,10 @@ static void WINAPI glLinkProgramARB( GLhandleARB programObj )
 static void WINAPI glListDrawCommandsStatesClientNV( GLuint list, GLuint segment, const void **indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void * HOSTPTR *temp = mirror_pointer_array((void**)indirects, count);
   TRACE( "(%d, %d, %p, %p, %p, %p, %d)\n", list, segment, indirects, sizes, states, fbos, count );
-  funcs->ext.p_glListDrawCommandsStatesClientNV( list, segment, indirects, sizes, states, fbos, count );
+  funcs->ext.p_glListDrawCommandsStatesClientNV( list, segment, temp, sizes, states, fbos, count );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glListParameterfSGIX( GLuint list, GLenum pname, GLfloat param )
@@ -8106,21 +8152,21 @@ static void * WINAPI glMapBuffer( GLenum target, GLenum access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d)\n", target, access );
-  return funcs->ext.p_glMapBuffer( target, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapBuffer( target, access ));
 }
 
 static void * WINAPI glMapBufferARB( GLenum target, GLenum access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d)\n", target, access );
-  return funcs->ext.p_glMapBufferARB( target, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapBufferARB( target, access ));
 }
 
 static void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %ld, %ld, %d)\n", target, offset, length, access );
-  return funcs->ext.p_glMapBufferRange( target, offset, length, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapBufferRange( target, offset, length, access ));
 }
 
 static void WINAPI glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const void *points )
@@ -8148,35 +8194,35 @@ static void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d)\n", buffer, access );
-  return funcs->ext.p_glMapNamedBuffer( buffer, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapNamedBuffer( buffer, access ));
 }
 
 static void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d)\n", buffer, access );
-  return funcs->ext.p_glMapNamedBufferEXT( buffer, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapNamedBufferEXT( buffer, access ));
 }
 
 static void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %ld, %ld, %d)\n", buffer, offset, length, access );
-  return funcs->ext.p_glMapNamedBufferRange( buffer, offset, length, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapNamedBufferRange( buffer, offset, length, access ));
 }
 
 static void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %ld, %ld, %d)\n", buffer, offset, length, access );
-  return funcs->ext.p_glMapNamedBufferRangeEXT( buffer, offset, length, access );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapNamedBufferRangeEXT( buffer, offset, length, access ));
 }
 
 static void * WINAPI glMapObjectBufferATI( GLuint buffer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d)\n", buffer );
-  return funcs->ext.p_glMapObjectBufferATI( buffer );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapObjectBufferATI( buffer ));
 }
 
 static void WINAPI glMapParameterfvNV( GLenum target, GLenum pname, const GLfloat *params )
@@ -8197,7 +8243,7 @@ static void * WINAPI glMapTexture2DINTEL( GLuint texture, GLint level, GLbitfiel
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %p, %p)\n", texture, level, access, stride, layout );
-  return funcs->ext.p_glMapTexture2DINTEL( texture, level, access, stride, layout );
+  return ADDRSPACECAST(void*, funcs->ext.p_glMapTexture2DINTEL( texture, level, access, stride, layout ));
 }
 
 static void WINAPI glMapVertexAttrib1dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )
@@ -8623,22 +8669,28 @@ static void WINAPI glMultiDrawElementArrayAPPLE( GLenum mode, const GLint *first
 static void WINAPI glMultiDrawElements( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void *const HOSTPTR *temp = mirror_pointer_array((void**)indices, drawcount);
   TRACE( "(%d, %p, %d, %p, %d)\n", mode, count, type, indices, drawcount );
-  funcs->ext.p_glMultiDrawElements( mode, count, type, indices, drawcount );
+  funcs->ext.p_glMultiDrawElements( mode, count, type, temp, drawcount );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount, const GLint *basevertex )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void *const HOSTPTR *temp = mirror_pointer_array((void**)indices, drawcount);
   TRACE( "(%d, %p, %d, %p, %d, %p)\n", mode, count, type, indices, drawcount, basevertex );
-  funcs->ext.p_glMultiDrawElementsBaseVertex( mode, count, type, indices, drawcount, basevertex );
+  funcs->ext.p_glMultiDrawElementsBaseVertex( mode, count, type, temp, drawcount, basevertex );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void *const HOSTPTR *temp = mirror_pointer_array((void**)indices, primcount);
   TRACE( "(%d, %p, %d, %p, %d)\n", mode, count, type, indices, primcount );
-  funcs->ext.p_glMultiDrawElementsEXT( mode, count, type, indices, primcount );
+  funcs->ext.p_glMultiDrawElementsEXT( mode, count, type, temp, primcount );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glMultiDrawElementsIndirect( GLenum mode, GLenum type, const void *indirect, GLsizei drawcount, GLsizei stride )
@@ -8714,8 +8766,10 @@ static void WINAPI glMultiModeDrawArraysIBM( const GLenum *mode, const GLint *fi
 static void WINAPI glMultiModeDrawElementsIBM( const GLenum *mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount, GLint modestride )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void *const HOSTPTR *temp = mirror_pointer_array((void**)indices, primcount);
   TRACE( "(%p, %p, %d, %p, %d, %d)\n", mode, count, type, indices, primcount, modestride );
-  funcs->ext.p_glMultiModeDrawElementsIBM( mode, count, type, indices, primcount, modestride );
+  funcs->ext.p_glMultiModeDrawElementsIBM( mode, count, type, temp, primcount, modestride );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glMultiTexBufferEXT( GLenum texunit, GLenum target, GLenum internalformat, GLuint buffer )
@@ -10331,8 +10385,10 @@ static void WINAPI glNormalPointerListIBM( GLenum type, GLint stride, const void
 static void WINAPI glNormalPointervINTEL( GLenum type, const void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void * HOSTPTR *temp = mirror_pointer_array((void**)pointer, 3);
   TRACE( "(%d, %p)\n", type, pointer );
-  funcs->ext.p_glNormalPointervINTEL( type, pointer );
+  funcs->ext.p_glNormalPointervINTEL( type, temp );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glNormalStream3bATI( GLenum stream, GLbyte nx, GLbyte ny, GLbyte nz )
@@ -13243,15 +13299,19 @@ static void WINAPI glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint ar
 static void WINAPI glShaderSource( GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)string, count);
   TRACE( "(%d, %d, %p, %p)\n", shader, count, string, length );
-  funcs->ext.p_glShaderSource( shader, count, string, length );
+  funcs->ext.p_glShaderSource( shader, count, temp, length );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glShaderSourceARB( GLhandleARB shaderObj, GLsizei count, const GLcharARB **string, const GLint *length )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLcharARB * HOSTPTR *temp = mirror_pointer_array((void**)string, count);
   TRACE( "(%d, %d, %p, %p)\n", shaderObj, count, string, length );
-  funcs->ext.p_glShaderSourceARB( shaderObj, count, string, length );
+  funcs->ext.p_glShaderSourceARB( shaderObj, count, temp, length );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding )
@@ -14041,8 +14101,10 @@ static void WINAPI glTexCoordPointerListIBM( GLint size, GLenum type, GLint stri
 static void WINAPI glTexCoordPointervINTEL( GLint size, GLenum type, const void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void * HOSTPTR *temp = mirror_pointer_array((void**)pointer, size);
   TRACE( "(%d, %d, %p)\n", size, type, pointer );
-  funcs->ext.p_glTexCoordPointervINTEL( size, type, pointer );
+  funcs->ext.p_glTexCoordPointervINTEL( size, type, temp );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glTexEnvxOES( GLenum target, GLenum pname, GLfixed param )
@@ -14727,15 +14789,19 @@ static void WINAPI glTransformFeedbackStreamAttribsNV( GLsizei count, const GLin
 static void WINAPI glTransformFeedbackVaryings( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)varyings, count);
   TRACE( "(%d, %d, %p, %d)\n", program, count, varyings, bufferMode );
-  funcs->ext.p_glTransformFeedbackVaryings( program, count, varyings, bufferMode );
+  funcs->ext.p_glTransformFeedbackVaryings( program, count, temp, bufferMode );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glTransformFeedbackVaryingsEXT( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const GLchar *const HOSTPTR *temp = mirror_pointer_array((void**)varyings, count);
   TRACE( "(%d, %d, %p, %d)\n", program, count, varyings, bufferMode );
-  funcs->ext.p_glTransformFeedbackVaryingsEXT( program, count, varyings, bufferMode );
+  funcs->ext.p_glTransformFeedbackVaryingsEXT( program, count, temp, bufferMode );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glTransformFeedbackVaryingsNV( GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode )
@@ -15707,8 +15773,10 @@ static GLboolean WINAPI glVDPAUIsSurfaceNV( GLvdpauSurfaceNV surface )
 static void WINAPI glVDPAUMapSurfacesNV( GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLvdpauSurfaceNV) *temp0 = mirror_intptr_array(surfaces, numSurfaces);
   TRACE( "(%d, %p)\n", numSurfaces, surfaces );
-  funcs->ext.p_glVDPAUMapSurfacesNV( numSurfaces, surfaces );
+  funcs->ext.p_glVDPAUMapSurfacesNV( numSurfaces, temp0 );
+  gl_temp_free(temp0);
 }
 
 static GLvdpauSurfaceNV WINAPI glVDPAURegisterOutputSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames )
@@ -15742,8 +15810,10 @@ static void WINAPI glVDPAUSurfaceAccessNV( GLvdpauSurfaceNV surface, GLenum acce
 static void WINAPI glVDPAUUnmapSurfacesNV( GLsizei numSurface, const GLvdpauSurfaceNV *surfaces )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLvdpauSurfaceNV) *temp0 = mirror_intptr_array(surfaces, numSurface);
   TRACE( "(%d, %p)\n", numSurface, surfaces );
-  funcs->ext.p_glVDPAUUnmapSurfacesNV( numSurface, surfaces );
+  funcs->ext.p_glVDPAUUnmapSurfacesNV( numSurface, temp0 );
+  gl_temp_free(temp0);
 }
 
 static void WINAPI glVDPAUUnregisterSurfaceNV( GLvdpauSurfaceNV surface )
@@ -16169,8 +16239,10 @@ static void WINAPI glVertexArrayVertexBuffer( GLuint vaobj, GLuint bindingindex,
 static void WINAPI glVertexArrayVertexBuffers( GLuint vaobj, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  WINEGLHOST(GLintptr) *temp0 = mirror_intptr_array(offsets, count);
   TRACE( "(%d, %d, %d, %p, %p, %p)\n", vaobj, first, count, buffers, offsets, strides );
-  funcs->ext.p_glVertexArrayVertexBuffers( vaobj, first, count, buffers, offsets, strides );
+  funcs->ext.p_glVertexArrayVertexBuffers( vaobj, first, count, buffers, temp0, strides );
+  gl_temp_free(temp0);
 }
 
 static void WINAPI glVertexArrayVertexOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset )
@@ -17835,8 +17907,10 @@ static void WINAPI glVertexPointerListIBM( GLint size, GLenum type, GLint stride
 static void WINAPI glVertexPointervINTEL( GLint size, GLenum type, const void **pointer )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  const void * HOSTPTR *temp = mirror_pointer_array((void**)pointer, size);
   TRACE( "(%d, %d, %p)\n", size, type, pointer );
-  funcs->ext.p_glVertexPointervINTEL( size, type, pointer );
+  funcs->ext.p_glVertexPointervINTEL( size, type, temp );
+  gl_temp_free(temp);
 }
 
 static void WINAPI glVertexStream1dATI( GLenum stream, GLdouble x )

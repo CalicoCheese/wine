@@ -74,7 +74,7 @@ CFDictionaryRef localized_strings;
 const char* debugstr_cf(CFTypeRef t)
 {
     CFStringRef s;
-    const char* ret;
+    const char* HOSTPTR ret;
 
     if (!t) return "(null)";
 
@@ -86,9 +86,9 @@ const char* debugstr_cf(CFTypeRef t)
     if (ret) ret = debugstr_a(ret);
     if (!ret)
     {
-        const UniChar* u = CFStringGetCharactersPtr(s);
+        const UniChar* HOSTPTR u = CFStringGetCharactersPtr(s);
         if (u)
-            ret = debugstr_wn((const WCHAR*)u, CFStringGetLength(s));
+            ret = debugstr_wn((const WCHAR* HOSTPTR)u, CFStringGetLength(s));
     }
     if (!ret)
     {
@@ -286,6 +286,17 @@ static BOOL process_attach(void)
 {
     SessionAttributeBits attributes;
     OSStatus status;
+
+    /* CrossOver Hack 11095.  Cocoa makes a similar call to confstr() during
+       its first pass through the event loop, which happens on the main thread.
+       However, if Wine is double-fork()-ing on a background thread simultaneously
+       with the first such call, the child process can become deadlocked.  It
+       appears to be a bug in the system library.
+
+       By calling this here, we greatly reduce the likelihood of such a race
+       and deadlock. */
+    char dummy[256];
+    confstr(_CS_DARWIN_USER_CACHE_DIR, dummy, sizeof(dummy));
 
     status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
     if (status != noErr || !(attributes & sessionHasGraphicAccess))

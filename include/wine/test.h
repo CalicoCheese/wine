@@ -79,6 +79,18 @@ extern void winetest_wait_child_process( HANDLE process );
 #define START_TEST(name) void func_##name(void)
 #endif
 
+#if (defined(__x86_64__) || defined(__i386_on_x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+#define __winetest_cdecl __cdecl
+#if defined(__i386_on_x86_64__)
+#define __winetest_va_list __builtin_va_list32
+#else
+#define __winetest_va_list __builtin_ms_va_list
+#endif
+#else
+#define __winetest_cdecl
+#define __winetest_va_list va_list
+#endif
+
 extern int broken( int condition );
 extern int winetest_vok( int condition, const char *msg, va_list ap );
 extern void winetest_vskip( const char *msg, va_list ap );
@@ -178,6 +190,17 @@ extern void winetest_pop_context(void);
 
 #include <stdio.h>
 #include <excpt.h>
+
+#if defined(__i386_on_x86_64__) && defined(__WINE_USE_MSVCRT)
+# define __winetest_va_start(list,arg) __builtin_va_start32(list,arg)
+# define __winetest_va_end(list) __builtin_va_end32(list)
+#elif (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+# define __winetest_va_start(list,arg) __builtin_ms_va_start(list,arg)
+# define __winetest_va_end(list) __builtin_ms_va_end(list)
+#else
+# define __winetest_va_start(list,arg) va_start(list,arg)
+# define __winetest_va_end(list) va_end(list)
+#endif
 
 struct test
 {

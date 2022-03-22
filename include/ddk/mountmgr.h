@@ -23,6 +23,8 @@
 
 #include "ifdef.h"
 
+#include "wine/winheader_enter.h"
+
 #define MOUNTMGRCONTROLTYPE  ((ULONG)'m')
 #define MOUNTDEVCONTROLTYPE  ((ULONG)'M')
 
@@ -211,5 +213,7 @@ typedef struct _MOUNTMGR_TARGET_NAME
      (s)->Buffer[8] == 'm'  && (s)->Buffer[9] == 'e'  && (s)->Buffer[10] == '{'  && \
      (s)->Buffer[19] == '-' && (s)->Buffer[24] == '-' && (s)->Buffer[29] == '-'  && \
      (s)->Buffer[34] == '-' && (s)->Buffer[47] == '}')
+
+#include "wine/winheader_exit.h"
 
 #endif /* _MOUNTMGR_ */
