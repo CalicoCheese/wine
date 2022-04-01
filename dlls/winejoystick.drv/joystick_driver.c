@@ -20,7 +20,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #ifndef HAVE_LINUX_JOYSTICK_H
 #if !defined(HAVE_IOKIT_HID_IOHIDLIB_H)

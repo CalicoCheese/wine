@@ -1305,20 +1305,6 @@ static inline const GUID *TLB_get_guid_null(const TLBGuid *guid)
     return guid != NULL ? &guid->guid : &GUID_NULL;
 }
 
-static int get_ptr_size(SYSKIND syskind)
-{
-    switch(syskind){
-    case SYS_WIN64:
-        return 8;
-    case SYS_WIN32:
-    case SYS_MAC:
-    case SYS_WIN16:
-        return 4;
-    }
-    WARN("Unhandled syskind: 0x%x\n", syskind);
-    return 4;
-}
-
 /*
  debug
 */

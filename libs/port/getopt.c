@@ -28,7 +28,6 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #ifndef HAVE_GETOPT_LONG_ONLY
 

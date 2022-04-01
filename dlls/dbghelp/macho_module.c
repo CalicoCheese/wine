@@ -799,14 +799,14 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
 
             if (!ReadFile(fmap->handle, &fat_arch, sizeof(fat_arch), &bytes_read, NULL) || bytes_read != sizeof(fat_arch))
                 goto done;
-            if (swap_ulong_be_to_host(fat_arch.cputype) == target_cpu)
+            if (swap_ulong_be_to_host(fat_arch.cputype) == target.cpu)
             {
                 fmap->arch_offset = swap_ulong_be_to_host(fat_arch.offset);
                 break;
             }
         }
         if (i >= narch) goto done;
-        TRACE("... found target arch (%d)\n", target_cpu);
+        TRACE("... found target arch (%d)\n", target.cpu);
     }
     else
     {
@@ -821,7 +821,7 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
         goto done;
     TRACE("... got possible Mach header\n");
     /* and check for a Mach-O header */
-    if (mach_header.magic != target_magic || mach_header.cputype != target_cpu) goto done;
+    if (mach_header.magic != target_magic || mach_header.cputype != target.cpu) goto done;
     fmap->commands_size = mach_header.sizeofcmds;
     fmap->commands_count = mach_header.ncmds;
     /* Make sure the file type is one of the ones we expect. */

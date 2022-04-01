@@ -147,7 +147,6 @@ static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevent
 #endif /* linux && __i386__ && HAVE_STDINT_H */
 
 #if defined(HAVE_PORT_H) && defined(HAVE_PORT_CREATE)
-# include <port.h>
 # define USE_EVENT_PORTS
 #endif /* HAVE_PORT_H && HAVE_PORT_CREATE */
 

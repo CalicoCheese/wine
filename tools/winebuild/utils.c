@@ -45,7 +45,6 @@
 #endif
 
 static struct strarray tmp_files;
-static struct strarray empty_strarray;
 static const char *output_file_source_name;
 
 static const struct
@@ -650,7 +649,7 @@ int remove_stdcall_decoration( char *name )
 {
     char *p, *end = strrchr( name, '@' );
     if (!end || !end[1] || end == name) return -1;
-    if (target_cpu != CPU_i386 && target_cpu != CPU_x86_32on64) return -1;
+    if (target.cpu != CPU_i386 && target.cpu != CPU_x86_32on64) return -1;
     /* make sure all the rest is digits */
     for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
     *end = 0;
@@ -861,7 +860,7 @@ unsigned int get_alignment(unsigned int align)
 
     assert( !(align & (align - 1)) );
 
-    switch(target_cpu)
+    switch(target.cpu)
     {
     case CPU_i386:
     case CPU_x86_64:
@@ -889,7 +888,7 @@ unsigned int get_page_size(void)
 /* return the size of a pointer on the target CPU */
 unsigned int get_ptr_size(void)
 {
-    switch(target_cpu)
+    switch(target.cpu)
     {
     case CPU_i386:
     case CPU_x86_32on64:
@@ -908,7 +907,7 @@ unsigned int get_ptr_size(void)
 /* return the size of a pointer on the target CPU */
 unsigned int get_host_ptr_size(void)
 {
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
         return 8;
     return get_ptr_size();
 }
@@ -1094,7 +1093,7 @@ const char *asm_globl( const char *func )
     switch (target.platform)
     {
     case PLATFORM_APPLE:
-        buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        buffer = strmake( "\t.glbal _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
@@ -1114,6 +1113,17 @@ const char *get_asm_ptr_keyword(void)
     {
     case 4: return ".long";
     case 8: return ".quad";
+    }
+    assert(0);
+    return NULL;
+}
+
+const char *get_asm_host_ptr_keyword(void)
+{
+    switch(get_host_ptr_size())
+    {
+        case 4: return ".long";
+        case 8: return ".quad";
     }
     assert(0);
     return NULL;

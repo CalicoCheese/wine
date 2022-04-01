@@ -54,7 +54,7 @@
 #  define O_BINARY 0
 # endif
 # ifndef __int64
-#   if defined(__x86_64__) || defined(__aarch64__) || defined(__powerpc64__)
+#   if defined(__x86_64__) || defined(__i386_on_x86_64__) || defined(__aarch64__) || defined(__powerpc64__)
 #     define __int64 long
 #   else
 #     define __int64 long long
@@ -428,6 +428,8 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
 {
     switch (target->cpu)
     {
+    case CPU_x86_32on64:
+    case CPU_POWERPC:
     case CPU_i386:
         if (size == 8) target->cpu = CPU_x86_64;
         break;

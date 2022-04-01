@@ -6218,23 +6218,23 @@ HOSTSTACK_CFLAGS=""
 
 
 case $host in
-  *-darwin*)
-    with_fontconfig=${with_fontconfig:-no}
-    ;;
-  *-mingw32*|*-cygwin*)
-    enable_win16=${enable_win16:-no}
-    with_mingw=${with_mingw:-no}
-    ;;
+	*-darwin*)
+	with_fontconfig=${with_fontconfig:-no}
+	;;
+	*-mingw32*|*-cygwin*)
+	enable_win16=${enable_win16:-no}
+	with_mingw=${with_mingw:-no}
+	;;
 esac
 
 
 case $host in
-  x86_64*|amd64*)
-    if test "x$enable_win64" != "xyes" -a "x$enable_win32on64" != "xyes" -a "$cross_compiling" != "yes"
-    then
-      CC="$CC -m32"
-      CXX="$CXX -m32"
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
+	x86_64*|amd64*)
+	if test "x$enable_win64" != "xyes" -a "x$enable_win32on64" != "xyes" -a "$cross_compiling" != "yes"
+	then
+	CC="$CC -m32"
+	CXX="$CXX -m32"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
 printf %s "checking whether $CC works... " >&6; }
 if test ${wine_cv_cc_m32+y}
 then :
@@ -6262,22 +6262,22 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_cc_m32" >&5
 printf "%s\n" "$wine_cv_cc_m32" >&6; }
-      test $wine_cv_cc_m32 != no || as_fn_error $? "Cannot build a 32-bit program, you need to install 32-bit development libraries." "$LINENO" 5
-      host_cpu="i386"
-      notice_platform="32-bit "
-      TARGETFLAGS="$TARGETFLAGS -m32"
-      WIDLFLAGS="-m32"
+	test $wine_cv_cc_m32 != no || as_fn_error $? "Cannot build a 32-bit program, you need to install 32-bit development libraries." "$LINENO" 5
+	host_cpu="i386"
+	notice_platform="32-bit "
+	TARGETFLAGS="$TARGETFLAGS -m32"
+	WIDLFLAGS="-m32"
 
-      PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
-      export PKG_CONFIG_PATH
-      enable_win16=${enable_win16:-yes}
-      with_unwind=${with_unwind:-no}
+	PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
+	export PKG_CONFIG_PATH
+	enable_win16=${enable_win16:-yes}
+	with_unwind=${with_unwind:-no}
 
-    elif test "x$enable_win64" != "xyes" -a "x$enable_win32on64" = "xyes" -a "$cross_compiling" != "yes"
-    then
-      if test "x${GCC}" = "xyes"
-      then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
+	elif test "x$enable_win64" != "xyes" -a "x$enable_win32on64" = "xyes" -a "$cross_compiling" != "yes"
+	then
+	if test "x${GCC}" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
 printf %s "checking whether $CC supports __builtin_ms_va_list... " >&6; }
 if test ${wine_cv_builtin_ms_va_list+y}
 then :
@@ -6304,27 +6304,27 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
 printf "%s\n" "$wine_cv_builtin_ms_va_list" >&6; }
-        test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
-        if test "x$ac_cv_cflags__ilocal_include" = xno
+	test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
+	if test "x$ac_cv_cflags__ilocal_include" = xno
 then :
   as_fn_error $? "You need a version of clang that supports -ilocal to build Wine for 32on64." "$LINENO" 5
 fi
-      fi
-      CC="$CC -mwine32 -mstorage-address-space=default -minterop64-32-thunk-prefix=wine -minterop64-32-cs32-name=wine_32on64_cs32 -minterop64-32-cs64-name=wine_32on64_cs64 -mstack64"
-      CXX="$CXX -mwine32 -mstorage-address-space=default -minterop64-32-thunk-prefix=wine -minterop64-32-cs32-name=wine_32on64_cs32 -minterop64-32-cs64-name=wine_32on64_cs64 -mstack64"
-      HOSTSTACK_CFLAGS="$HOSTSTACK_CFLAGS -DWINE32ON64_HOSTSTACK -mstack64"
-      MODULECFLAGS="-mdefault-address-space=ptr32 -mstorage-address-space=ptr32 -mno-stack64"
+	fi
+	CC="$CC -mwine32 -mstorage-address-space=default -minterop64-32-thunk-prefix=wine -minterop64-32-cs32-name=wine_32on64_cs32 -minterop64-32-cs64-name=wine_32on64_cs64 -mstack64"
+	CXX="$CXX -mwine32 -mstorage-address-space=default -minterop64-32-thunk-prefix=wine -minterop64-32-cs32-name=wine_32on64_cs32 -minterop64-32-cs64-name=wine_32on64_cs64 -mstack64"
+	HOSTSTACK_CFLAGS="$HOSTSTACK_CFLAGS -DWINE32ON64_HOSTSTACK -mstack64"
+	MODULECFLAGS="-mdefault-address-space=ptr32 -mstorage-address-space=ptr32 -mno-stack64"
 
-      host_cpu="x86_32on64"
-      notice_platform="64-bit "
-      TARGETFLAGS="-mwine32"
+	host_cpu="x86_32on64"
+	notice_platform="64-bit "
+	TARGETFLAGS="-mwine32"
 
-      WIDLFLAGS="-m32"
+	WIDLFLAGS="-m32"
 
-    else
-      if test "x${GCC}" = "xyes"
-      then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
+	else
+	if test "x${GCC}" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
 printf %s "checking whether $CC supports __builtin_ms_va_list... " >&6; }
 if test ${wine_cv_builtin_ms_va_list+y}
 then :
@@ -6351,22 +6351,22 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
 printf "%s\n" "$wine_cv_builtin_ms_va_list" >&6; }
-        test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
-      fi
-      CC="$CC -m64"
-      CXX="$CXX -m64"
-      host_cpu="x86_64"
-      notice_platform="64-bit "
-      TARGETFLAGS="-m64"
+	test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
+	fi
+	CC="$CC -m64"
+	CXX="$CXX -m64"
+	host_cpu="x86_64"
+	notice_platform="64-bit "
+	TARGETFLAGS="-m64"
 
-      TARGETFLAGS="$TARGETFLAGS -m64"
-      enable_wow64=${enable_wow64:-yes}
-      enable_wow64win=${enable_wow64win:-yes}
-      enable_wow64cpu=${enable_wow64cpu:-yes}
-    fi
-    ;;
-  arm*)
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports Thumb-2" >&5
+	TARGETFLAGS="$TARGETFLAGS -m64"
+	enable_wow64=${enable_wow64:-yes}
+	enable_wow64win=${enable_wow64win:-yes}
+	enable_wow64cpu=${enable_wow64cpu:-yes}
+	fi
+	;;
+	arm*)
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports Thumb-2" >&5
 printf %s "checking whether $CC supports Thumb-2... " >&6; }
 if test ${wine_cv_thumb2+y}
 then :
@@ -6394,26 +6394,26 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_thumb2" >&5
 printf "%s\n" "$wine_cv_thumb2" >&6; }
-    if test x"$wine_cv_thumb2" = xyes
-    then
-        CFLAGS="$CFLAGS -mthumb"
-        TARGETFLAGS="$TARGETFLAGS -mthumb"
-    else
-        CFLAGS="$CFLAGS -marm"
-        TARGETFLAGS="$TARGETFLAGS -marm"
-    fi
-    case $with_float_abi in
-      soft|softfp|hard)
-        float_abi=$with_float_abi ;;
-      *)
-        case $host_os in
-          *eabihf)
-            float_abi=hard ;;
-          *)
-            float_abi=softfp
-            saved_CFLAGS=$CFLAGS
-            CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
+	if test x"$wine_cv_thumb2" = xyes
+	then
+	CFLAGS="$CFLAGS -mthumb"
+	TARGETFLAGS="$TARGETFLAGS -mthumb"
+	else
+	CFLAGS="$CFLAGS -marm"
+	TARGETFLAGS="$TARGETFLAGS -marm"
+	fi
+	case $with_float_abi in
+	soft|softfp|hard)
+	float_abi=$with_float_abi ;;
+	*)
+	case $host_os in
+	*eabihf)
+	float_abi=hard ;;
+	*)
+	float_abi=softfp
+	saved_CFLAGS=$CFLAGS
+	CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
 printf %s "checking whether $CC supports -mfloat-abi=$float_abi... " >&6; }
 if test ${wine_cv_float_abi+y}
 then :
@@ -6441,28 +6441,28 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_float_abi" >&5
 printf "%s\n" "$wine_cv_float_abi" >&6; }
-            if test $wine_cv_float_abi = no
-            then
-                float_abi=soft
-                as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
-            fi
-            CFLAGS=$saved_CFLAGS
-        esac
-        ;;
-    esac
-    CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
-    TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
-    WIDLFLAGS="-mfloat-abi=$float_abi"
+	if test $wine_cv_float_abi = no
+	then
+	float_abi=soft
+	as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
+	fi
+	CFLAGS=$saved_CFLAGS
+	esac
+	;;
+	esac
+	CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
+	TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
+	WIDLFLAGS="-mfloat-abi=$float_abi"
 
-    ;;
-  aarch64*)
-    enable_wow64=${enable_wow64:-yes}
-    enable_wow64win=${enable_wow64win:-yes}
-    ;;
-  i[3456789]86*)
-    enable_win16=${enable_win16:-yes}
-    with_unwind=${with_unwind:-no}
-    ;;
+	;;
+	aarch64*)
+	enable_wow64=${enable_wow64:-yes}
+	enable_wow64win=${enable_wow64win:-yes}
+	;;
+	i[3456789]86*)
+	enable_win16=${enable_win16:-yes}
+	with_unwind=${with_unwind:-no}
+	;;
 esac
 
 enable_win16=${enable_win16:-no}
@@ -6476,22 +6476,22 @@ enable_winetest=${enable_winetest:-$enable_tests}
 
 if test "x$enable_win64" = "xyes"
 then
-    test -z "$with_wine64" || as_fn_error $? "--enable-win64 and --with-wine64 are mutually exclusive.
+	test -z "$with_wine64" || as_fn_error $? "--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree." "$LINENO" 5
-    test "x$enable_win32on64" != "xyes" || as_fn_error $? "--enable-win64 and --enable-win32on64 are mutually exclusive.
+	test "x$enable_win32on64" != "xyes" || as_fn_error $? "--enable-win64 and --enable-win32on64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --enable-win32on64 in the 32-bit Wow64 build tree." "$LINENO" 5
 fi
 
 case $build_os in
-  cygwin*|mingw32*) toolsext=".exe"
+	cygwin*|mingw32*) toolsext=".exe"
  ;;
-  *) toolsext=""
+	*) toolsext=""
  ;;
 esac
 
 if test "x$enable_win32on64" = "xyes"
 then
-    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32on64"
+	test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32on64"
 fi
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for the directory containing the Wine tools" >&5
@@ -6501,24 +6501,24 @@ then :
   printf %s "(cached) " >&6
 else $as_nop
   wine_cv_toolsdir="$with_wine_tools"
-   if test -z "$with_wine_tools"; then
-     if test "$cross_compiling" = "yes"; then
-       as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
-     elif test -n "$with_wine64"; then
-       wine_cv_toolsdir="$with_wine64"
-     fi
-   fi
+	if test -z "$with_wine_tools"; then
+	if test "$cross_compiling" = "yes"; then
+	as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
+	elif test -n "$with_wine64"; then
+	wine_cv_toolsdir="$with_wine64"
+	fi
+	fi
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_toolsdir" >&5
 printf "%s\n" "$wine_cv_toolsdir" >&6; }
 if test -z "$wine_cv_toolsdir"; then
-    wine_makedep=tools/makedep$toolsext
+	wine_makedep=tools/makedep$toolsext
 elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
-    wine_makedep=$wine_cv_toolsdir/tools/makedep$toolsext
-    enable_tools=${enable_tools:-no}
-    test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
+	wine_makedep=$wine_cv_toolsdir/tools/makedep$toolsext
+	enable_tools=${enable_tools:-no}
+	test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
 else
-    as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
+	as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
 fi
 toolsdir=$wine_cv_toolsdir
 
@@ -6531,8 +6531,8 @@ SED_CMD="LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@dlldir@,\${dlldir},g' 
 
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
-    TARGETFLAGS="-b $host_alias $TARGETFLAGS"
-    WIDLFLAGS="-b $host_alias $WIDLFLAGS"
+	TARGETFLAGS="-b $host_alias $TARGETFLAGS"
+	WIDLFLAGS="-b $host_alias $WIDLFLAGS"
 
 fi
 
@@ -6586,7 +6586,7 @@ test -n "$FLEX" || FLEX="none"
 
 if test "$FLEX" = "none"
 then
-  as_fn_error $? "no suitable flex found. Please install the 'flex' package." "$LINENO" 5
+	as_fn_error $? "no suitable flex found. Please install the 'flex' package." "$LINENO" 5
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether flex is recent enough" >&5
 printf %s "checking whether flex is recent enough... " >&6; }
@@ -6600,12 +6600,12 @@ else $as_nop
 }
 %%
 EOF
-    if $FLEX -t conftest.l >/dev/null 2>&5
-    then
-      wine_cv_recent_flex=yes
-    else
-      wine_cv_recent_flex=no
-    fi
+	if $FLEX -t conftest.l >/dev/null 2>&5
+	then
+	wine_cv_recent_flex=yes
+	else
+	wine_cv_recent_flex=no
+	fi
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_recent_flex" >&5
 printf "%s\n" "$wine_cv_recent_flex" >&6; }
@@ -6661,7 +6661,7 @@ test -n "$BISON" || BISON="none"
 
 if test "$BISON" = "none"
 then
-  as_fn_error $? "no suitable bison found. Please install the 'bison' package." "$LINENO" 5
+	as_fn_error $? "no suitable bison found. Please install the 'bison' package." "$LINENO" 5
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether bison is recent enough" >&5
 printf %s "checking whether bison is recent enough... " >&6; }
@@ -6674,12 +6674,12 @@ else $as_nop
 %%
 empty: ;
 EOF
-    if $BISON conftest.y >/dev/null 2>&5
-    then
-      wine_cv_recent_bison=yes
-    else
-      wine_cv_recent_bison=no
-    fi
+	if $BISON conftest.y >/dev/null 2>&5
+	then
+	wine_cv_recent_bison=yes
+	else
+	wine_cv_recent_bison=no
+	fi
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_recent_bison" >&5
 printf "%s\n" "$wine_cv_recent_bison" >&6; }
@@ -7347,13 +7347,13 @@ fi
 
 if test "x$enable_maintainer_mode" != "xyes"
 then
-  FONTFORGE=""
-  RSVG=""
-  CONVERT=""
-  ICOTOOL=""
+	FONTFORGE=""
+	RSVG=""
+	CONVERT=""
+	ICOTOOL=""
 else
-  test "$srcdir" = . || as_fn_error $? "Maintainer mode cannot work out of tree." "$LINENO" 5
-  for ac_prog in fontforge
+	test "$srcdir" = . || as_fn_error $? "Maintainer mode cannot work out of tree." "$LINENO" 5
+	for ac_prog in fontforge
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7401,7 +7401,7 @@ fi
 done
 test -n "$FONTFORGE" || FONTFORGE="false"
 
-  for ac_prog in rsvg-convert rsvg
+	for ac_prog in rsvg-convert rsvg
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7449,7 +7449,7 @@ fi
 done
 test -n "$RSVG" || RSVG="false"
 
-  for ac_prog in convert
+	for ac_prog in convert
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7497,7 +7497,7 @@ fi
 done
 test -n "$CONVERT" || CONVERT="false"
 
-  for ac_prog in icotool
+	for ac_prog in icotool
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7545,74 +7545,74 @@ fi
 done
 test -n "$ICOTOOL" || ICOTOOL="false"
 
-  test "$FONTFORGE" != "false" || as_fn_error $? "You need fontforge to rebuild fonts in maintainer mode." "$LINENO" 5
-  test "$RSVG" != "false" || as_fn_error $? "You need rsvg to rebuild icons in maintainer mode." "$LINENO" 5
+	test "$FONTFORGE" != "false" || as_fn_error $? "You need fontforge to rebuild fonts in maintainer mode." "$LINENO" 5
+	test "$RSVG" != "false" || as_fn_error $? "You need rsvg to rebuild icons in maintainer mode." "$LINENO" 5
 
-    if test "$CONVERT" = false
-  then
-    as_fn_error $? "You need imagemagick to rebuild icons in maintainer mode." "$LINENO" 5
-  else
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for recent enough imagemagick" >&5
+		if test "$CONVERT" = false
+	then
+	as_fn_error $? "You need imagemagick to rebuild icons in maintainer mode." "$LINENO" 5
+	else
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for recent enough imagemagick" >&5
 printf %s "checking for recent enough imagemagick... " >&6; }
-    convert_version=`convert --version | head -n1`
-    if test "x$convert_version" != "x"
-    then
-      convert_version_major=`expr "$convert_version" : '.* \([0-9]*\)\.[0-9]*'`
-      convert_version_minor=`expr "$convert_version" : '.* [0-9]*\.\([0-9]*\)'`
-      if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
-      then
-        CONVERT=false
-      fi
-    fi
-    if test "$CONVERT" = false
-    then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no ($convert_version_major.$convert_version_minor)" >&5
+	convert_version=`convert --version | head -n1`
+	if test "x$convert_version" != "x"
+	then
+	convert_version_major=`expr "$convert_version" : '.* \([0-9]*\)\.[0-9]*'`
+	convert_version_minor=`expr "$convert_version" : '.* [0-9]*\.\([0-9]*\)'`
+	if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
+	then
+	CONVERT=false
+	fi
+	fi
+	if test "$CONVERT" = false
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no ($convert_version_major.$convert_version_minor)" >&5
 printf "%s\n" "no ($convert_version_major.$convert_version_minor)" >&6; }
-      as_fn_error $? "You need imagemagick version 6.6 or newer to rebuild icons in maintainer mode." "$LINENO" 5
-    else
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes ($convert_version_major.$convert_version_minor)" >&5
+	as_fn_error $? "You need imagemagick version 6.6 or newer to rebuild icons in maintainer mode." "$LINENO" 5
+	else
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes ($convert_version_major.$convert_version_minor)" >&5
 printf "%s\n" "yes ($convert_version_major.$convert_version_minor)" >&6; }
-    fi
-  fi
+	fi
+	fi
 
-    if test "$ICOTOOL" = false
-  then
-    as_fn_error $? "You need icotool to rebuild icons in maintainer mode." "$LINENO" 5
-  else
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for recent enough icotool" >&5
+		if test "$ICOTOOL" = false
+	then
+	as_fn_error $? "You need icotool to rebuild icons in maintainer mode." "$LINENO" 5
+	else
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for recent enough icotool" >&5
 printf %s "checking for recent enough icotool... " >&6; }
-    icotool_version=`icotool --version | head -n1`
-    if test "x$icotool_version" != "x"
-    then
-      icotool_version_major=`expr "$icotool_version" : '.* \([0-9]*\)\.[0-9]*'`
-      icotool_version_minor=`expr "$icotool_version" : '.* [0-9]*\.\([0-9]*\)'`
-      if test "$icotool_version_major" -eq 0 -a "$icotool_version_minor" -lt 29
-      then
-        ICOTOOL=false
-        as_fn_append wine_warnings "|icotool version 0.29.0 or newer is needed to rebuild icons."
-      fi
-    fi
-    if test "$ICOTOOL" = false
-    then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no ($icotool_version_major.$icotool_version_minor)" >&5
+	icotool_version=`icotool --version | head -n1`
+	if test "x$icotool_version" != "x"
+	then
+	icotool_version_major=`expr "$icotool_version" : '.* \([0-9]*\)\.[0-9]*'`
+	icotool_version_minor=`expr "$icotool_version" : '.* [0-9]*\.\([0-9]*\)'`
+	if test "$icotool_version_major" -eq 0 -a "$icotool_version_minor" -lt 29
+	then
+	ICOTOOL=false
+	as_fn_append wine_warnings "|icotool version 0.29.0 or newer is needed to rebuild icons."
+	fi
+	fi
+	if test "$ICOTOOL" = false
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no ($icotool_version_major.$icotool_version_minor)" >&5
 printf "%s\n" "no ($icotool_version_major.$icotool_version_minor)" >&6; }
-      as_fn_error $? "You need icotool version 0.29.0 or newer to rebuild icons in maintainer mode." "$LINENO" 5
-    else
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes ($icotool_version_major.$icotool_version_minor)" >&5
+	as_fn_error $? "You need icotool version 0.29.0 or newer to rebuild icons in maintainer mode." "$LINENO" 5
+	else
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes ($icotool_version_major.$icotool_version_minor)" >&5
 printf "%s\n" "yes ($icotool_version_major.$icotool_version_minor)" >&6; }
-    fi
-  fi
+	fi
+	fi
 
-    with_gettext=yes
-  with_gettextpo=yes
+		with_gettext=yes
+	with_gettextpo=yes
 
-    enable_werror=yes
+		enable_werror=yes
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
 if test "$MSGFMT" != "false"
 then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether msgfmt supports contexts" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether msgfmt supports contexts" >&5
 printf %s "checking whether msgfmt supports contexts... " >&6; }
 if test ${wine_cv_msgfmt_contexts+y}
 then :
@@ -7624,16 +7624,16 @@ msgctxt "ctxt"
 msgid "id"
 msgstr "str"
 EOF
-  if $MSGFMT -o /dev/null conftest.po 2>&5
-  then
-    wine_cv_msgfmt_contexts=yes
-  else
-    wine_cv_msgfmt_contexts=no
-  fi
+	if $MSGFMT -o /dev/null conftest.po 2>&5
+	then
+	wine_cv_msgfmt_contexts=yes
+	else
+	wine_cv_msgfmt_contexts=no
+	fi
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_msgfmt_contexts" >&5
 printf "%s\n" "$wine_cv_msgfmt_contexts" >&6; }
-  test $wine_cv_msgfmt_contexts != no || MSGFMT=false
+	test $wine_cv_msgfmt_contexts != no || MSGFMT=false
 fi
 if test "$MSGFMT" = false
 then :
@@ -8209,12 +8209,6 @@ then :
   printf "%s\n" "#define HAVE_PCAP_PCAP_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "port.h" "ac_cv_header_port_h" "$ac_includes_default"
-if test "x$ac_cv_header_port_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_PORT_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
 if test "x$ac_cv_header_pthread_h" = xyes
 then :
@@ -8539,9 +8533,9 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "sys/conf.h" "ac_cv_header_sys_conf_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_conf_h" = xyes
 then :
@@ -8549,9 +8543,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/mount.h" "ac_cv_header_sys_mount_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_mount_h" = xyes
 then :
@@ -8559,9 +8553,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/statfs.h" "ac_cv_header_sys_statfs_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_statfs_h" = xyes
 then :
@@ -8569,9 +8563,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/user.h" "ac_cv_header_sys_user_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_user_h" = xyes
 then :
@@ -8579,9 +8573,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/vfs.h" "ac_cv_header_sys_vfs_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_vfs_h" = xyes
 then :
@@ -8593,9 +8587,9 @@ fi
 saved_sysctl_h_CFLAGS=$CFLAGS
 test "x${GCC}" != xyes || CFLAGS="$CFLAGS -Werror"
 ac_fn_c_check_header_compile "$LINENO" "sys/sysctl.h" "ac_cv_header_sys_sysctl_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_sysctl_h" = xyes
 then :
@@ -8606,25 +8600,25 @@ fi
 CFLAGS=$saved_sysctl_h_CFLAGS
 
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip.h" "ac_cv_header_netinet_ip_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_ip_h" = xyes
 then :
@@ -8632,25 +8626,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_net_if_h" = xyes
 then :
@@ -8658,25 +8652,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_arp.h" "ac_cv_header_net_if_arp_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_net_if_arp_h" = xyes
 then :
@@ -8684,25 +8678,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_dl.h" "ac_cv_header_net_if_dl_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_net_if_dl_h" = xyes
 then :
@@ -8710,25 +8704,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_types.h" "ac_cv_header_net_if_types_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_net_if_types_h" = xyes
 then :
@@ -8736,25 +8730,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/route.h" "ac_cv_header_net_route_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_net_route_h" = xyes
 then :
@@ -8762,25 +8756,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/if_ether.h" "ac_cv_header_netinet_if_ether_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_if_ether_h" = xyes
 then :
@@ -8788,25 +8782,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/in_pcb.h" "ac_cv_header_netinet_in_pcb_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_in_pcb_h" = xyes
 then :
@@ -8814,25 +8808,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip_icmp.h" "ac_cv_header_netinet_ip_icmp_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_ip_icmp_h" = xyes
 then :
@@ -8840,25 +8834,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip_var.h" "ac_cv_header_netinet_ip_var_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_ip_var_h" = xyes
 then :
@@ -8866,25 +8860,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/udp.h" "ac_cv_header_netinet_udp_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_udp_h" = xyes
 then :
@@ -8892,25 +8886,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netipx/ipx.h" "ac_cv_header_netipx_ipx_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_netipx_ipx_h" = xyes
 then :
@@ -8918,25 +8912,25 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/un.h" "ac_cv_header_sys_un_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NET_ROUTE_H
+	# include <net/route.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NET_IF_H
+	# include <net/if.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
 "
 if test "x$ac_cv_header_sys_un_h" = xyes
 then :
@@ -8946,31 +8940,31 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "netinet/udp_var.h" "ac_cv_header_netinet_udp_var_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_VAR_H
-     # include <netinet/ip_var.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_ICMP_H
-     # include <netinet/ip_icmp.h>
-     #endif
-     #ifdef HAVE_NETINET_UDP_H
-     # include <netinet/udp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_H
-     # include <netinet/tcp.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_VAR_H
+	# include <netinet/ip_var.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_ICMP_H
+	# include <netinet/ip_icmp.h>
+	#endif
+	#ifdef HAVE_NETINET_UDP_H
+	# include <netinet/udp.h>
+	#endif
+	#ifdef HAVE_NETINET_TCP_H
+	# include <netinet/tcp.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_udp_var_h" = xyes
 then :
@@ -8978,31 +8972,31 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/icmp_var.h" "ac_cv_header_netinet_icmp_var_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_VAR_H
-     # include <netinet/ip_var.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_ICMP_H
-     # include <netinet/ip_icmp.h>
-     #endif
-     #ifdef HAVE_NETINET_UDP_H
-     # include <netinet/udp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_H
-     # include <netinet/tcp.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_VAR_H
+	# include <netinet/ip_var.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_ICMP_H
+	# include <netinet/ip_icmp.h>
+	#endif
+	#ifdef HAVE_NETINET_UDP_H
+	# include <netinet/udp.h>
+	#endif
+	#ifdef HAVE_NETINET_TCP_H
+	# include <netinet/tcp.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_icmp_var_h" = xyes
 then :
@@ -9010,31 +9004,31 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_var.h" "ac_cv_header_netinet_tcp_var_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_VAR_H
-     # include <netinet/ip_var.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_ICMP_H
-     # include <netinet/ip_icmp.h>
-     #endif
-     #ifdef HAVE_NETINET_UDP_H
-     # include <netinet/udp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_H
-     # include <netinet/tcp.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_SYS_SOCKETVAR_H
+	# include <sys/socketvar.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_NETINET_IN_SYSTM_H
+	# include <netinet/in_systm.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_H
+	# include <netinet/ip.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_VAR_H
+	# include <netinet/ip_var.h>
+	#endif
+	#ifdef HAVE_NETINET_IP_ICMP_H
+	# include <netinet/ip_icmp.h>
+	#endif
+	#ifdef HAVE_NETINET_UDP_H
+	# include <netinet/udp.h>
+	#endif
+	#ifdef HAVE_NETINET_TCP_H
+	# include <netinet/tcp.h>
+	#endif
 "
 if test "x$ac_cv_header_netinet_tcp_var_h" = xyes
 then :
@@ -9044,13 +9038,13 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "linux/ipx.h" "ac_cv_header_linux_ipx_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_ASM_TYPES_H
-     # include <asm/types.h>
-     #endif
-     #ifdef HAVE_LINUX_TYPES_H
-     # include <linux/types.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_ASM_TYPES_H
+	# include <asm/types.h>
+	#endif
+	#ifdef HAVE_LINUX_TYPES_H
+	# include <linux/types.h>
+	#endif
 "
 if test "x$ac_cv_header_linux_ipx_h" = xyes
 then :
@@ -9058,13 +9052,13 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "linux/irda.h" "ac_cv_header_linux_irda_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_ASM_TYPES_H
-     # include <asm/types.h>
-     #endif
-     #ifdef HAVE_LINUX_TYPES_H
-     # include <linux/types.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_ASM_TYPES_H
+	# include <asm/types.h>
+	#endif
+	#ifdef HAVE_LINUX_TYPES_H
+	# include <linux/types.h>
+	#endif
 "
 if test "x$ac_cv_header_linux_irda_h" = xyes
 then :
@@ -9072,13 +9066,13 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "linux/rtnetlink.h" "ac_cv_header_linux_rtnetlink_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_ASM_TYPES_H
-     # include <asm/types.h>
-     #endif
-     #ifdef HAVE_LINUX_TYPES_H
-     # include <linux/types.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_ASM_TYPES_H
+	# include <asm/types.h>
+	#endif
+	#ifdef HAVE_LINUX_TYPES_H
+	# include <linux/types.h>
+	#endif
 "
 if test "x$ac_cv_header_linux_rtnetlink_h" = xyes
 then :
@@ -9088,13 +9082,13 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "resolv.h" "ac_cv_header_resolv_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_ARPA_NAMESER_H
-     # include <arpa/nameser.h>
-     #endif
+	#include <sys/socket.h>
+	#ifdef HAVE_NETINET_IN_H
+	# include <netinet/in.h>
+	#endif
+	#ifdef HAVE_ARPA_NAMESER_H
+	# include <arpa/nameser.h>
+	#endif
 "
 if test "x$ac_cv_header_resolv_h" = xyes
 then :
@@ -9489,8 +9483,8 @@ WINELOADER_PROGRAMS="$wine_binary"
 libwine_soversion=`expr $libwine_version : '\([0-9]*\)\..*'`
 
 case $host_os in
-  cygwin*|mingw32*)
-    if test -n "$ac_tool_prefix"; then
+	cygwin*|mingw32*)
+	if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}dlltool", so it can be a program name with args.
 set dummy ${ac_tool_prefix}dlltool; ac_word=$2
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -9592,10 +9586,10 @@ else
   DLLTOOL="$ac_cv_prog_DLLTOOL"
 fi
 
-    LIBEXT="dll"
-    EXTRACFLAGS="-D__WINE_PE_BUILD"
-        case $host_cpu in
-      *i[3456]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
+	LIBEXT="dll"
+	EXTRACFLAGS="-D__WINE_PE_BUILD"
+		case $host_cpu in
+	*i[3456]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
 printf %s "checking whether the compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
 if test ${ac_cv_cflags__Wl___disable_stdcall_fixup+y}
 then :
@@ -9623,21 +9617,21 @@ if test "x$ac_cv_cflags__Wl___disable_stdcall_fixup" = xyes
 then :
   LDDLLFLAGS="-Wl,--disable-stdcall-fixup"
 fi ;;
-    esac
-        enable_loader=${enable_loader:-no}
-    enable_server=${enable_server:-no}
-        with_x=${with_x:-no}
-    with_pthread=${with_pthread:-no}
-    ;;
+	esac
+		enable_loader=${enable_loader:-no}
+	enable_server=${enable_server:-no}
+		with_x=${with_x:-no}
+	with_pthread=${with_pthread:-no}
+	;;
 
-  darwin*|macosx*)
-    ac_ext=m
+	darwin*|macosx*)
+	ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_objc_compiler_gnu
 
-        ac_ext=m
+	ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -9914,41 +9908,41 @@ then :
 
 fi
 
-        ac_fn_objc_check_header_compile "$LINENO" "Metal/Metal.h" "ac_cv_header_Metal_Metal_h" "$ac_includes_default"
+	ac_fn_objc_check_header_compile "$LINENO" "Metal/Metal.h" "ac_cv_header_Metal_Metal_h" "$ac_includes_default"
 if test "x$ac_cv_header_Metal_Metal_h" = xyes
 then :
   printf "%s\n" "#define HAVE_METAL_METAL_H 1" >>confdefs.h
 
 fi
 
-    ac_ext=c
+	ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    LIBEXT="dylib"
-    DLLFLAGS="$DLLFLAGS -fPIC"
-    LDDLLFLAGS="-fPIC"
-        COREFOUNDATION_LIBS="-framework CoreFoundation"
+	LIBEXT="dylib"
+	DLLFLAGS="$DLLFLAGS -fPIC"
+	LDDLLFLAGS="-fPIC"
+		COREFOUNDATION_LIBS="-framework CoreFoundation"
 
-    IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
+	IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
 
-    APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
+	APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
 
-    CORESERVICES_LIBS="-framework CoreServices"
+	CORESERVICES_LIBS="-framework CoreServices"
 
-    APPKIT_LIBS="-framework AppKit"
+	APPKIT_LIBS="-framework AppKit"
 
-    SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
+	SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
-    libwine_tag=""
+	libwine_tag=""
 
-    WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
+	WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
-    wine_can_build_preloader=yes
-    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
+	wine_can_build_preloader=yes
+	WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
 printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
 if test ${ac_cv_cflags__Wl__no_new_main__e__main+y}
 then :
@@ -9975,7 +9969,7 @@ printf "%s\n" "$ac_cv_cflags__Wl__no_new_main__e__main" >&6; }
 if test "x$ac_cv_cflags__Wl__no_new_main__e__main" = xyes
 then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
-                     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
 printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
 if test ${ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+y}
 then :
@@ -10037,9 +10031,9 @@ else $as_nop
   wine_can_build_preloader=no
 fi
 fi
-    if test "$wine_can_build_preloader" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
+	if test "$wine_can_build_preloader" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
 printf %s "checking whether the compiler supports -Wl,-no_pie... " >&6; }
 if test ${ac_cv_cflags__Wl__no_pie+y}
 then :
@@ -10067,105 +10061,105 @@ if test "x$ac_cv_cflags__Wl__no_pie" = xyes
 then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
 fi
-        test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
-    else
-        as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
-    fi
+	test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
+	WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+	else
+	as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
+	fi
 
-    if test "$host_cpu" = "x86_32on64"
-    then
-        WINEPRELOADER_LDFLAGS="$WINEPRELOADER_LDFLAGS -Wl,-stack_size,0x04000000,-stack_addr,0xc0000000"
-        libwine_tag="32on64"
-    fi
+	if test "$host_cpu" = "x86_32on64"
+	then
+	WINEPRELOADER_LDFLAGS="$WINEPRELOADER_LDFLAGS -Wl,-stack_size,0x04000000,-stack_addr,0xc0000000"
+	libwine_tag="32on64"
+	fi
 
-    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
-    then
-                DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
+	if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
+	then
+		DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
 
-    fi
-    if test "$ac_cv_header_Security_Security_h" = "yes"
-    then
-        SECURITY_LIBS="-framework Security -framework CoreFoundation"
+	fi
+	if test "$ac_cv_header_Security_Security_h" = "yes"
+	then
+	SECURITY_LIBS="-framework Security -framework CoreFoundation"
 
-    fi
-    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes"
-    then
-        COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
+	fi
+	if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes"
+	then
+	COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
 
-        enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
-    fi
-    if test "$ac_cv_header_OpenAL_al_h" = "yes"
-    then
-        OPENAL_LIBS="-framework OpenAL"
+	enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
+	fi
+	if test "$ac_cv_header_OpenAL_al_h" = "yes"
+	then
+	OPENAL_LIBS="-framework OpenAL"
 
 
 printf "%s\n" "#define HAVE_OPENAL 1" >>confdefs.h
 
-        ac_cv_lib_openal=yes
-    fi
-    if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
-    then
-        OPENCL_LIBS="-framework OpenCL"
+	ac_cv_lib_openal=yes
+	fi
+	if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
+	then
+	OPENCL_LIBS="-framework OpenCL"
 
-        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
-    fi
-    if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $IOKIT_LIBS"
-        ac_fn_c_check_func "$LINENO" "IOHIDManagerCreate" "ac_cv_func_IOHIDManagerCreate"
+	ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+	fi
+	if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
+	then
+	ac_save_LIBS="$LIBS"
+	LIBS="$LIBS $IOKIT_LIBS"
+	ac_fn_c_check_func "$LINENO" "IOHIDManagerCreate" "ac_cv_func_IOHIDManagerCreate"
 if test "x$ac_cv_func_IOHIDManagerCreate" = xyes
 then :
   printf "%s\n" "#define HAVE_IOHIDMANAGERCREATE 1" >>confdefs.h
 
 fi
 
-        LIBS="$ac_save_LIBS"
-    fi
+	LIBS="$ac_save_LIBS"
+	fi
 
-    if test "$ac_cv_header_IOKit_usb_IOUSBLib_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $IOKIT_LIBS"
-        ac_fn_c_check_func "$LINENO" "IOServiceMatching" "ac_cv_func_IOServiceMatching"
+	if test "$ac_cv_header_IOKit_usb_IOUSBLib_h" = "yes"
+	then
+	ac_save_LIBS="$LIBS"
+	LIBS="$LIBS $IOKIT_LIBS"
+	ac_fn_c_check_func "$LINENO" "IOServiceMatching" "ac_cv_func_IOServiceMatching"
 if test "x$ac_cv_func_IOServiceMatching" = xyes
 then :
   printf "%s\n" "#define HAVE_IOSERVICEMATCHING 1" >>confdefs.h
 
 fi
 
-        LIBS="$ac_save_LIBS"
-    fi
+	LIBS="$ac_save_LIBS"
+	fi
 
-    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
-    then
-        CARBON_LIBS="-framework Carbon"
+	if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
+	then
+	CARBON_LIBS="-framework Carbon"
 
-    fi
-    if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        METAL_LIBS="-framework Metal"
+	fi
+	if test "$ac_cv_header_Metal_Metal_h" = "yes"
+	then
+	METAL_LIBS="-framework Metal"
 
-    fi
+	fi
 
-    if test "$ac_cv_header_AVFoundation_AVFoundation_h" = "yes"
-    then
-        AVFOUNDATION_LIBS="-framework AVFoundation"
+	if test "$ac_cv_header_AVFoundation_AVFoundation_h" = "yes"
+	then
+	AVFOUNDATION_LIBS="-framework AVFoundation"
 
-    fi
+	fi
 
-        if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
+		if test "$ac_cv_header_Metal_Metal_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
 printf %s "checking whether MTLDevice protocol supports registryID property... " >&6; }
-        ac_ext=m
+	ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_objc_compiler_gnu
 
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <Metal/Metal.h>
 int
@@ -10188,48 +10182,48 @@ else $as_nop
 printf "%s\n" "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-        ac_ext=c
+	ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    fi
+	fi
 
-        if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $APPLICATIONSERVICES_LIBS"
-        ac_fn_c_check_func "$LINENO" "CGDisplayModeGetWidth" "ac_cv_func_CGDisplayModeGetWidth"
+		if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
+	then
+	ac_save_LIBS="$LIBS"
+	LIBS="$LIBS $APPLICATIONSERVICES_LIBS"
+	ac_fn_c_check_func "$LINENO" "CGDisplayModeGetWidth" "ac_cv_func_CGDisplayModeGetWidth"
 if test "x$ac_cv_func_CGDisplayModeGetWidth" = xyes
 then :
   enable_winemac_drv=${enable_winemac_drv:-yes}
 fi
 
-        LIBS="$ac_save_LIBS"
-    fi
+	LIBS="$ac_save_LIBS"
+	fi
 
-    UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
-    LIBWINE_NAME="wine$libwine_tag"
+	UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
+	LIBWINE_NAME="wine$libwine_tag"
 
-    LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.$libwine_version.dylib"
+	LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.$libwine_version.dylib"
 
-    LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/lib$LIBWINE_NAME.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
+	LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/lib$LIBWINE_NAME.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
 
-    WINELOADER_DEPENDS="wine_info.plist"
+	WINELOADER_DEPENDS="wine_info.plist"
 
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.$libwine_version.dylib libs/wine/lib$LIBWINE_NAME.$libwine_soversion.dylib"
-    ;;
+	TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.$libwine_version.dylib libs/wine/lib$LIBWINE_NAME.$libwine_soversion.dylib"
+	;;
 
-  linux-android*)
+	linux-android*)
 
 printf "%s\n" "#define _GNU_SOURCE 1" >>confdefs.h
 
-    DLLFLAGS="$DLLFLAGS -fPIC"
-    LDDLLFLAGS="-fPIC"
-    LDEXECFLAGS="-Wl,-pie"
-    enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
+	DLLFLAGS="$DLLFLAGS -fPIC"
+	LDDLLFLAGS="-fPIC"
+	LDEXECFLAGS="-Wl,-pie"
+	enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
 printf %s "checking whether the compiler supports -Wl,-z,defs... " >&6; }
 if test ${ac_cv_cflags__Wl__z_defs+y}
 then :
@@ -10257,7 +10251,7 @@ if test "x$ac_cv_cflags__Wl__z_defs" = xyes
 then :
   UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"
 fi
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
 printf %s "checking whether the compiler supports -fPIC -Wl,--export-dynamic... " >&6; }
 if test ${ac_cv_cflags__fPIC__Wl___export_dynamic+y}
 then :
@@ -10285,17 +10279,17 @@ if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes
 then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+	WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    LIBWINE_NAME="wine"
+	LIBWINE_NAME="wine"
 
-    LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.so"
+	LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.so"
 
-    LIBWINE_LDFLAGS="-shared -Wl,-soname,lib$LIBWINE_NAME.so"
+	LIBWINE_LDFLAGS="-shared -Wl,-soname,lib$LIBWINE_NAME.so"
 
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.so"
+	TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.so"
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
 printf %s "checking for -lEGL... " >&6; }
 if test ${ac_cv_lib_soname_EGL+y}
 then :
@@ -10349,7 +10343,7 @@ printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
 
 
 fi
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lGLESv2" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lGLESv2" >&5
 printf %s "checking for -lGLESv2... " >&6; }
 if test ${ac_cv_lib_soname_GLESv2+y}
 then :
@@ -10404,29 +10398,29 @@ printf "%s\n" "#define SONAME_LIBGLESV2 \"$ac_cv_lib_soname_GLESv2\"" >>confdefs
 
 fi
 
-    if test "x$exec_prefix" = xNONE
-    then
-      case $host_cpu in
-        *i[3456]86*) exec_prefix='${prefix}/x86' ;;
-        *x86_64*)      exec_prefix='${prefix}/x86_64' ;;
-        *arm*)         exec_prefix='${prefix}/armeabi-v7a' ;;
-        *aarch64*)     exec_prefix='${prefix}/arm64-v8a' ;;
-      esac
-    fi
-    ;;
+	if test "x$exec_prefix" = xNONE
+	then
+	case $host_cpu in
+	*i[3456]86*) exec_prefix='${prefix}/x86' ;;
+	*x86_64*)      exec_prefix='${prefix}/x86_64' ;;
+	*arm*)         exec_prefix='${prefix}/armeabi-v7a' ;;
+	*aarch64*)     exec_prefix='${prefix}/arm64-v8a' ;;
+	esac
+	fi
+	;;
 
-  *)
+	*)
 
 printf "%s\n" "#define _GNU_SOURCE 1" >>confdefs.h
 
-    test "$ac_cv_sys_file_offset_bits" = 64 &&
+	test "$ac_cv_sys_file_offset_bits" = 64 &&
 printf "%s\n" "#define _TIME_BITS 64" >>confdefs.h
 
-    case $host_cpu in
-      *i[3456789]86*)
-        DLLFLAGS="$DLLFLAGS -fno-PIC"
-        LDDLLFLAGS="-fno-PIC"
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-PIC -Wl,-z,notext" >&5
+	case $host_cpu in
+	*i[3456789]86*)
+	DLLFLAGS="$DLLFLAGS -fno-PIC"
+	LDDLLFLAGS="-fno-PIC"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-PIC -Wl,-z,notext" >&5
 printf %s "checking whether the compiler supports -fno-PIC -Wl,-z,notext... " >&6; }
 if test ${ac_cv_cflags__fno_PIC__Wl__z_notext+y}
 then :
@@ -10454,17 +10448,17 @@ if test "x$ac_cv_cflags__fno_PIC__Wl__z_notext" = xyes
 then :
   LDDLLFLAGS="$LDDLLFLAGS -Wl,-z,notext"
 fi
-        ;;
-      *)
-        DLLFLAGS="$DLLFLAGS -fPIC"
-        LDDLLFLAGS="-fPIC" ;;
-    esac
-    LIBWINE_NAME="wine"
+	;;
+	*)
+	DLLFLAGS="$DLLFLAGS -fPIC"
+	LDDLLFLAGS="-fPIC" ;;
+	esac
+	LIBWINE_NAME="wine"
 
-    LIBWINE_LDFLAGS="-shared -Wl,-soname,lib$LIBWINE_NAME.so.$libwine_soversion"
+	LIBWINE_LDFLAGS="-shared -Wl,-soname,lib$LIBWINE_NAME.so.$libwine_soversion"
 
-    echo '{ global: *; };' >conftest.map
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,--version-script=conftest.map" >&5
+	echo '{ global: *; };' >conftest.map
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,--version-script=conftest.map" >&5
 printf %s "checking whether the compiler supports -shared -Wl,--version-script=conftest.map... " >&6; }
 if test ${ac_cv_cflags__shared__Wl___version_script_conftest_map+y}
 then :
@@ -10492,9 +10486,9 @@ if test "x$ac_cv_cflags__shared__Wl___version_script_conftest_map" = xyes
 then :
   LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"
 fi
-    rm -f conftest.map
+	rm -f conftest.map
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
 printf %s "checking whether the compiler supports -Wl,-z,defs... " >&6; }
 if test ${ac_cv_cflags__Wl__z_defs+y}
 then :
@@ -10522,7 +10516,7 @@ if test "x$ac_cv_cflags__Wl__z_defs" = xyes
 then :
   UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"
 fi
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
 printf %s "checking whether the compiler supports -Wl,--export-dynamic... " >&6; }
 if test ${ac_cv_cflags__Wl___export_dynamic+y}
 then :
@@ -10550,11 +10544,11 @@ if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes
 then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+	WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    case $host_cpu in
-      *i[3456789]86* | x86_64 | *aarch64* | arm*)
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
+	case $host_cpu in
+	*i[3456789]86* | x86_64 | *aarch64* | arm*)
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
 printf %s "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
 if test ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+y}
 then :
@@ -10581,9 +10575,9 @@ printf "%s\n" "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
 if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes
 then :
   case $host_os in
-                         freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                         *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
-                         esac
+	freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
+	*) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
+	esac
 else $as_nop
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400" >&5
 printf %s "checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400... " >&6; }
@@ -10612,11 +10606,11 @@ printf "%s\n" "$ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&6; }
 if test "x$ac_cv_cflags__Wl___section_start__interp_0x7d000400" = xyes
 then :
   case $host_os in
-                                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                            *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                         esac
+	freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+	*) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
+	esac
 fi
-                         # Extract the first word of "prelink", so it can be a program name with args.
+	# Extract the first word of "prelink", so it can be a program name with args.
 set dummy prelink; ac_word=$2
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 printf %s "checking for $ac_word... " >&6; }
@@ -10662,12 +10656,12 @@ printf "%s\n" "no" >&6; }
 fi
 
 
-                         if test "x$PRELINK" = xfalse
-                         then
-                             as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
-                         fi
+	if test "x$PRELINK" = xfalse
+	then
+	as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
+	fi
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
 printf %s "checking whether the compiler supports -Wl,-z,max-page-size=0x1000... " >&6; }
 if test ${ac_cv_cflags__Wl__z_max_page_size_0x1000+y}
 then :
@@ -10695,14 +10689,14 @@ if test "x$ac_cv_cflags__Wl__z_max_page_size_0x1000" = xyes
 then :
   WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"
 fi
-        ;;
-    esac
-    LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.so.$libwine_version"
+	;;
+	esac
+	LIBWINE_SHAREDLIB="lib$LIBWINE_NAME.so.$libwine_version"
 
-    LIBWINE_DEPENDS="wine.map"
+	LIBWINE_DEPENDS="wine.map"
 
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.so.$libwine_version libs/wine/lib$LIBWINE_NAME.so.$libwine_soversion"
-    ;;
+	TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/lib$LIBWINE_NAME.so.$libwine_version libs/wine/lib$LIBWINE_NAME.so.$libwine_soversion"
+	;;
 esac
 
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
@@ -10712,8 +10706,8 @@ enable_winemac_drv=${enable_winemac_drv:-no}
 
 if test "x$with_mingw" != xno
 then
-    case "x$with_mingw" in
-      x|xyes) case "$host_cpu" in
+	case "x$with_mingw" in
+	x|xyes) case "$host_cpu" in
   aarch64*)
     ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang" ;;
   arm*)
@@ -10776,23 +10770,23 @@ fi
 done
 test -n "$CROSSCC" || CROSSCC="false"
  ;;
-      *) CROSSCC=$with_mingw ;;
-    esac
-    if test "$CROSSCC" != "false"
-    then
-        ac_save_CC="$CC"
-        saved_CFLAGS=$CFLAGS
-        saved_LDFLAGS=$LDFLAGS
-        CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
+	*) CROSSCC=$with_mingw ;;
+	esac
+	if test "$CROSSCC" != "false"
+	then
+	ac_save_CC="$CC"
+	saved_CFLAGS=$CFLAGS
+	saved_LDFLAGS=$LDFLAGS
+	CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
 
-        EXTRACROSSCFLAGS="-D__WINE_PE_BUILD -Wall"
+	EXTRACROSSCFLAGS="-D__WINE_PE_BUILD -Wall"
 
 
 
-        CC="$CROSSCC"
-        CFLAGS=$CROSSCFLAGS
-        LDFLAGS=$CROSSLDFLAGS
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
+	CC="$CROSSCC"
+	CFLAGS=$CROSSCFLAGS
+	LDFLAGS=$CROSSLDFLAGS
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
 printf %s "checking whether $CROSSCC works... " >&6; }
 if test ${wine_cv_crosscc+y}
 then :
@@ -10819,32 +10813,32 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_crosscc" >&5
 printf "%s\n" "$wine_cv_crosscc" >&6; }
-        if test $wine_cv_crosscc = yes
-        then
-            set x $CROSSCC
-            shift
-            while test $# -ge 1
-            do
-                case "$1" in
-                    *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
-                    *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
-                esac
-                shift
-            done
+	if test $wine_cv_crosscc = yes
+	then
+	set x $CROSSCC
+	shift
+	while test $# -ge 1
+	do
+	case "$1" in
+	*-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
+	*-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
+	esac
+	shift
+	done
 
-                        llvm_target=$CROSSTARGET
-            llvm_cflags="-fuse-ld=lld"
-            if test -z "$llvm_target"
-            then
-                case $host_cpu in
-                *i[3456789]86*) llvm_target=i686-windows ;;
-                *) llvm_target=$host_cpu-windows ;;
-                esac
-            fi
-            case $llvm_target in
-            *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
-            esac
-            as_ac_var=`printf "%s\n" "ac_cv_crosscflags_-target $llvm_target $llvm_cflags" | $as_tr_sh`
+		llvm_target=$CROSSTARGET
+	llvm_cflags="-fuse-ld=lld"
+	if test -z "$llvm_target"
+	then
+	case $host_cpu in
+	*i[3456789]86*) llvm_target=i686-windows ;;
+	*) llvm_target=$host_cpu-windows ;;
+	esac
+	fi
+	case $llvm_target in
+	*windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+	esac
+	as_ac_var=`printf "%s\n" "ac_cv_crosscflags_-target $llvm_target $llvm_cflags" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -target $llvm_target $llvm_cflags" >&5
 printf %s "checking whether the cross-compiler supports -target $llvm_target $llvm_cflags... " >&6; }
 if eval test \${$as_ac_var+y}
@@ -10879,13 +10873,13 @@ printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   CROSSTARGET=$llvm_target
-                                  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
-                                  DELAYLOADFLAG="-Wl,-delayload,"
+	EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
+	DELAYLOADFLAG="-Wl,-delayload,"
 
-                                  CFLAGS="$CFLAGS $llvm_cflags"
+	CFLAGS="$CFLAGS $llvm_cflags"
 fi
-        fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
+	fi
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 printf %s "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
 if test ${ac_cv_crosscflags__fno_strict_aliasing+y}
 then :
@@ -10919,7 +10913,7 @@ if test "x$ac_cv_crosscflags__fno_strict_aliasing" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-strict-aliasing"
 fi
-                { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
 printf %s "checking whether the cross-compiler supports -Werror=unknown-warning-option... " >&6; }
 if test ${ac_cv_crosscflags__Werror_unknown_warning_option+y}
 then :
@@ -10953,7 +10947,7 @@ if test "x$ac_cv_crosscflags__Werror_unknown_warning_option" = xyes
 then :
   CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=ignored-optimization-argument" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=ignored-optimization-argument" >&5
 printf %s "checking whether the cross-compiler supports -Werror=ignored-optimization-argument... " >&6; }
 if test ${ac_cv_crosscflags__Werror_ignored_optimization_argument+y}
 then :
@@ -10987,7 +10981,7 @@ if test "x$ac_cv_crosscflags__Werror_ignored_optimization_argument" = xyes
 then :
   CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
 printf %s "checking whether the cross-compiler supports -Wdeclaration-after-statement... " >&6; }
 if test ${ac_cv_crosscflags__Wdeclaration_after_statement+y}
 then :
@@ -11021,7 +11015,7 @@ if test "x$ac_cv_crosscflags__Wdeclaration_after_statement" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wdeclaration-after-statement"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wempty-body" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wempty-body" >&5
 printf %s "checking whether the cross-compiler supports -Wempty-body... " >&6; }
 if test ${ac_cv_crosscflags__Wempty_body+y}
 then :
@@ -11055,7 +11049,7 @@ if test "x$ac_cv_crosscflags__Wempty_body" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wempty-body"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wignored-qualifiers" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wignored-qualifiers" >&5
 printf %s "checking whether the cross-compiler supports -Wignored-qualifiers... " >&6; }
 if test ${ac_cv_crosscflags__Wignored_qualifiers+y}
 then :
@@ -11089,7 +11083,7 @@ if test "x$ac_cv_crosscflags__Wignored_qualifiers" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wignored-qualifiers"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Winit-self" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Winit-self" >&5
 printf %s "checking whether the cross-compiler supports -Winit-self... " >&6; }
 if test ${ac_cv_crosscflags__Winit_self+y}
 then :
@@ -11123,7 +11117,7 @@ if test "x$ac_cv_crosscflags__Winit_self" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Winit-self"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpacked-not-aligned" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpacked-not-aligned" >&5
 printf %s "checking whether the cross-compiler supports -Wpacked-not-aligned... " >&6; }
 if test ${ac_cv_crosscflags__Wpacked_not_aligned+y}
 then :
@@ -11157,7 +11151,7 @@ if test "x$ac_cv_crosscflags__Wpacked_not_aligned" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-packed-not-aligned"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpragma-pack" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpragma-pack" >&5
 printf %s "checking whether the cross-compiler supports -Wpragma-pack... " >&6; }
 if test ${ac_cv_crosscflags__Wpragma_pack+y}
 then :
@@ -11191,7 +11185,7 @@ if test "x$ac_cv_crosscflags__Wpragma_pack" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-pragma-pack"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wshift-overflow=2" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wshift-overflow=2" >&5
 printf %s "checking whether the cross-compiler supports -Wshift-overflow=2... " >&6; }
 if test ${ac_cv_crosscflags__Wshift_overflow_2+y}
 then :
@@ -11225,7 +11219,7 @@ if test "x$ac_cv_crosscflags__Wshift_overflow_2" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wshift-overflow=2"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wstrict-prototypes" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wstrict-prototypes" >&5
 printf %s "checking whether the cross-compiler supports -Wstrict-prototypes... " >&6; }
 if test ${ac_cv_crosscflags__Wstrict_prototypes+y}
 then :
@@ -11259,7 +11253,7 @@ if test "x$ac_cv_crosscflags__Wstrict_prototypes" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wstrict-prototypes"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wtype-limits" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wtype-limits" >&5
 printf %s "checking whether the cross-compiler supports -Wtype-limits... " >&6; }
 if test ${ac_cv_crosscflags__Wtype_limits+y}
 then :
@@ -11293,7 +11287,7 @@ if test "x$ac_cv_crosscflags__Wtype_limits" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wtype-limits"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wunused-but-set-parameter" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wunused-but-set-parameter" >&5
 printf %s "checking whether the cross-compiler supports -Wunused-but-set-parameter... " >&6; }
 if test ${ac_cv_crosscflags__Wunused_but_set_parameter+y}
 then :
@@ -11327,7 +11321,7 @@ if test "x$ac_cv_crosscflags__Wunused_but_set_parameter" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wunused-but-set-parameter"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wvla" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wvla" >&5
 printf %s "checking whether the cross-compiler supports -Wvla... " >&6; }
 if test ${ac_cv_crosscflags__Wvla+y}
 then :
@@ -11361,7 +11355,7 @@ if test "x$ac_cv_crosscflags__Wvla" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wvla"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wwrite-strings" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wwrite-strings" >&5
 printf %s "checking whether the cross-compiler supports -Wwrite-strings... " >&6; }
 if test ${ac_cv_crosscflags__Wwrite_strings+y}
 then :
@@ -11395,7 +11389,7 @@ if test "x$ac_cv_crosscflags__Wwrite_strings" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wwrite-strings"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpointer-arith" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpointer-arith" >&5
 printf %s "checking whether the cross-compiler supports -Wpointer-arith... " >&6; }
 if test ${ac_cv_crosscflags__Wpointer_arith+y}
 then :
@@ -11429,7 +11423,7 @@ if test "x$ac_cv_crosscflags__Wpointer_arith" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wpointer-arith"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wlogical-op" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wlogical-op" >&5
 printf %s "checking whether the cross-compiler supports -Wlogical-op... " >&6; }
 if test ${ac_cv_crosscflags__Wlogical_op+y}
 then :
@@ -11463,7 +11457,7 @@ if test "x$ac_cv_crosscflags__Wlogical_op" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wlogical-op"
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wabsolute-value" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wabsolute-value" >&5
 printf %s "checking whether the cross-compiler supports -Wabsolute-value... " >&6; }
 if test ${ac_cv_crosscflags__Wabsolute_value+y}
 then :
@@ -11498,8 +11492,8 @@ then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wabsolute-value"
 fi
 
-        case $host_cpu in
-          *i[3456789]86*|x86_32on64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-omit-frame-pointer" >&5
+	case $host_cpu in
+	*i[3456789]86*|x86_32on64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-omit-frame-pointer" >&5
 printf %s "checking whether the cross-compiler supports -fno-omit-frame-pointer... " >&6; }
 if test ${ac_cv_crosscflags__fno_omit_frame_pointer+y}
 then :
@@ -11533,7 +11527,7 @@ if test "x$ac_cv_crosscflags__fno_omit_frame_pointer" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-omit-frame-pointer"
 fi ;;
-          x86_64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
+	x86_64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
 printf %s "checking whether the cross-compiler supports -Wno-format... " >&6; }
 if test ${ac_cv_crosscflags__Wno_format+y}
 then :
@@ -11567,7 +11561,7 @@ if test "x$ac_cv_crosscflags__Wno_format" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
 fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wformat-overflow" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wformat-overflow" >&5
 printf %s "checking whether the cross-compiler supports -Wformat-overflow... " >&6; }
 if test ${ac_cv_crosscflags__Wformat_overflow+y}
 then :
@@ -11601,7 +11595,7 @@ if test "x$ac_cv_crosscflags__Wformat_overflow" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wformat-overflow"
 fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wnonnull" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wnonnull" >&5
 printf %s "checking whether the cross-compiler supports -Wnonnull... " >&6; }
 if test ${ac_cv_crosscflags__Wnonnull+y}
 then :
@@ -11635,7 +11629,7 @@ if test "x$ac_cv_crosscflags__Wnonnull" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wnonnull"
 fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -mcx16" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -mcx16" >&5
 printf %s "checking whether the cross-compiler supports -mcx16... " >&6; }
 if test ${ac_cv_crosscflags__mcx16+y}
 then :
@@ -11669,7 +11663,7 @@ if test "x$ac_cv_crosscflags__mcx16" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -mcx16"
 fi ;;
-          aarch64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
+	aarch64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
 printf %s "checking whether the cross-compiler supports -Wno-format... " >&6; }
 if test ${ac_cv_crosscflags__Wno_format+y}
 then :
@@ -11703,30 +11697,30 @@ if test "x$ac_cv_crosscflags__Wno_format" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
 fi ;;
-        esac
+	esac
 
 
-        if test -z "$CROSSDEBUG"
-        then
-          for ac_flag in $CROSSCFLAGS; do
-            case $ac_flag in
-             -gdwarf*)    CROSSDEBUG=dwarf ;;
-             -gcodeview)  CROSSDEBUG=pdb ;;
-             -g)          CROSSDEBUG=${CROSSDEBUG:-dwarf} ;;
-            esac
-          done
-        fi
+	if test -z "$CROSSDEBUG"
+	then
+	for ac_flag in $CROSSCFLAGS; do
+	case $ac_flag in
+	-gdwarf*)    CROSSDEBUG=dwarf ;;
+	-gcodeview)  CROSSDEBUG=pdb ;;
+	-g)          CROSSDEBUG=${CROSSDEBUG:-dwarf} ;;
+	esac
+	done
+	fi
 
-        ac_debug_format_seen=""
-        for ac_flag in $CROSSCFLAGS; do
-          case $ac_flag in
-           -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
-          esac
-        done
-        if test "x$ac_debug_format_seen" = x
-        then
-          case $CROSSDEBUG in
-            *dwarf)  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-4" >&5
+	ac_debug_format_seen=""
+	for ac_flag in $CROSSCFLAGS; do
+	case $ac_flag in
+	-gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
+	esac
+	done
+	if test "x$ac_debug_format_seen" = x
+	then
+	case $CROSSDEBUG in
+	*dwarf)  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-4" >&5
 printf %s "checking whether the cross-compiler supports -gdwarf-4... " >&6; }
 if test ${ac_cv_crosscflags__gdwarf_4+y}
 then :
@@ -11760,7 +11754,7 @@ if test "x$ac_cv_crosscflags__gdwarf_4" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gdwarf-4"
 fi ;;
-            pdb)     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gcodeview" >&5
+	pdb)     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gcodeview" >&5
 printf %s "checking whether the cross-compiler supports -gcodeview... " >&6; }
 if test ${ac_cv_crosscflags__gcodeview+y}
 then :
@@ -11794,10 +11788,10 @@ if test "x$ac_cv_crosscflags__gcodeview" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gcodeview"
 fi ;;
-          esac
-        fi
+	esac
+	fi
 
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fexcess-precision=standard" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fexcess-precision=standard" >&5
 printf %s "checking whether the cross-compiler supports -fexcess-precision=standard... " >&6; }
 if test ${ac_cv_crosscflags__fexcess_precision_standard+y}
 then :
@@ -11833,9 +11827,9 @@ then :
 
 fi
 
-        if test "x$enable_werror" = "xyes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
+	if test "x$enable_werror" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
 printf %s "checking whether the cross-compiler supports -Werror... " >&6; }
 if test ${ac_cv_crosscflags__Werror+y}
 then :
@@ -11869,10 +11863,10 @@ if test "x$ac_cv_crosscflags__Werror" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror"
 fi
-        fi
-        if test "x$enable_build_id" = "xyes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--build-id" >&5
+	fi
+	if test "x$enable_build_id" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--build-id" >&5
 printf %s "checking whether the cross-compiler supports -Wl,--build-id... " >&6; }
 if test ${ac_cv_crosscflags__Wl___build_id+y}
 then :
@@ -11905,14 +11899,14 @@ printf "%s\n" "$ac_cv_crosscflags__Wl___build_id" >&6; }
 if test "x$ac_cv_crosscflags__Wl___build_id" = xyes
 then :
   CROSSCFLAGS="$CROSSCFLAGS -Wl,--build-id"
-                            CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--build-id"
+	CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--build-id"
 fi
-        fi
+	fi
 
-        CFLAGS=$saved_CFLAGS
-        LDFLAGS=$saved_LDFLAGS
-        CC="$ac_save_CC"
-    fi
+	CFLAGS=$saved_CFLAGS
+	LDFLAGS=$saved_LDFLAGS
+	CC="$ac_save_CC"
+	fi
 fi
 if test "x$CROSSTARGET" = "x"
 then :
@@ -11926,13 +11920,13 @@ esac
 fi
 
 case $host_cpu in
-  aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5 ;;
+	aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5 ;;
 esac
 
 
 if test "x$with_system_dllpath" != "x" -a "$CROSSCC" != "false"
 then
-    case "$host_cpu" in
+	case "$host_cpu" in
   i[3456789]86*|x86_32on64)
     ac_prefix_list="i686-w64-mingw32-pkg-config i586-w64-mingw32-pkg-config i486-w64-mingw32-pkg-config i386-w64-mingw32-pkg-config " ;;
   *)
@@ -12091,12 +12085,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$FAUDIO_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version."
-    fi
+	if test "x$FAUDIO_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version."
+	fi
 
-    if ${JPEG_PE_CFLAGS:+false} :
+	if ${JPEG_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12126,7 +12120,7 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stddef.h>
-             #include <stdio.h>
+	#include <stdio.h>
 #include <jpeglib.h>
 int
 main (void)
@@ -12202,12 +12196,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$JPEG_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libjpeg ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$JPEG_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libjpeg ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${LCMS2_PE_CFLAGS:+false} :
+	if ${LCMS2_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12312,12 +12306,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$LCMS2_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|liblcms2 ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$LCMS2_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|liblcms2 ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${MPG123_PE_CFLAGS:+false} :
+	if ${MPG123_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12422,12 +12416,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$MPG123_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libmpg123 ${notice_platform}MinGW development files not found (or too old); using bundled version."
-    fi
+	if test "x$MPG123_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libmpg123 ${notice_platform}MinGW development files not found (or too old); using bundled version."
+	fi
 
-    if ${PNG_PE_CFLAGS:+false} :
+	if ${PNG_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12532,12 +12526,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$PNG_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libpng ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$PNG_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libpng ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${TIFF_PE_CFLAGS:+false} :
+	if ${TIFF_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12642,12 +12636,12 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$TIFF_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libtiff ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$TIFF_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libtiff ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${XML2_PE_CFLAGS:+false} :
+	if ${XML2_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12702,7 +12696,7 @@ if test "x$ac_cv_mingw_header_libxml_parser_h" = xyes
 then :
 
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxml/xmlsave.h" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxml/xmlsave.h" >&5
 printf %s "checking for MinGW libxml/xmlsave.h... " >&6; }
 if test ${ac_cv_mingw_header_libxml_xmlsave_h+y}
 then :
@@ -12740,7 +12734,7 @@ if test "x$ac_cv_mingw_header_libxml_xmlsave_h" = xyes
 then :
 
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxml/SAX2.h" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxml/SAX2.h" >&5
 printf %s "checking for MinGW libxml/SAX2.h... " >&6; }
 if test ${ac_cv_mingw_header_libxml_SAX2_h+y}
 then :
@@ -12778,9 +12772,9 @@ if test "x$ac_cv_mingw_header_libxml_SAX2_h" = xyes
 then :
 
 fi
-        if test "$ac_cv_mingw_header_libxml_parser_h" = "yes" -a "$ac_cv_mingw_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_mingw_header_libxml_SAX2_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in MinGW -lxml2" >&5
+	if test "$ac_cv_mingw_header_libxml_parser_h" = "yes" -a "$ac_cv_mingw_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_mingw_header_libxml_SAX2_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in MinGW -lxml2" >&5
 printf %s "checking for xmlFirstElementChild in MinGW -lxml2... " >&6; }
 if test ${ac_cv_mingw_lib_xml2+y}
 then :
@@ -12827,18 +12821,18 @@ then :
 else $as_nop
   XML2_PE_CFLAGS=""; XML2_PE_LIBS=""
 fi
-        else
-            XML2_PE_CFLAGS=""
-            XML2_PE_LIBS=""
-        fi
+	else
+	XML2_PE_CFLAGS=""
+	XML2_PE_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$XML2_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libxml2 ${notice_platform}MinGW development files not found (or too old); using bundled version."
-    fi
+	if test "x$XML2_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libxml2 ${notice_platform}MinGW development files not found (or too old); using bundled version."
+	fi
 
-    if ${XSLT_PE_CFLAGS:+false} :
+	if ${XSLT_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -12893,7 +12887,7 @@ if test "x$ac_cv_mingw_header_libxslt_pattern_h" = xyes
 then :
 
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxslt/transform.h" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxslt/transform.h" >&5
 printf %s "checking for MinGW libxslt/transform.h... " >&6; }
 if test ${ac_cv_mingw_header_libxslt_transform_h+y}
 then :
@@ -12931,9 +12925,9 @@ if test "x$ac_cv_mingw_header_libxslt_transform_h" = xyes
 then :
 
 fi
-        if test "$ac_cv_mingw_header_libxslt_pattern_h" = "yes" -a "$ac_cv_mingw_header_libxslt_transform_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xsltCompilePattern in MinGW -lxslt" >&5
+	if test "$ac_cv_mingw_header_libxslt_pattern_h" = "yes" -a "$ac_cv_mingw_header_libxslt_transform_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xsltCompilePattern in MinGW -lxslt" >&5
 printf %s "checking for xsltCompilePattern in MinGW -lxslt... " >&6; }
 if test ${ac_cv_mingw_lib_xslt+y}
 then :
@@ -12980,18 +12974,18 @@ then :
 else $as_nop
   XSLT_PE_CFLAGS=""; XSLT_PE_LIBS=""
 fi
-        else
-            XSLT_PE_CFLAGS=""
-            XSLT_PE_LIBS=""
-        fi
+	else
+	XSLT_PE_CFLAGS=""
+	XSLT_PE_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$XSLT_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libxslt ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$XSLT_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libxslt ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${VKD3D_PE_CFLAGS:+false} :
+	if ${VKD3D_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -13046,7 +13040,7 @@ if test "x$ac_cv_mingw_header_vkd3d_h" = xyes
 then :
 
 fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d_shader.h" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d_shader.h" >&5
 printf %s "checking for MinGW vkd3d_shader.h... " >&6; }
 if test ${ac_cv_mingw_header_vkd3d_shader_h+y}
 then :
@@ -13084,9 +13078,9 @@ if test "x$ac_cv_mingw_header_vkd3d_shader_h" = xyes
 then :
 
 fi
-        if test "$ac_cv_mingw_header_vkd3d_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_serialize_versioned_root_signature in MinGW -lvkd3d" >&5
+	if test "$ac_cv_mingw_header_vkd3d_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_serialize_versioned_root_signature in MinGW -lvkd3d" >&5
 printf %s "checking for vkd3d_serialize_versioned_root_signature in MinGW -lvkd3d... " >&6; }
 if test ${ac_cv_mingw_lib_vkd3d+y}
 then :
@@ -13133,7 +13127,7 @@ then :
 else $as_nop
   :
 fi
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_compile in MinGW -lvkd3d-shader" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_compile in MinGW -lvkd3d-shader" >&5
 printf %s "checking for vkd3d_shader_compile in MinGW -lvkd3d-shader... " >&6; }
 if test ${ac_cv_mingw_lib_vkd3d_shader+y}
 then :
@@ -13180,23 +13174,23 @@ then :
 else $as_nop
   :
 fi
-            if test "$ac_cv_mingw_lib_vkd3d" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
-            then
-                VKD3D_PE_CFLAGS=""
-                VKD3D_PE_LIBS=""
-            fi
-        else
-            VKD3D_PE_CFLAGS=""
-            VKD3D_PE_LIBS=""
-        fi
+	if test "$ac_cv_mingw_lib_vkd3d" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
+	then
+	VKD3D_PE_CFLAGS=""
+	VKD3D_PE_LIBS=""
+	fi
+	else
+	VKD3D_PE_CFLAGS=""
+	VKD3D_PE_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$VKD3D_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|libvkd3d ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$VKD3D_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|libvkd3d ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 
-    if ${ZLIB_PE_CFLAGS:+false} :
+	if ${ZLIB_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
@@ -13301,10 +13295,10 @@ else $as_nop
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "x$ZLIB_PE_LIBS" = "x"
-    then
-        as_fn_append wine_notices "|zlib ${notice_platform}MinGW development files not found; using bundled version."
-    fi
+	if test "x$ZLIB_PE_LIBS" = "x"
+	then
+	as_fn_append wine_notices "|zlib ${notice_platform}MinGW development files not found; using bundled version."
+	fi
 fi
 
 if ${FAUDIO_PE_LIBS:+false} :
@@ -13491,7 +13485,7 @@ printf "%s\n" "$as_me:${as_lineno-$LINENO}: zlib libs: $ZLIB_PE_LIBS" >&5
 
 if test "$ac_cv_header_pthread_h" = "yes"
 then
-    ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
+	ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
 if test "x$ac_cv_func_pthread_create" = xyes
 then :
 
@@ -14411,10 +14405,10 @@ fi
 
 if test "$have_x" = "yes"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+	ac_save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lX11" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lX11" >&5
 printf %s "checking for -lX11... " >&6; }
 if test ${ac_cv_lib_soname_X11+y}
 then :
@@ -14468,7 +14462,7 @@ printf "%s\n" "#define SONAME_LIBX11 \"$ac_cv_lib_soname_X11\"" >>confdefs.h
 
 
 fi
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXext" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXext" >&5
 printf %s "checking for -lXext... " >&6; }
 if test ${ac_cv_lib_soname_Xext+y}
 then :
@@ -14522,9 +14516,9 @@ printf "%s\n" "#define SONAME_LIBXEXT \"$ac_cv_lib_soname_Xext\"" >>confdefs.h
 
        X_LIBS="$X_LIBS -lXext"
 fi
-    X_LIBS="$X_LIBS -lX11"
+	X_LIBS="$X_LIBS -lX11"
 
-        ac_fn_c_check_header_compile "$LINENO" "X11/Xlib.h" "ac_cv_header_X11_Xlib_h" "#ifdef HAVE_X11_XLIB_H
+		ac_fn_c_check_header_compile "$LINENO" "X11/Xlib.h" "ac_cv_header_X11_Xlib_h" "#ifdef HAVE_X11_XLIB_H
 # include <X11/Xlib.h>
 #endif
 #ifdef HAVE_X11_XUTIL_H
@@ -14706,9 +14700,9 @@ then :
 fi
 
 
-                if test "$ac_cv_header_X11_XKBlib_h" = "yes"
-        then
-              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XkbQueryExtension in -lX11" >&5
+		if test "$ac_cv_header_X11_XKBlib_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XkbQueryExtension in -lX11" >&5
 printf %s "checking for XkbQueryExtension in -lX11... " >&6; }
 if test ${ac_cv_lib_X11_XkbQueryExtension+y}
 then :
@@ -14750,11 +14744,11 @@ printf "%s\n" "#define HAVE_XKB 1" >>confdefs.h
 
 fi
 
-        fi
+	fi
 
-                if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcursor" >&5
+		if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcursor" >&5
 printf %s "checking for -lXcursor... " >&6; }
 if test ${ac_cv_lib_soname_Xcursor+y}
 then :
@@ -14808,8 +14802,8 @@ printf "%s\n" "#define SONAME_LIBXCURSOR \"$ac_cv_lib_soname_Xcursor\"" >>confde
 
 
 fi
-        fi
-        if test "x$ac_cv_lib_soname_Xcursor" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xcursor" = "x"
 then :
   case "x$with_xcursor" in
   x)   as_fn_append wine_notices "|libxcursor ${notice_platform}development files not found, the Xcursor extension won't be supported." ;;
@@ -14820,9 +14814,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXi" >&5
+		if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXi" >&5
 printf %s "checking for -lXi... " >&6; }
 if test ${ac_cv_lib_soname_Xi+y}
 then :
@@ -14876,8 +14870,8 @@ printf "%s\n" "#define SONAME_LIBXI \"$ac_cv_lib_soname_Xi\"" >>confdefs.h
 
 
 fi
-        fi
-        if test "x$ac_cv_lib_soname_Xi" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xi" = "x"
 then :
   case "x$with_xinput" in
   x)   as_fn_append wine_notices "|libxi ${notice_platform}development files not found, the Xinput extension won't be supported." ;;
@@ -14888,9 +14882,9 @@ esac
 
 fi
 
-                if test "x$ac_cv_lib_soname_Xi" != x
-        then
-            if test "$ac_cv_header_X11_extensions_XInput2_h" != "yes"
+		if test "x$ac_cv_lib_soname_Xi" != x
+	then
+	if test "$ac_cv_header_X11_extensions_XInput2_h" != "yes"
 then :
   case "x$with_xinput2" in
   x)   as_fn_append wine_notices "|XInput2 headers not found, the XInput 2 extension won't be supported." ;;
@@ -14900,11 +14894,11 @@ This is an error since --with-xinput2 was requested." "$LINENO" 5 ;;
 esac
 
 fi
-        fi
+	fi
 
-                if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
-        then
-              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XShmQueryExtension in -lXext" >&5
+		if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XShmQueryExtension in -lXext" >&5
 printf %s "checking for XShmQueryExtension in -lXext... " >&6; }
 if test ${ac_cv_lib_Xext_XShmQueryExtension+y}
 then :
@@ -14946,8 +14940,8 @@ printf "%s\n" "#define HAVE_LIBXXSHM 1" >>confdefs.h
 
 fi
 
-        fi
-        if test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"
+	fi
+	if test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"
 then :
   case "x$with_xshm" in
   x)   as_fn_append wine_notices "|XShm ${notice_platform}development files not found, X Shared Memory won't be supported." ;;
@@ -14958,9 +14952,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
-        then
-              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XShapeQueryExtension in -lXext" >&5
+		if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XShapeQueryExtension in -lXext" >&5
 printf %s "checking for XShapeQueryExtension in -lXext... " >&6; }
 if test ${ac_cv_lib_Xext_XShapeQueryExtension+y}
 then :
@@ -15002,8 +14996,8 @@ printf "%s\n" "#define HAVE_LIBXSHAPE 1" >>confdefs.h
 
 fi
 
-        fi
-        if test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"
+	fi
+	if test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"
 then :
   case "x$with_xshape" in
   x)   as_fn_append wine_notices "|XShape ${notice_platform}development files not found, XShape won't be supported." ;;
@@ -15014,9 +15008,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes" -o "$ac_cv_header_X11_extensions_xf86vmproto_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXxf86vm" >&5
+		if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes" -o "$ac_cv_header_X11_extensions_xf86vmproto_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXxf86vm" >&5
 printf %s "checking for -lXxf86vm... " >&6; }
 if test ${ac_cv_lib_soname_Xxf86vm+y}
 then :
@@ -15070,8 +15064,8 @@ printf "%s\n" "#define SONAME_LIBXXF86VM \"$ac_cv_lib_soname_Xxf86vm\"" >>confde
 
 
 fi
-        fi
-        if test "x$ac_cv_lib_soname_Xxf86vm" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xxf86vm" = "x"
 then :
   case "x$with_xxf86vm" in
   x)   as_fn_append wine_notices "|libXxf86vm ${notice_platform}development files not found, XFree86 Vidmode won't be supported." ;;
@@ -15082,9 +15076,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXrender" >&5
+		if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXrender" >&5
 printf %s "checking for -lXrender... " >&6; }
 if test ${ac_cv_lib_soname_Xrender+y}
 then :
@@ -15178,7 +15172,7 @@ printf "%s\n" "#define HAVE_XRENDERSETPICTURETRANSFORM 1" >>confdefs.h
 
 fi
 
-               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XRenderCreateLinearGradient in -lXrender" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XRenderCreateLinearGradient in -lXrender" >&5
 printf %s "checking for XRenderCreateLinearGradient in -lXrender... " >&6; }
 if test ${ac_cv_lib_Xrender_XRenderCreateLinearGradient+y}
 then :
@@ -15222,8 +15216,8 @@ fi
 
 fi
 
-        fi
-        if test "x$ac_cv_lib_soname_Xrender" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xrender" = "x"
 then :
   case "x$with_xrender" in
   x)   as_fn_append wine_warnings "|libxrender ${notice_platform}development files not found, XRender won't be supported." ;;
@@ -15234,9 +15228,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
-        then
-                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+		if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
+	then
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
@@ -15326,8 +15320,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-        fi
-        if test "x$ac_cv_lib_soname_Xrandr" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xrandr" = "x"
 then :
   case "x$with_xrandr" in
   x)   as_fn_append wine_notices "|libxrandr ${notice_platform}development files not found, XRandr won't be supported." ;;
@@ -15338,9 +15332,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xfixes_h" = "yes"
-        then
-                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+		if test "$ac_cv_header_X11_extensions_Xfixes_h" = "yes"
+	then
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
@@ -15410,8 +15404,8 @@ printf "%s\n" "#define SONAME_LIBXFIXES \"$ac_cv_lib_soname_Xfixes\"" >>confdefs
 fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-        fi
-        if test "x$ac_cv_lib_soname_Xfixes" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xfixes" = "x"
 then :
   case "x$with_xfixes" in
   x)   as_fn_append wine_notices "|libxfixes ${notice_platform}development files not found, Xfixes won't be supported." ;;
@@ -15422,9 +15416,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
-        then
-                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+		if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
+	then
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <X11/Xlib.h>
 #include <X11/extensions/Xinerama.h>
@@ -15494,8 +15488,8 @@ printf "%s\n" "#define SONAME_LIBXINERAMA \"$ac_cv_lib_soname_Xinerama\"" >>conf
 fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-        fi
-        if test "x$ac_cv_lib_soname_Xinerama" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xinerama" = "x"
 then :
   case "x$with_xinerama" in
   x)   as_fn_append wine_notices "|libxinerama ${notice_platform}development files not found, multi-monitor setups won't be supported." ;;
@@ -15506,9 +15500,9 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcomposite" >&5
+		if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcomposite" >&5
 printf %s "checking for -lXcomposite... " >&6; }
 if test ${ac_cv_lib_soname_Xcomposite+y}
 then :
@@ -15562,8 +15556,8 @@ printf "%s\n" "#define SONAME_LIBXCOMPOSITE \"$ac_cv_lib_soname_Xcomposite\"" >>
 
 
 fi
-        fi
-        if test "x$ac_cv_lib_soname_Xcomposite" = "x"
+	fi
+	if test "x$ac_cv_lib_soname_Xcomposite" = "x"
 then :
   case "x$with_xcomposite" in
   x)   as_fn_append wine_notices "|libxcomposite ${notice_platform}development files not found, Xcomposite won't be supported." ;;
@@ -15574,7 +15568,7 @@ esac
 
 fi
 
-                ac_fn_c_check_member "$LINENO" "XICCallback" "callback" "ac_cv_member_XICCallback_callback" "#ifdef HAVE_X11_XLIB_H
+		ac_fn_c_check_member "$LINENO" "XICCallback" "callback" "ac_cv_member_XICCallback_callback" "#ifdef HAVE_X11_XLIB_H
 #include <X11/Xlib.h>
 #endif
 "
@@ -15599,9 +15593,9 @@ fi
 
 
 
-        opengl_msg=""
-    if test "x$with_opengl" != "xno"
-    then
+		opengl_msg=""
+	if test "x$with_opengl" != "xno"
+	then
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lGL" >&5
 printf %s "checking for -lGL... " >&6; }
 if test ${ac_cv_lib_soname_GL+y}
@@ -15693,12 +15687,12 @@ then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 printf "%s\n" "not found" >&6; }
        if test -f /usr/X11R6/lib/libGL.a
-                            then
-	                        opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
+	then
+	opengl_msg="/usr/X11R6/lib/libGL.a is present on your system.
 This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
-                            else
-                                opengl_msg="No OpenGL library found on this system."
-                            fi
+	else
+	opengl_msg="No OpenGL library found on this system."
+	fi
 else $as_nop
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GL" >&5
 printf "%s\n" "$ac_cv_lib_soname_GL" >&6; }
@@ -15715,9 +15709,9 @@ printf "%s\n" "#define SONAME_LIBGL \"$ac_cv_lib_soname_GL\"" >>confdefs.h
 
        OPENGL_LIBS="-lGL"
 fi
-        if test "x$with_osmesa" != "xno"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5
+	if test "x$with_osmesa" != "xno"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5
 printf %s "checking for -lOSMesa... " >&6; }
 if test ${ac_cv_lib_soname_OSMesa+y}
 then :
@@ -15771,7 +15765,7 @@ printf "%s\n" "#define SONAME_LIBOSMESA \"$ac_cv_lib_soname_OSMesa\"" >>confdefs
 
 
 fi
-            if test "x$ac_cv_lib_soname_OSMesa" = "x"
+	if test "x$ac_cv_lib_soname_OSMesa" = "x"
 then :
   case "x$with_osmesa" in
   x)   as_fn_append wine_notices "|libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported." ;;
@@ -15781,9 +15775,9 @@ This is an error since --with-osmesa was requested." "$LINENO" 5 ;;
 esac
 
 fi
-        fi
-    fi
-    if test -n "$opengl_msg"
+	fi
+	fi
+	if test -n "$opengl_msg"
 then :
   case "x$with_opengl" in
   x)   as_fn_append wine_warnings "|$opengl_msg
@@ -15796,15 +15790,15 @@ esac
 
 fi
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+	CPPFLAGS="$ac_save_CPPFLAGS"
 else
-    X_CFLAGS=""
-    X_LIBS=""
+	X_CFLAGS=""
+	X_LIBS=""
 fi
 
 if test "$enable_wineandroid_drv$enable_winemac_drv" = "nono"
 then
-    if test "x$X_LIBS" = "x"
+	if test "x$X_LIBS" = "x"
 then :
   case "x$with_x" in
   xno) ;;
@@ -15816,7 +15810,7 @@ esac
 enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 else
-    if test "x$X_LIBS" = "x"
+	if test "x$X_LIBS" = "x"
 then :
   case "x$with_x" in
   x)   as_fn_append wine_notices "|X ${notice_platform}development files not found, the X11 driver won't be supported." ;;
@@ -15830,7 +15824,7 @@ fi
 
 if test "$ac_cv_header_CL_cl_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
 printf %s "checking for clGetPlatformInfo in -lOpenCL... " >&6; }
 if test ${ac_cv_lib_OpenCL_clGetPlatformInfo+y}
 then :
@@ -15885,7 +15879,7 @@ fi
 
 if test "$ac_cv_header_pcap_pcap_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcap_create in -lpcap" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcap_create in -lpcap" >&5
 printf %s "checking for pcap_create in -lpcap... " >&6; }
 if test ${ac_cv_lib_pcap_pcap_create+y}
 then :
@@ -15940,7 +15934,7 @@ fi
 
 if test "x$with_inotify" != "xno"
 then
-    if ${INOTIFY_CFLAGS:+false} :
+	if ${INOTIFY_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -15968,7 +15962,7 @@ then :
 
 fi
 
-         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for inotify_add_watch in -linotify" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for inotify_add_watch in -linotify" >&5
 printf %s "checking for inotify_add_watch in -linotify... " >&6; }
 if test ${ac_cv_lib_inotify_inotify_add_watch+y}
 then :
@@ -16026,7 +16020,7 @@ fi
 
 if test "x$with_dbus" != "xno"
 then
-    if ${DBUS_CFLAGS:+false} :
+	if ${DBUS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16112,7 +16106,7 @@ CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
 if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
-                            "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"
+	"x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"
 then :
   case "x$with_dbus" in
   x)   as_fn_append wine_notices "|libdbus ${notice_platform}development files not found, no dynamic device support." ;;
@@ -16125,7 +16119,7 @@ fi
 
 if test "x$with_gnutls" != "xno"
 then
-    if ${GNUTLS_CFLAGS:+false} :
+	if ${GNUTLS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16217,7 +16211,7 @@ printf "%s\n" "#define SONAME_LIBGNUTLS \"$ac_cv_lib_soname_gnutls\"" >>confdefs
 
 
 fi
-                 ac_wine_check_funcs_save_LIBS="$LIBS"
+	ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $GNUTLS_LIBS"
 
   for ac_func in gnutls_cipher_init
@@ -16255,7 +16249,7 @@ fi
 
 if test "x$with_gnutls" != "xno"
 then
-    if ${GMP_CFLAGS:+false} :
+	if ${GMP_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16345,7 +16339,7 @@ fi
 
 if test "x$with_sane" != "xno"
 then
-    if ${SANE_CFLAGS:+false} :
+	if ${SANE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16427,7 +16421,7 @@ fi
 
 if test "x$with_usb" != "xno"
 then
-    if ${USB_CFLAGS:+false} :
+	if ${USB_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16513,7 +16507,7 @@ fi
 
 if test "x$with_v4l2" != "xno"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lv4l2" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lv4l2" >&5
 printf %s "checking for -lv4l2... " >&6; }
 if test ${ac_cv_lib_soname_v4l2+y}
 then :
@@ -16581,7 +16575,7 @@ fi
 
 if test "x$with_gphoto" != "xno"
 then
-    if ${GPHOTO2_CFLAGS:+false} :
+	if ${GPHOTO2_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16649,7 +16643,7 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if ${GPHOTO2_PORT_CFLAGS:+false} :
+	if ${GPHOTO2_PORT_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16748,17 +16742,17 @@ fi
 
 if test "$ac_cv_header_resolv_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for resolver library" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for resolver library" >&5
 printf %s "checking for resolver library... " >&6; }
 if test ${ac_cv_have_resolv+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_save_LIBS="$LIBS"
-       for lib in '' -lresolv
-       do
-         LIBS="$lib $ac_save_LIBS"
-         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	for lib in '' -lresolv
+	do
+	LIBS="$lib $ac_save_LIBS"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -16780,37 +16774,37 @@ else $as_nop
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
-         test "x$ac_cv_have_resolv" = "xnot found" || break
-       done
-       LIBS="$ac_save_LIBS"
+	test "x$ac_cv_have_resolv" = "xnot found" || break
+	done
+	LIBS="$ac_save_LIBS"
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_resolv" >&5
 printf "%s\n" "$ac_cv_have_resolv" >&6; }
 
-    case "$ac_cv_have_resolv" in
-      "not found") ;;
-      "none required")
+	case "$ac_cv_have_resolv" in
+	"not found") ;;
+	"none required")
 
 printf "%s\n" "#define HAVE_RESOLV 1" >>confdefs.h
  ;;
-      *)
-        printf "%s\n" "#define HAVE_RESOLV 1" >>confdefs.h
+	*)
+	printf "%s\n" "#define HAVE_RESOLV 1" >>confdefs.h
 
-        RESOLV_LIBS=$ac_cv_have_resolv
+	RESOLV_LIBS=$ac_cv_have_resolv
  ;;
-    esac
+	esac
 
-    if test "x$ac_cv_have_resolv" != "xnot found"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for res_getservers" >&5
+	if test "x$ac_cv_have_resolv" != "xnot found"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for res_getservers" >&5
 printf %s "checking for res_getservers... " >&6; }
 if test ${ac_cv_have_res_getservers+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_save_LIBS="$LIBS"
-                        LIBS="$RESOLV_LIBS $LIBS"
-                        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	LIBS="$RESOLV_LIBS $LIBS"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <resolv.h>
 int
@@ -16829,22 +16823,22 @@ else $as_nop
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
-	                 LIBS="$ac_save_LIBS"
+	LIBS="$ac_save_LIBS"
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_res_getservers" >&5
 printf "%s\n" "$ac_cv_have_res_getservers" >&6; }
-        if test "$ac_cv_have_res_getservers" = "yes"
-        then
+	if test "$ac_cv_have_res_getservers" = "yes"
+	then
 
 printf "%s\n" "#define HAVE_RES_GETSERVERS 1" >>confdefs.h
 
-        fi
-    fi
+	fi
+	fi
 fi
 
 if test "x$with_freetype" != "xno"
 then
-    if ${FREETYPE_CFLAGS:+false} :
+	if ${FREETYPE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -16872,9 +16866,9 @@ then :
 
 fi
 
-        if test "$ac_cv_header_ft2build_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
+	if test "$ac_cv_header_ft2build_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
 printf %s "checking for -lfreetype... " >&6; }
 if test ${ac_cv_lib_soname_freetype+y}
 then :
@@ -16929,7 +16923,7 @@ printf "%s\n" "#define SONAME_LIBFREETYPE \"$ac_cv_lib_soname_freetype\"" >>conf
 
 printf "%s\n" "#define HAVE_FREETYPE 1" >>confdefs.h
 
-                 ac_fn_c_check_type "$LINENO" "FT_TrueTypeEngineType" "ac_cv_type_FT_TrueTypeEngineType" "#include <ft2build.h>
+	ac_fn_c_check_type "$LINENO" "FT_TrueTypeEngineType" "ac_cv_type_FT_TrueTypeEngineType" "#include <ft2build.h>
 #include FT_MODULE_H
 "
 if test "x$ac_cv_type_FT_TrueTypeEngineType" = xyes
@@ -16941,10 +16935,10 @@ printf "%s\n" "#define HAVE_FT_TRUETYPEENGINETYPE 1" >>confdefs.h
 fi
 
 fi
-        else
-            FREETYPE_CFLAGS=""
-            FREETYPE_LIBS=""
-        fi
+	else
+	FREETYPE_CFLAGS=""
+	FREETYPE_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -16971,9 +16965,9 @@ LIBS="$ac_wine_check_funcs_save_LIBS"
 
 if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes
 then
-    if test "$ac_cv_header_gettext_po_h" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for po_message_msgctxt in -lgettextpo" >&5
+	if test "$ac_cv_header_gettext_po_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for po_message_msgctxt in -lgettextpo" >&5
 printf %s "checking for po_message_msgctxt in -lgettextpo... " >&6; }
 if test ${ac_cv_lib_gettextpo_po_message_msgctxt+y}
 then :
@@ -17013,12 +17007,12 @@ then :
 
 printf "%s\n" "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
 
-                      GETTEXTPO_LIBS="-lgettextpo"
+	GETTEXTPO_LIBS="-lgettextpo"
 
 fi
 
-    fi
-    if test "x$GETTEXTPO_LIBS" = "x"
+	fi
+	if test "x$GETTEXTPO_LIBS" = "x"
 then :
   case "x$with_gettextpo" in
   x)   as_fn_append wine_notices "|GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt." ;;
@@ -17028,7 +17022,7 @@ This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
 
 fi
-    if test "$srcdir" != .
+	if test "$srcdir" != .
 then :
   case "x$with_gettextpo" in
   x)   as_fn_append wine_notices "|Rebuilding po files is not supported for out of tree builds." ;;
@@ -17042,7 +17036,7 @@ fi
 
 if test "x$with_pulse" != "xno";
 then
-    if ${PULSE_CFLAGS:+false} :
+	if ${PULSE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17132,7 +17126,7 @@ fi
 
 if test "x$with_gstreamer" != "xno"
 then
-    if ${GSTREAMER_CFLAGS:+false} :
+	if ${GSTREAMER_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17158,7 +17152,7 @@ if test "x$ac_cv_header_gst_gst_h" = xyes
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether gint64 defined by gst/gst.h is indeed 64-bit" >&5
 printf %s "checking whether gint64 defined by gst/gst.h is indeed 64-bit... " >&6; }
-              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <gst/gst.h>
 int
@@ -17173,7 +17167,7 @@ if ac_fn_c_try_compile "$LINENO"
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
-                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gst_pad_new in -lgstreamer-1.0" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gst_pad_new in -lgstreamer-1.0" >&5
 printf %s "checking for gst_pad_new in -lgstreamer-1.0... " >&6; }
 if test ${ac_cv_lib_gstreamer_1_0_gst_pad_new+y}
 then :
@@ -17216,8 +17210,8 @@ fi
 else $as_nop
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-                 ac_glib2_broken=yes
-                 as_fn_append wine_notices "|glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built."
+	ac_glib2_broken=yes
+	as_fn_append wine_notices "|glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built."
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
@@ -17240,7 +17234,7 @@ ALSA_LIBS=""
 
 if test "x$with_alsa" != "xno"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for snd_pcm_hw_params_get_access_mask in -lasound" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for snd_pcm_hw_params_get_access_mask in -lasound" >&5
 printf %s "checking for snd_pcm_hw_params_get_access_mask in -lasound... " >&6; }
 if test ${ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask+y}
 then :
@@ -17300,14 +17294,14 @@ test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 
 if test "x$with_oss" != xno
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    if test -f /etc/oss.conf
-    then
-        . /etc/oss.conf
-    fi
-    ac_oss_incl="-I${OSSLIBDIR:-/usr/lib/oss}/include"
-    CPPFLAGS="$CPPFLAGS $ac_oss_incl"
-    ac_fn_c_check_header_compile "$LINENO" "sys/soundcard.h" "ac_cv_header_sys_soundcard_h" "$ac_includes_default"
+	ac_save_CPPFLAGS="$CPPFLAGS"
+	if test -f /etc/oss.conf
+	then
+	. /etc/oss.conf
+	fi
+	ac_oss_incl="-I${OSSLIBDIR:-/usr/lib/oss}/include"
+	CPPFLAGS="$CPPFLAGS $ac_oss_incl"
+	ac_fn_c_check_header_compile "$LINENO" "sys/soundcard.h" "ac_cv_header_sys_soundcard_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_soundcard_h" = xyes
 then :
   ac_fn_c_check_member "$LINENO" "oss_sysinfo" "numaudioengines" "ac_cv_member_oss_sysinfo_numaudioengines" "#include <sys/soundcard.h>
@@ -17319,7 +17313,7 @@ printf "%s\n" "#define HAVE_OSS_SYSINFO_NUMAUDIOENGINES 1" >>confdefs.h
 
 OSS4_CFLAGS="$ac_oss_incl"
 
-             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for _oss_ioctl in -lossaudio" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for _oss_ioctl in -lossaudio" >&5
 printf %s "checking for _oss_ioctl in -lossaudio... " >&6; }
 if test ${ac_cv_lib_ossaudio__oss_ioctl+y}
 then :
@@ -17364,7 +17358,7 @@ fi
 
 fi
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+	CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes
 then :
@@ -17379,7 +17373,7 @@ fi
 
 if test "x$with_udev" != "xno"
 then
-    if ${UDEV_CFLAGS:+false} :
+	if ${UDEV_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17471,7 +17465,7 @@ fi
 
 if test "x$with_unwind" != xno
 then
-    if ${UNWIND_CFLAGS:+false} :
+	if ${UNWIND_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17521,12 +17515,12 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_unw_step" >&5
 printf "%s\n" "$wine_cv_have_unw_step" >&6; }
-        if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
-        then
-            save_libs=$LIBS
-                        UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
-            LIBS="$UNWIND_LIBS $LIBS"
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step in libunwind" >&5
+	if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
+	then
+	save_libs=$LIBS
+		UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
+	LIBS="$UNWIND_LIBS $LIBS"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step in libunwind" >&5
 printf %s "checking for unw_step in libunwind... " >&6; }
 if test ${wine_cv_have_libunwind_unw_step+y}
 then :
@@ -17555,21 +17549,21 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_step" >&5
 printf "%s\n" "$wine_cv_have_libunwind_unw_step" >&6; }
-            LIBS=$save_libs
-        fi
-        test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
-        if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
-        then
+	LIBS=$save_libs
+	fi
+	test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
+	if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
+	then
 
 printf "%s\n" "#define HAVE_LIBUNWIND 1" >>confdefs.h
 
-        fi
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
 case $host in
-  aarch64*|*-darwin*)
-    if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono
+	aarch64*|*-darwin*)
+	if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono
 then :
   case "x$with_unwind" in
   x)   as_fn_append wine_notices "|libunwind ${notice_platform}development files not found, stack unwinding won't work." ;;
@@ -17583,7 +17577,7 @@ esac
 
 if test "x$with_sdl" != "xno"
 then
-    if ${SDL2_CFLAGS:+false} :
+	if ${SDL2_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17683,7 +17677,7 @@ fi
 
 if test "x$with_capi" != "xno"
 then
-    if ${CAPI20_CFLAGS:+false} :
+	if ${CAPI20_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17704,7 +17698,7 @@ printf "%s\n" "$as_me:${as_lineno-$LINENO}: capi20 cflags: $CAPI20_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: capi20 libs: $CAPI20_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
-    ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "#define __user
+	ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "#define __user
 "
 if test "x$ac_cv_header_capi20_h" = xyes
 then :
@@ -17719,9 +17713,9 @@ then :
 
 fi
 
-    if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for capi20_register in -lcapi20" >&5
+	if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for capi20_register in -lcapi20" >&5
 printf %s "checking for capi20_register in -lcapi20... " >&6; }
 if test ${ac_cv_lib_capi20_capi20_register+y}
 then :
@@ -17763,7 +17757,7 @@ else $as_nop
   CAPI20_LIBS=""
 fi
 
-    fi
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -17780,7 +17774,7 @@ fi
 
 if test "x$with_cups" != "xno"
 then
-    if ${CUPS_CFLAGS:+false} :
+	if ${CUPS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17814,9 +17808,9 @@ then :
 
 fi
 
-                        if test "$ac_cv_header_cups_cups_h" = "yes"
-                        then
-                            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lcups" >&5
+	if test "$ac_cv_header_cups_cups_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lcups" >&5
 printf %s "checking for -lcups... " >&6; }
 if test ${ac_cv_lib_soname_cups+y}
 then :
@@ -17870,10 +17864,10 @@ printf "%s\n" "#define SONAME_LIBCUPS \"$ac_cv_lib_soname_cups\"" >>confdefs.h
 
 
 fi
-                        else
-                            CUPS_CFLAGS=""
-                            CUPS_LIBS=""
-                        fi
+	else
+	CUPS_CFLAGS=""
+	CUPS_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -17890,7 +17884,7 @@ fi
 
 if test "x$with_fontconfig" != "xno"
 then
-    if ${FONTCONFIG_CFLAGS:+false} :
+	if ${FONTCONFIG_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -17918,9 +17912,9 @@ then :
 
 fi
 
-        if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
+	if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
 printf %s "checking for -lfontconfig... " >&6; }
 if test ${ac_cv_lib_soname_fontconfig+y}
 then :
@@ -17974,9 +17968,9 @@ printf "%s\n" "#define SONAME_LIBFONTCONFIG \"$ac_cv_lib_soname_fontconfig\"" >>
 
 
 fi
-        else
-            FONTCONFIG_CFLAGS=""
-        fi
+	else
+	FONTCONFIG_CFLAGS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -17993,7 +17987,7 @@ fi
 
 if test "x$with_krb5" != "xno"
 then
-    if ${KRB5_CFLAGS:+false} :
+	if ${KRB5_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -18021,9 +18015,9 @@ then :
 
 fi
 
-         if test "$ac_cv_header_krb5_krb5_h" = "yes"
-         then
-             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lkrb5" >&5
+	if test "$ac_cv_header_krb5_krb5_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lkrb5" >&5
 printf %s "checking for -lkrb5... " >&6; }
 if test ${ac_cv_lib_soname_krb5+y}
 then :
@@ -18077,9 +18071,9 @@ printf "%s\n" "#define SONAME_LIBKRB5 \"$ac_cv_lib_soname_krb5\"" >>confdefs.h
 
 
 fi
-         else
-             KRB5_CFLAGS=""
-         fi
+	else
+	KRB5_CFLAGS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -18097,7 +18091,7 @@ test "x$ac_cv_lib_soname_krb5" != "x" || with_gssapi=${with_gssapi:-no}
 
 if test "x$with_gssapi" != "xno"
 then
-    if ${GSSAPI_CFLAGS:+false} :
+	if ${GSSAPI_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -18131,9 +18125,9 @@ then :
 
 fi
 
-        if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lgssapi_krb5" >&5
+	if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lgssapi_krb5" >&5
 printf %s "checking for -lgssapi_krb5... " >&6; }
 if test ${ac_cv_lib_soname_gssapi_krb5+y}
 then :
@@ -18187,9 +18181,9 @@ printf "%s\n" "#define SONAME_LIBGSSAPI_KRB5 \"$ac_cv_lib_soname_gssapi_krb5\"" 
 
 
 fi
-        else
-            GSSAPI_CFLAGS=""
-        fi
+	else
+	GSSAPI_CFLAGS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -18206,7 +18200,7 @@ fi
 
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
 printf %s "checking for -lopenal... " >&6; }
 if test ${ac_cv_lib_soname_openal+y}
 then :
@@ -18260,7 +18254,7 @@ printf "%s\n" "#define SONAME_LIBOPENAL \"$ac_cv_lib_soname_openal\"" >>confdefs
 
        OPENAL_LIBS="-lopenal"
 
-                      ac_cv_lib_openal=yes
+	ac_cv_lib_openal=yes
 
 printf "%s\n" "#define HAVE_OPENAL 1" >>confdefs.h
 
@@ -18279,7 +18273,7 @@ fi
 
 if test "$ac_cv_header_libprocstat_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for procstat_open_sysctl in -lprocstat" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for procstat_open_sysctl in -lprocstat" >&5
 printf %s "checking for procstat_open_sysctl in -lprocstat... " >&6; }
 if test ${ac_cv_lib_procstat_procstat_open_sysctl+y}
 then :
@@ -18319,7 +18313,7 @@ then :
 
 printf "%s\n" "#define HAVE_LIBPROCSTAT 1" >>confdefs.h
 
-                  PROCSTAT_LIBS="-lprocstat"
+	PROCSTAT_LIBS="-lprocstat"
 
 fi
 
@@ -18383,7 +18377,7 @@ fi
 
 if test "x$with_netapi" != "xno"
 then
-    if ${NETAPI_CFLAGS:+false} :
+	if ${NETAPI_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -18475,14 +18469,14 @@ fi
 
 
 if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv$enable_wineandroid_drv" = xnonononono -a \
-        "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
+	"x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
 then
-    as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
+	as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
 
 if test "x$with_vulkan" != "xno"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lvulkan" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lvulkan" >&5
 printf %s "checking for -lvulkan... " >&6; }
 if test ${ac_cv_lib_soname_vulkan+y}
 then :
@@ -18536,9 +18530,9 @@ printf "%s\n" "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_vulkan\"" >>confdefs
 
 
 fi
-    if test "x$ac_cv_lib_soname_vulkan" = "x"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lMoltenVK" >&5
+	if test "x$ac_cv_lib_soname_vulkan" = "x"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lMoltenVK" >&5
 printf %s "checking for -lMoltenVK... " >&6; }
 if test ${ac_cv_lib_soname_MoltenVK+y}
 then :
@@ -18592,7 +18586,7 @@ printf "%s\n" "#define SONAME_LIBMOLTENVK \"$ac_cv_lib_soname_MoltenVK\"" >>conf
 
 
 fi
-    fi
+	fi
 fi
 if test "x$ac_cv_lib_soname_vulkan" = "x" -a "x$ac_cv_lib_soname_MoltenVK" = "x"
 then :
@@ -18608,10 +18602,10 @@ fi
 
 if test "x${GCC}" = "xyes"
 then
-  EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
+	EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
 
-      saved_CFLAGS=$CFLAGS
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
+			saved_CFLAGS=$CFLAGS
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
 printf %s "checking whether the compiler supports -Werror=unknown-warning-option... " >&6; }
 if test ${ac_cv_cflags__Werror_unknown_warning_option+y}
 then :
@@ -18639,7 +18633,7 @@ if test "x$ac_cv_cflags__Werror_unknown_warning_option" = xyes
 then :
   CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unused-command-line-argument" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unused-command-line-argument" >&5
 printf %s "checking whether the compiler supports -Werror=unused-command-line-argument... " >&6; }
 if test ${ac_cv_cflags__Werror_unused_command_line_argument+y}
 then :
@@ -18667,7 +18661,7 @@ if test "x$ac_cv_cflags__Werror_unused_command_line_argument" = xyes
 then :
   CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=ignored-optimization-argument" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=ignored-optimization-argument" >&5
 printf %s "checking whether the compiler supports -Werror=ignored-optimization-argument... " >&6; }
 if test ${ac_cv_cflags__Werror_ignored_optimization_argument+y}
 then :
@@ -18695,7 +18689,7 @@ if test "x$ac_cv_cflags__Werror_ignored_optimization_argument" = xyes
 then :
   CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fcf-protection=none" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fcf-protection=none" >&5
 printf %s "checking whether the compiler supports -fcf-protection=none... " >&6; }
 if test ${ac_cv_cflags__fcf_protection_none+y}
 then :
@@ -18723,7 +18717,7 @@ if test "x$ac_cv_cflags__fcf_protection_none" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -fcf-protection=none"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-stack-protector" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-stack-protector" >&5
 printf %s "checking whether the compiler supports -fno-stack-protector... " >&6; }
 if test ${ac_cv_cflags__fno_stack_protector+y}
 then :
@@ -18751,7 +18745,7 @@ if test "x$ac_cv_cflags__fno_stack_protector" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -fno-stack-protector"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-strict-aliasing" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-strict-aliasing" >&5
 printf %s "checking whether the compiler supports -fno-strict-aliasing... " >&6; }
 if test ${ac_cv_cflags__fno_strict_aliasing+y}
 then :
@@ -18779,7 +18773,7 @@ if test "x$ac_cv_cflags__fno_strict_aliasing" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wdeclaration-after-statement" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wdeclaration-after-statement" >&5
 printf %s "checking whether the compiler supports -Wdeclaration-after-statement... " >&6; }
 if test ${ac_cv_cflags__Wdeclaration_after_statement+y}
 then :
@@ -18807,7 +18801,7 @@ if test "x$ac_cv_cflags__Wdeclaration_after_statement" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wdeclaration-after-statement"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wempty-body" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wempty-body" >&5
 printf %s "checking whether the compiler supports -Wempty-body... " >&6; }
 if test ${ac_cv_cflags__Wempty_body+y}
 then :
@@ -18835,7 +18829,7 @@ if test "x$ac_cv_cflags__Wempty_body" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wempty-body"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wignored-qualifiers" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wignored-qualifiers" >&5
 printf %s "checking whether the compiler supports -Wignored-qualifiers... " >&6; }
 if test ${ac_cv_cflags__Wignored_qualifiers+y}
 then :
@@ -18863,7 +18857,7 @@ if test "x$ac_cv_cflags__Wignored_qualifiers" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wignored-qualifiers"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Winit-self" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Winit-self" >&5
 printf %s "checking whether the compiler supports -Winit-self... " >&6; }
 if test ${ac_cv_cflags__Winit_self+y}
 then :
@@ -18891,7 +18885,7 @@ if test "x$ac_cv_cflags__Winit_self" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Winit-self"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpacked-not-aligned" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpacked-not-aligned" >&5
 printf %s "checking whether the compiler supports -Wpacked-not-aligned... " >&6; }
 if test ${ac_cv_cflags__Wpacked_not_aligned+y}
 then :
@@ -18919,7 +18913,7 @@ if test "x$ac_cv_cflags__Wpacked_not_aligned" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-packed-not-aligned"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpragma-pack" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpragma-pack" >&5
 printf %s "checking whether the compiler supports -Wpragma-pack... " >&6; }
 if test ${ac_cv_cflags__Wpragma_pack+y}
 then :
@@ -18947,7 +18941,7 @@ if test "x$ac_cv_cflags__Wpragma_pack" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-pragma-pack"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wshift-overflow=2" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wshift-overflow=2" >&5
 printf %s "checking whether the compiler supports -Wshift-overflow=2... " >&6; }
 if test ${ac_cv_cflags__Wshift_overflow_2+y}
 then :
@@ -18975,7 +18969,7 @@ if test "x$ac_cv_cflags__Wshift_overflow_2" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wshift-overflow=2"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wstrict-prototypes" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wstrict-prototypes" >&5
 printf %s "checking whether the compiler supports -Wstrict-prototypes... " >&6; }
 if test ${ac_cv_cflags__Wstrict_prototypes+y}
 then :
@@ -19003,7 +18997,7 @@ if test "x$ac_cv_cflags__Wstrict_prototypes" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wstrict-prototypes"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wtype-limits" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wtype-limits" >&5
 printf %s "checking whether the compiler supports -Wtype-limits... " >&6; }
 if test ${ac_cv_cflags__Wtype_limits+y}
 then :
@@ -19031,7 +19025,7 @@ if test "x$ac_cv_cflags__Wtype_limits" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wtype-limits"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wunused-but-set-parameter" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wunused-but-set-parameter" >&5
 printf %s "checking whether the compiler supports -Wunused-but-set-parameter... " >&6; }
 if test ${ac_cv_cflags__Wunused_but_set_parameter+y}
 then :
@@ -19059,7 +19053,7 @@ if test "x$ac_cv_cflags__Wunused_but_set_parameter" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wunused-but-set-parameter"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wvla" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wvla" >&5
 printf %s "checking whether the compiler supports -Wvla... " >&6; }
 if test ${ac_cv_cflags__Wvla+y}
 then :
@@ -19087,7 +19081,7 @@ if test "x$ac_cv_cflags__Wvla" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wvla"
 fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wwrite-strings" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wwrite-strings" >&5
 printf %s "checking whether the compiler supports -Wwrite-strings... " >&6; }
 if test ${ac_cv_cflags__Wwrite_strings+y}
 then :
@@ -19116,9 +19110,9 @@ then :
   EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
 fi
 
-  if test -z "$CROSSTARGET"
-  then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fexcess-precision=standard" >&5
+	if test -z "$CROSSTARGET"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fexcess-precision=standard" >&5
 printf %s "checking whether the compiler supports -fexcess-precision=standard... " >&6; }
 if test ${ac_cv_cflags__fexcess_precision_standard+y}
 then :
@@ -19147,9 +19141,9 @@ then :
   EXCESS_PRECISION_CFLAGS="-fexcess-precision=standard"
 
 fi
-  fi
+	fi
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpointer-arith" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpointer-arith" >&5
 printf %s "checking whether the compiler supports -Wpointer-arith... " >&6; }
 if test ${ac_cv_cflags__Wpointer_arith+y}
 then :
@@ -19176,8 +19170,8 @@ printf "%s\n" "$ac_cv_cflags__Wpointer_arith" >&6; }
 if test "x$ac_cv_cflags__Wpointer_arith" = xyes
 then :
   saved_string_h_CFLAGS=$CFLAGS
-      CFLAGS="$CFLAGS -Wpointer-arith -Werror"
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5
+	CFLAGS="$CFLAGS -Wpointer-arith -Werror"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5
 printf %s "checking for broken string.h that generates warnings with -Wpointer-arith... " >&6; }
 if test ${ac_cv_c_string_h_warnings+y}
 then :
@@ -19204,11 +19198,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_string_h_warnings" >&5
 printf "%s\n" "$ac_cv_c_string_h_warnings" >&6; }
-      test "$ac_cv_c_string_h_warnings" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-      CFLAGS=$saved_string_h_CFLAGS
+	test "$ac_cv_c_string_h_warnings" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
+	CFLAGS=$saved_string_h_CFLAGS
 fi
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wlogical-op" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wlogical-op" >&5
 printf %s "checking whether the compiler supports -Wlogical-op... " >&6; }
 if test ${ac_cv_cflags__Wlogical_op+y}
 then :
@@ -19235,8 +19229,8 @@ printf "%s\n" "$ac_cv_cflags__Wlogical_op" >&6; }
 if test "x$ac_cv_cflags__Wlogical_op" = xyes
 then :
   saved_string_h_CFLAGS=$CFLAGS
-      CFLAGS="$CFLAGS -Wlogical-op -Werror"
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wlogical-op" >&5
+	CFLAGS="$CFLAGS -Wlogical-op -Werror"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wlogical-op" >&5
 printf %s "checking for broken string.h that generates warnings with -Wlogical-op... " >&6; }
 if test ${ac_cv_c_logicalop_noisy+y}
 then :
@@ -19264,11 +19258,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_logicalop_noisy" >&5
 printf "%s\n" "$ac_cv_c_logicalop_noisy" >&6; }
-      CFLAGS=$saved_string_h_CFLAGS
-      test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
+	CFLAGS=$saved_string_h_CFLAGS
+	test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
 fi
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for flags needed for 64-bit compare-and-swap support" >&5
+		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for flags needed for 64-bit compare-and-swap support" >&5
 printf %s "checking for flags needed for 64-bit compare-and-swap support... " >&6; }
 if test ${wine_cv_64bit_compare_swap+y}
 then :
@@ -19292,14 +19286,14 @@ then :
   wine_cv_64bit_compare_swap="none needed"
 else $as_nop
   case $host_cpu in
-            *i[3456]86*) wine_cv_64bit_compare_swap="-march=i586" ;;
-            *arm*)         wine_cv_64bit_compare_swap="-march=armv7-a" ;;
-            *)             wine_cv_64bit_compare_swap="unknown" ;;
-           esac
-           if test "x$wine_cv_64bit_compare_swap" != xunknown
-           then
-                              CFLAGS="$CFLAGS $wine_cv_64bit_compare_swap"
-               cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	*i[3456]86*) wine_cv_64bit_compare_swap="-march=i586" ;;
+	*arm*)         wine_cv_64bit_compare_swap="-march=armv7-a" ;;
+	*)             wine_cv_64bit_compare_swap="unknown" ;;
+	esac
+	if test "x$wine_cv_64bit_compare_swap" != xunknown
+	then
+		CFLAGS="$CFLAGS $wine_cv_64bit_compare_swap"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
 #error no
@@ -19319,29 +19313,29 @@ else $as_nop
   wine_cv_64bit_compare_swap="unknown"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-               CFLAGS=$saved_CFLAGS
-           fi
+	CFLAGS=$saved_CFLAGS
+	fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_64bit_compare_swap" >&5
 printf "%s\n" "$wine_cv_64bit_compare_swap" >&6; }
-  case "$wine_cv_64bit_compare_swap" in
-      unknown) as_fn_error $? "gcc doesn't support 64-bit compare-and-swap on this platform" "$LINENO" 5 ;;
-      "none needed") ;;
-      *) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
-  esac
+	case "$wine_cv_64bit_compare_swap" in
+	unknown) as_fn_error $? "gcc doesn't support 64-bit compare-and-swap on this platform" "$LINENO" 5 ;;
+	"none needed") ;;
+	*) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
+	esac
 
-    ac_debug_format_seen=""
-  for ac_flag in $CFLAGS; do
-    case $ac_flag in
-      -gdwarf*)    ac_debug_format_seen=yes ;;
-      -g)          ac_debug_format_seen=${ac_debug_format_seen:-default} ;;
-    esac
-  done
-  if test "x$ac_debug_format_seen" = xdefault
-  then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-4" >&5
+		ac_debug_format_seen=""
+	for ac_flag in $CFLAGS; do
+	case $ac_flag in
+	-gdwarf*)    ac_debug_format_seen=yes ;;
+	-g)          ac_debug_format_seen=${ac_debug_format_seen:-default} ;;
+	esac
+	done
+	if test "x$ac_debug_format_seen" = xdefault
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-4" >&5
 printf %s "checking whether the compiler supports -gdwarf-4... " >&6; }
 if test ${ac_cv_cflags__gdwarf_4+y}
 then :
@@ -19369,12 +19363,12 @@ if test "x$ac_cv_cflags__gdwarf_4" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -gdwarf-4"
 fi
-  fi
+	fi
 
-    MSVCRTFLAGS=""
+		MSVCRTFLAGS=""
 
-  case $host_os in
-    mingw32*)         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-delayload,autoconftest.dll" >&5
+	case $host_os in
+	mingw32*)  	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-delayload,autoconftest.dll" >&5
 printf %s "checking whether the compiler supports -Wl,-delayload,autoconftest.dll... " >&6; }
 if test ${ac_cv_cflags__Wl__delayload_autoconftest_dll+y}
 then :
@@ -19403,8 +19397,8 @@ then :
   DELAYLOADFLAG="-Wl,-delayload,"
 
 fi ;;
-    *) MSVCRTFLAGS="-D_WIN32"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-builtin" >&5
+	*) MSVCRTFLAGS="-D_WIN32"
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-builtin" >&5
 printf %s "checking whether the compiler supports -fno-builtin... " >&6; }
 if test ${ac_cv_cflags__fno_builtin+y}
 then :
@@ -19432,7 +19426,7 @@ if test "x$ac_cv_cflags__fno_builtin" = xyes
 then :
   MSVCRTFLAGS="$MSVCRTFLAGS -fno-builtin"
 fi
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fshort-wchar" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fshort-wchar" >&5
 printf %s "checking whether the compiler supports -fshort-wchar... " >&6; }
 if test ${ac_cv_cflags__fshort_wchar+y}
 then :
@@ -19460,7 +19454,7 @@ if test "x$ac_cv_cflags__fshort_wchar" = xyes
 then :
   MSVCRTFLAGS="$MSVCRTFLAGS -fshort-wchar"
 fi
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-format" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-format" >&5
 printf %s "checking whether the compiler supports -Wno-format... " >&6; }
 if test ${ac_cv_cflags__Wno_format+y}
 then :
@@ -19488,10 +19482,10 @@ if test "x$ac_cv_cflags__Wno_format" = xyes
 then :
   MSVCRTFLAGS="$MSVCRTFLAGS -Wno-format"
 fi ;;
-  esac
+	esac
 
-  case $host_cpu in
-        *i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-omit-frame-pointer" >&5
+	case $host_cpu in
+		*i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-omit-frame-pointer" >&5
 printf %s "checking whether the compiler supports -fno-omit-frame-pointer... " >&6; }
 if test ${ac_cv_cflags__fno_omit_frame_pointer+y}
 then :
@@ -19519,9 +19513,9 @@ if test "x$ac_cv_cflags__fno_omit_frame_pointer" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -fno-omit-frame-pointer"
 fi ;;
-    *x86_64*)
-      case $host_os in
-                cygwin*|mingw32*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-format" >&5
+	*x86_64*)
+	case $host_os in
+		cygwin*|mingw32*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-format" >&5
 printf %s "checking whether the compiler supports -Wno-format... " >&6; }
 if test ${ac_cv_cflags__Wno_format+y}
 then :
@@ -19549,16 +19543,16 @@ if test "x$ac_cv_cflags__Wno_format" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-format"
 fi ;;
-                *) if test -z "$CROSSTARGET"
-           then
-               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
+		*) if test -z "$CROSSTARGET"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
 printf %s "checking for working -mabi=ms... " >&6; }
 if test ${ac_cv_mabi_ms+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   CFLAGS="$CFLAGS -mabi=ms"
-                    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
 int a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }
@@ -19577,21 +19571,21 @@ else $as_nop
   ac_cv_mabi_ms=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-                    CFLAGS=$saved_CFLAGS
+	CFLAGS=$saved_CFLAGS
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mabi_ms" >&5
 printf "%s\n" "$ac_cv_mabi_ms" >&6; }
-               test $ac_cv_mabi_ms = yes || as_fn_error $? "The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64." "$LINENO" 5
-           fi
-           MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms" ;;
-      esac ;;
-  esac
+	test $ac_cv_mabi_ms = yes || as_fn_error $? "The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64." "$LINENO" 5
+	fi
+	MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms" ;;
+	esac ;;
+	esac
 
-  CFLAGS=$saved_CFLAGS
+	CFLAGS=$saved_CFLAGS
 
-    if test "x$enable_werror" = "xyes"
-  then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
+		if test "x$enable_werror" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
 printf %s "checking whether the compiler supports -Werror... " >&6; }
 if test ${ac_cv_cflags__Werror+y}
 then :
@@ -19619,11 +19613,11 @@ if test "x$ac_cv_cflags__Werror" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror"
 fi
-  fi
+	fi
 
-    if test "x$enable_win64" != "xyes" -a "x$enable_win32on64" = "xyes" -a "$cross_compiling" != "yes"
-  then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=extra-tokens" >&5
+		if test "x$enable_win64" != "xyes" -a "x$enable_win32on64" = "xyes" -a "$cross_compiling" != "yes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=extra-tokens" >&5
 printf %s "checking whether the compiler supports -Werror=extra-tokens... " >&6; }
 if test ${ac_cv_cflags__Werror_extra_tokens+y}
 then :
@@ -19651,7 +19645,7 @@ if test "x$ac_cv_cflags__Werror_extra_tokens" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=extra-tokens"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=implicit-function-declaration" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=implicit-function-declaration" >&5
 printf %s "checking whether the compiler supports -Werror=implicit-function-declaration... " >&6; }
 if test ${ac_cv_cflags__Werror_implicit_function_declaration+y}
 then :
@@ -19679,7 +19673,7 @@ if test "x$ac_cv_cflags__Werror_implicit_function_declaration" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=implicit-function-declaration"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-function-pointer-types" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-function-pointer-types" >&5
 printf %s "checking whether the compiler supports -Werror=incompatible-function-pointer-types... " >&6; }
 if test ${ac_cv_cflags__Werror_incompatible_function_pointer_types+y}
 then :
@@ -19707,7 +19701,7 @@ if test "x$ac_cv_cflags__Werror_incompatible_function_pointer_types" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=incompatible-function-pointer-types"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-pointer-types-discards-qualifiers" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-pointer-types-discards-qualifiers" >&5
 printf %s "checking whether the compiler supports -Werror=incompatible-pointer-types-discards-qualifiers... " >&6; }
 if test ${ac_cv_cflags__Werror_incompatible_pointer_types_discards_qualifiers+y}
 then :
@@ -19735,7 +19729,7 @@ if test "x$ac_cv_cflags__Werror_incompatible_pointer_types_discards_qualifiers" 
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=incompatible-pointer-types-discards-qualifiers"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-pointer-types" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=incompatible-pointer-types" >&5
 printf %s "checking whether the compiler supports -Werror=incompatible-pointer-types... " >&6; }
 if test ${ac_cv_cflags__Werror_incompatible_pointer_types+y}
 then :
@@ -19763,7 +19757,7 @@ if test "x$ac_cv_cflags__Werror_incompatible_pointer_types" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=incompatible-pointer-types"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-to-int-cast-truncates" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-to-int-cast-truncates" >&5
 printf %s "checking whether the compiler supports -Werror=pointer-to-int-cast-truncates... " >&6; }
 if test ${ac_cv_cflags__Werror_pointer_to_int_cast_truncates+y}
 then :
@@ -19791,7 +19785,7 @@ if test "x$ac_cv_cflags__Werror_pointer_to_int_cast_truncates" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=pointer-to-int-cast-truncates"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-to-int-cast" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-to-int-cast" >&5
 printf %s "checking whether the compiler supports -Werror=pointer-to-int-cast... " >&6; }
 if test ${ac_cv_cflags__Werror_pointer_to_int_cast+y}
 then :
@@ -19819,7 +19813,7 @@ if test "x$ac_cv_cflags__Werror_pointer_to_int_cast" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=pointer-to-int-cast"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=int-to-pointer-cast-truncates" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=int-to-pointer-cast-truncates" >&5
 printf %s "checking whether the compiler supports -Werror=int-to-pointer-cast-truncates... " >&6; }
 if test ${ac_cv_cflags__Werror_int_to_pointer_cast_truncates+y}
 then :
@@ -19847,7 +19841,7 @@ if test "x$ac_cv_cflags__Werror_int_to_pointer_cast_truncates" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=int-to-pointer-cast-truncates"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=out-of-scope-function" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=out-of-scope-function" >&5
 printf %s "checking whether the compiler supports -Werror=out-of-scope-function... " >&6; }
 if test ${ac_cv_cflags__Werror_out_of_scope_function+y}
 then :
@@ -19875,7 +19869,7 @@ if test "x$ac_cv_cflags__Werror_out_of_scope_function" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=out-of-scope-function"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-arith" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-arith" >&5
 printf %s "checking whether the compiler supports -Werror=pointer-arith... " >&6; }
 if test ${ac_cv_cflags__Werror_pointer_arith+y}
 then :
@@ -19903,7 +19897,7 @@ if test "x$ac_cv_cflags__Werror_pointer_arith" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=pointer-arith"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-type-mismatch" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=pointer-type-mismatch" >&5
 printf %s "checking whether the compiler supports -Werror=pointer-type-mismatch... " >&6; }
 if test ${ac_cv_cflags__Werror_pointer_type_mismatch+y}
 then :
@@ -19931,7 +19925,7 @@ if test "x$ac_cv_cflags__Werror_pointer_type_mismatch" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=pointer-type-mismatch"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=strict-prototypes" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=strict-prototypes" >&5
 printf %s "checking whether the compiler supports -Werror=strict-prototypes... " >&6; }
 if test ${ac_cv_cflags__Werror_strict_prototypes+y}
 then :
@@ -19959,7 +19953,7 @@ if test "x$ac_cv_cflags__Werror_strict_prototypes" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=strict-prototypes"
 fi
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=tautological-constant-out-of-range-compare" >&5
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=tautological-constant-out-of-range-compare" >&5
 printf %s "checking whether the compiler supports -Werror=tautological-constant-out-of-range-compare... " >&6; }
 if test ${ac_cv_cflags__Werror_tautological_constant_out_of_range_compare+y}
 then :
@@ -19987,11 +19981,11 @@ if test "x$ac_cv_cflags__Werror_tautological_constant_out_of_range_compare" = xy
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror=tautological-constant-out-of-range-compare"
 fi
-  fi
+	fi
 
-  if test "x$enable_build_id" = "xyes"
-  then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--build-id" >&5
+	if test "x$enable_build_id" = "xyes"
+	then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--build-id" >&5
 printf %s "checking whether the compiler supports -Wl,--build-id... " >&6; }
 if test ${ac_cv_cflags__Wl___build_id+y}
 then :
@@ -20018,9 +20012,9 @@ printf "%s\n" "$ac_cv_cflags__Wl___build_id" >&6; }
 if test "x$ac_cv_cflags__Wl___build_id" = xyes
 then :
   CFLAGS="$CFLAGS -Wl,--build-id"
-                      LDFLAGS="$LDFLAGS -Wl,--build-id"
+	LDFLAGS="$LDFLAGS -Wl,--build-id"
 fi
-  fi
+	fi
 fi
 
 
@@ -20055,7 +20049,7 @@ fi
 printf "%s\n" "$ac_cv_c_fortify_enabled" >&6; }
 if test "$ac_cv_c_fortify_enabled" = yes
 then
-    CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
+	CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
 fi
 
 
@@ -20088,26 +20082,26 @@ fi
 printf "%s\n" "$ac_cv_c_cfi_support" >&6; }
 if test "$ac_cv_c_cfi_support" = "yes"
 then
-   DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
-   LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
-   UNIXDLLFLAGS="$UNIXDLLFLAGS -fasynchronous-unwind-tables"
+	DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
+	LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
+	UNIXDLLFLAGS="$UNIXDLLFLAGS -fasynchronous-unwind-tables"
 else
-   if test "x$enable_win64" = "xyes"
-   then
-      as_fn_append wine_warnings "|building 64-bit Wine without support for CFI directives; exception handling will not work properly."
-   fi
+	if test "x$enable_win64" = "xyes"
+	then
+	as_fn_append wine_warnings "|building 64-bit Wine without support for CFI directives; exception handling will not work properly."
+	fi
 fi
 
 
 case $host_os in
-  linux*)
-    case $host_cpu in
-      *i[3456789]86*|x86_64*|*aarch64*|arm*)
-        test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
-        ;;
-    esac
-    ;;
+	linux*)
+	case $host_cpu in
+	*i[3456789]86*|x86_64*|*aarch64*|arm*)
+	test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
+	WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+	;;
+	esac
+	;;
 esac
 
 
@@ -20525,9 +20519,9 @@ fi
 
 
 case $host_os in
-    darwin*|macosx*) ;;
-    *) ac_save_LIBS=$LIBS
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
+	darwin*|macosx*) ;;
+	*) ac_save_LIBS=$LIBS
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 printf %s "checking for library containing clock_gettime... " >&6; }
 if test ${ac_cv_search_clock_gettime+y}
 then :
@@ -20586,12 +20580,12 @@ then :
 
 printf "%s\n" "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
 
-                test "$ac_res" = "none required" || RT_LIBS="$ac_res"
+	test "$ac_res" = "none required" || RT_LIBS="$ac_res"
 
 fi
 
-    LIBS=$ac_save_LIBS
-    ;;
+	LIBS=$ac_save_LIBS
+	;;
 esac
 
 ac_save_LIBS=$LIBS
@@ -20654,7 +20648,7 @@ then :
 
 printf "%s\n" "#define HAVE_SHM_OPEN 1" >>confdefs.h
 
-                test "$ac_res" = "none required" || RT_LIBS="$ac_res"
+	test "$ac_res" = "none required" || RT_LIBS="$ac_res"
 
 fi
 
@@ -20662,7 +20656,7 @@ LIBS=$ac_save_LIBS
 
 if test "x$with_ldap" != "xno"
 then
-        if ${LDAP_CFLAGS:+false} :
+		if ${LDAP_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
@@ -20696,9 +20690,9 @@ then :
 
 fi
 
-        if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
-        then
-            ac_fn_c_check_type "$LINENO" "LDAPSortKey" "ac_cv_type_LDAPSortKey" "#include <ldap.h>
+	if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+	then
+	ac_fn_c_check_type "$LINENO" "LDAPSortKey" "ac_cv_type_LDAPSortKey" "#include <ldap.h>
 "
 if test "x$ac_cv_type_LDAPSortKey" = xyes
 then :
@@ -20791,9 +20785,9 @@ else $as_nop
   LDAP_LIBS=""
 fi
 
-        else
-            LDAP_LIBS=""
-        fi
+	else
+	LDAP_LIBS=""
+	fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -20989,17 +20983,17 @@ int
 main (void)
 {
 
-    char *name=0;
-    struct hostent he;
-    struct hostent *result;
-    char *buf=0;
-    int bufsize=0;
-    int errnr;
-    char *addr=0;
-    int addrlen=0;
-    int addrtype=0;
-    gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
-    gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
+	char *name=0;
+	struct hostent he;
+	struct hostent *result;
+	char *buf=0;
+	int bufsize=0;
+	int errnr;
+	char *addr=0;
+	int addrlen=0;
+	int addrtype=0;
+	gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
+	gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
 
   ;
   return 0;
@@ -21018,12 +21012,12 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_linux_gethostbyname_r_6" >&5
 printf "%s\n" "$wine_cv_linux_gethostbyname_r_6" >&6; }
-   if test "$wine_cv_linux_gethostbyname_r_6" = "yes"
-   then
+	if test "$wine_cv_linux_gethostbyname_r_6" = "yes"
+	then
 
 printf "%s\n" "#define HAVE_LINUX_GETHOSTBYNAME_R_6 1" >>confdefs.h
 
-   fi
+	fi
 
 ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
 #include <sys/socket.h>
@@ -21462,7 +21456,7 @@ fi
 
 
 case $host_cpu in
-  *i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386__" >&5
+	*i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386__" >&5
 printf %s "checking whether we need to define __i386__... " >&6; }
 if test ${ac_cv_cpp_def___i386__+y}
 then :
@@ -21491,7 +21485,7 @@ then :
   CFLAGS="$CFLAGS -D__i386__"
   LINTFLAGS="$LINTFLAGS -D__i386__"
 fi ;;
-  *x86_64*)         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __x86_64__" >&5
+	*x86_64*)         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __x86_64__" >&5
 printf %s "checking whether we need to define __x86_64__... " >&6; }
 if test ${ac_cv_cpp_def___x86_64__+y}
 then :
@@ -21520,7 +21514,7 @@ then :
   CFLAGS="$CFLAGS -D__x86_64__"
   LINTFLAGS="$LINTFLAGS -D__x86_64__"
 fi ;;
-  *x86_32on64*)     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386_on_x86_64__" >&5
+	*x86_32on64*)     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386_on_x86_64__" >&5
 printf %s "checking whether we need to define __i386_on_x86_64__... " >&6; }
 if test ${ac_cv_cpp_def___i386_on_x86_64__+y}
 then :
@@ -21549,7 +21543,7 @@ then :
   CFLAGS="$CFLAGS -D__i386_on_x86_64__"
   LINTFLAGS="$LINTFLAGS -D__i386_on_x86_64__"
 fi ;;
-  *sparc64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc64__" >&5
+	*sparc64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc64__" >&5
 printf %s "checking whether we need to define __sparc64__... " >&6; }
 if test ${ac_cv_cpp_def___sparc64__+y}
 then :
@@ -21578,7 +21572,7 @@ then :
   CFLAGS="$CFLAGS -D__sparc64__"
   LINTFLAGS="$LINTFLAGS -D__sparc64__"
 fi ;;
-  *sparc*)          { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc__" >&5
+	*sparc*)          { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc__" >&5
 printf %s "checking whether we need to define __sparc__... " >&6; }
 if test ${ac_cv_cpp_def___sparc__+y}
 then :
@@ -21607,7 +21601,7 @@ then :
   CFLAGS="$CFLAGS -D__sparc__"
   LINTFLAGS="$LINTFLAGS -D__sparc__"
 fi ;;
-  *powerpc64*)      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc64__" >&5
+	*powerpc64*)      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc64__" >&5
 printf %s "checking whether we need to define __powerpc64__... " >&6; }
 if test ${ac_cv_cpp_def___powerpc64__+y}
 then :
@@ -21636,7 +21630,7 @@ then :
   CFLAGS="$CFLAGS -D__powerpc64__"
   LINTFLAGS="$LINTFLAGS -D__powerpc64__"
 fi ;;
-  *powerpc*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc__" >&5
+	*powerpc*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc__" >&5
 printf %s "checking whether we need to define __powerpc__... " >&6; }
 if test ${ac_cv_cpp_def___powerpc__+y}
 then :
@@ -21665,7 +21659,7 @@ then :
   CFLAGS="$CFLAGS -D__powerpc__"
   LINTFLAGS="$LINTFLAGS -D__powerpc__"
 fi ;;
-  *aarch64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __aarch64__" >&5
+	*aarch64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __aarch64__" >&5
 printf %s "checking whether we need to define __aarch64__... " >&6; }
 if test ${ac_cv_cpp_def___aarch64__+y}
 then :
@@ -21694,7 +21688,7 @@ then :
   CFLAGS="$CFLAGS -D__aarch64__"
   LINTFLAGS="$LINTFLAGS -D__aarch64__"
 fi ;;
-  *arm*)            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __arm__" >&5
+	*arm*)            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __arm__" >&5
 printf %s "checking whether we need to define __arm__... " >&6; }
 if test ${ac_cv_cpp_def___arm__+y}
 then :
@@ -21726,7 +21720,7 @@ fi ;;
 esac
 
 case $host_vendor in
-  *sun*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sun__" >&5
+	*sun*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sun__" >&5
 printf %s "checking whether we need to define __sun__... " >&6; }
 if test ${ac_cv_cpp_def___sun__+y}
 then :
@@ -22852,8 +22846,8 @@ test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine
 
 if test "x$enable_tools" != xno
 then
-    wine_fn_append_file CONFIGURE_TARGETS "tools/makedep$ac_exeext"
-    ac_config_commands="$ac_config_commands tools/makedep"
+	wine_fn_append_file CONFIGURE_TARGETS "tools/makedep$ac_exeext"
+	ac_config_commands="$ac_config_commands tools/makedep"
 
 fi
 
@@ -22883,7 +22877,7 @@ include/stamp-h: ${wine_srcdir}include/config.h.in config.status
 
 if test "x$enable_maintainer_mode" = xyes
 then
-    wine_fn_append_rule "configure: configure.ac aclocal.m4
+	wine_fn_append_rule "configure: configure.ac aclocal.m4
 	autoconf --warnings=all
 include/config.h.in: include/stamp-h.in
 include/stamp-h.in: configure.ac aclocal.m4
@@ -22893,34 +22887,34 @@ fi
 
 if test "x$enable_tools" != xno
 then
-    wine_fn_append_rule "tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
+	wine_fn_append_rule "tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
 Makefile: tools/makedep$ac_exeext"
 else
-    wine_fn_append_rule "\$(MAKEDEP):
+	wine_fn_append_rule "\$(MAKEDEP):
 	@echo \"You need to run make in $toolsdir first\" && false"
 fi
 
 
 if test -n "$with_wine64"
 then
-    case "$with_wine64" in
-      /*) reldir="" ;;
-      *)  reldir="../" ;;
-    esac
-        rm -f fonts server 2>/dev/null
-    wine_fn_append_rule "all: loader/wine64 loader/wine64-preloader $with_wine64/loader/$wine_binary $with_wine64/loader/$wine_binary-preloader
+	case "$with_wine64" in
+	/*) reldir="" ;;
+	*)  reldir="../" ;;
+	esac
+		rm -f fonts server 2>/dev/null
+	wine_fn_append_rule "all: loader/wine64 loader/wine64-preloader $with_wine64/loader/$wine_binary $with_wine64/loader/$wine_binary-preloader
 loader/wine64 loader/wine64-preloader:
 	rm -f \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
 $with_wine64/loader/$wine_binary:
-  rm -f \$@ && \$(LN_S) $ac_pwd/loader/$wine_binary \$@
+	rm -f \$@ && \$(LN_S) $ac_pwd/loader/$wine_binary \$@
 $with_wine64/loader/$wine_binary-preloader:
-  rm -f \$@ && \$(LN_S) $ac_pwd/loader/$wine_binary-preloader \$@
+	rm -f \$@ && \$(LN_S) $ac_pwd/loader/$wine_binary-preloader \$@
 clean::
 	rm -f loader/wine64 loader/wine64-preloader $with_wine64/loader/$wine_binary $with_wine64/loader/$wine_binary-preloader"
 else
-    TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
+	TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
+	TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
 loader/wine.inf \
 nls \
@@ -23630,12 +23624,12 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 #
 wine_fn_output_makedep ()
 {
-    as_dir=tools; as_fn_mkdir_p
-    $CC -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext ${wine_srcdir}tools/makedep.c $LDFLAGS
+	as_dir=tools; as_fn_mkdir_p
+	$CC -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext ${wine_srcdir}tools/makedep.c $LDFLAGS
 }
 wine_fn_output_makefile ()
 {
-    cat <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$1 && "$wine_makedep"$makedep_flags && return
+	cat <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$1 && "$wine_makedep"$makedep_flags && return
 # This Makefile understands the following targets:
 #
 # all (default):   build wine
@@ -23880,7 +23874,7 @@ LTLIBOBJS = $LTLIBOBJS
 $SET_MAKE
 $wine_rules
 _WINE_EOF
-    as_fn_error $? "could not create Makefile" "$LINENO" 5
+	as_fn_error $? "could not create Makefile" "$LINENO" 5
 }
 
 _ACEOF
@@ -24287,7 +24281,7 @@ fi
 
 if test "$no_create" = "yes"
 then
-  exit 0
+	exit 0
 fi
 
 ac_save_IFS="$IFS"

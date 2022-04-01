@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include "tools.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
 
 enum incl_type

@@ -22,7 +22,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
+
 
 extern void wpp_del_define( const char *name );
 extern void wpp_add_cmdline_define( const char *value );

@@ -123,7 +123,6 @@
 
 %top{
 #include "config.h"
-#include "wine/port.h"
 }
 
 /*

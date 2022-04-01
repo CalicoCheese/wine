@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #if !defined(HAVE__SPAWNVP) && (!defined(_WIN32) || defined(__CYGWIN__))
 

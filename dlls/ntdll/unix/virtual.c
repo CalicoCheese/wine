@@ -71,7 +71,9 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/list.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "wine/rbtree.h"
+#define WINE_RBTREE_HOSTADDRSPACE
 #include "unix_private.h"
 #include "wine/debug.h"
 

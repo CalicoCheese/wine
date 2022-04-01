@@ -258,7 +258,7 @@ static void set_target( const char *name )
 
     free( spec );
 
-    if (target_cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
+    if (target.cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
@@ -485,7 +485,7 @@ static void option_callback( int optc, char *optarg )
         if (!strcmp( optarg, "16" )) main_spec->type = SPEC_WIN16;
         else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
         else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
-        else if (!strcmp( optarg, "wine32" )) { force_pointer_size = 8; target_cpu = CPU_x86_32on64; }
+        else if (!strcmp( optarg, "wine32" )) { force_pointer_size = 8; target.cpu = CPU_x86_32on64; }
         else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
         else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
@@ -623,13 +623,13 @@ static void option_callback( int optc, char *optarg )
         break;
     }
 
-    switch (target_cpu)
+    switch (target.cpu)
     {
     case CPU_i386:
-        if (force_pointer_size == 8) target_cpu = CPU_x86_64;
+        if (force_pointer_size == 8) target.cpu = CPU_x86_64;
         break;
     case CPU_x86_64:
-        if (force_pointer_size == 4) target_cpu = CPU_i386;
+        if (force_pointer_size == 4) target.cpu = CPU_i386;
         break;
     case CPU_x86_32on64:
         break;

@@ -35,17 +35,13 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/poll.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

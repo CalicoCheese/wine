@@ -35,6 +35,12 @@
 #include <stdint.h>
 #include <wine/32on64utils.h>
 
+struct list
+{
+    struct list *next;
+    struct list *prev;
+};
+
 #ifdef WINE_LIST_HOSTADDRSPACE
 #include <wine/hostaddrspace_enter.h>
 #define WINE_LIST_HOSTADDRSPACE_ENABLED
@@ -42,12 +48,6 @@
 #include <wine/winheader_enter.h>
 #define WINE_LIST_HOSTADDRSPACE_DISABLED
 #endif
-
-struct list
-{
-    struct list *next;
-    struct list *prev;
-};
 
 /* Define a list like so:
  *
@@ -249,7 +249,6 @@ static inline void list_move_head( struct list *dst, struct list *src )
 /* get pointer to object containing list element */
 #undef LIST_ENTRY
 #define LIST_ENTRY(elem, type, field) \
-    ((type *)((char *)(elem) - offsetof(type, field)))
     TRUNCCAST(type *, ((uintptr_t)(elem) - offsetof(type, field)))
 
 #ifdef WINE_LIST_HOSTADDRSPACE

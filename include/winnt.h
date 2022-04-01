@@ -995,7 +995,7 @@ typedef enum _HEAP_INFORMATION_CLASS {
 /* The Win32 register context */
 
 /* i386 context definitions */
-
+#if defined(__i386__) || defined(__i386_on_x86_64__)
 #define I386_SIZE_OF_80387_REGISTERS      80
 
 typedef struct _I386_FLOATING_SAVE_AREA
@@ -1068,8 +1068,6 @@ typedef struct _I386_CONTEXT
 #define CONTEXT_I386_FULL (CONTEXT_I386_CONTROL | CONTEXT_I386_INTEGER | CONTEXT_I386_SEGMENTS)
 #define CONTEXT_I386_ALL (CONTEXT_I386_FULL | CONTEXT_I386_FLOATING_POINT | CONTEXT_I386_DEBUG_REGISTERS | CONTEXT_I386_EXTENDED_REGISTERS)
 
-#ifdef __i386__
-
 #define CONTEXT_CONTROL CONTEXT_I386_CONTROL
 #define CONTEXT_INTEGER CONTEXT_I386_INTEGER
 #define CONTEXT_SEGMENTS CONTEXT_I386_SEGMENTS
@@ -1137,7 +1135,7 @@ typedef struct _XSAVE_FORMAT {
 } XSAVE_FORMAT, *PXSAVE_FORMAT;
 
 /* x86-64 context definitions */
-
+#if defined(__x86_64__) && !defined(__i386_on_x86_64__)
 typedef struct _AMD64_RUNTIME_FUNCTION
 {
     DWORD BeginAddress;
@@ -1244,8 +1242,6 @@ typedef struct DECLSPEC_ALIGN(16) _AMD64_CONTEXT {
     DWORD64 LastExceptionToRip;   /* 4c0 */
     DWORD64 LastExceptionFromRip; /* 4c8 */
 } AMD64_CONTEXT;
-
-#ifdef __x86_64__
 
 #define CONTEXT_CONTROL CONTEXT_AMD64_CONTROL
 #define CONTEXT_INTEGER CONTEXT_AMD64_INTEGER
@@ -1693,7 +1689,7 @@ struct _EXCEPTION_RECORD;
 typedef EXCEPTION_DISPOSITION WINAPI EXCEPTION_ROUTINE(struct _EXCEPTION_RECORD*,PVOID,CONTEXT*,PVOID);
 typedef EXCEPTION_ROUTINE *PEXCEPTION_ROUTINE;
 
-#ifdef __x86_64__
+#if defined(__x86_64__) && !defined(__i386_on_x86_64__)
 
 #define UNWIND_HISTORY_TABLE_SIZE 12
 
@@ -1832,7 +1828,7 @@ typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
 
 #endif /* __aarch64__ */
 
-#if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
+#if (defined(__x86_64__) && !defined(__i386_on_x86_64__)) || defined(__arm__) || defined(__aarch64__)
 
 typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD_PTR,PVOID);
 
@@ -2140,7 +2136,7 @@ typedef struct _NT_TIB
 
 struct _TEB;
 
-#if defined(__i386__) && defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+#if (defined(__i386__) || defined(__i386_on_x86_64__)) && defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
@@ -2656,9 +2652,25 @@ typedef struct _IMAGE_SECTION_HEADER {
 
 #define	IMAGE_SIZEOF_SECTION_HEADER 40
 
+#ifdef __i386_on_x86_64__
+static inline PIMAGE_SECTION_HEADER IMAGE_FIRST_SECTION(const void * ntheader)
+{
+    const IMAGE_NT_HEADERS* hdr = ntheader;
+    return ((PIMAGE_SECTION_HEADER)(ULONG_PTR)((const BYTE *)&hdr->OptionalHeader + \
+                           hdr->FileHeader.SizeOfOptionalHeader));
+}
+
+static inline IMAGE_SECTION_HEADER* HOSTPTR IMAGE_FIRST_SECTION(const void * HOSTPTR ntheader) __attribute__((overloadable))
+{
+    const IMAGE_NT_HEADERS* HOSTPTR hdr = ntheader;
+    return ((IMAGE_SECTION_HEADER* HOSTPTR)(ULONG_HOSTPTR)((const BYTE * HOSTPTR)&hdr->OptionalHeader + \
+                           hdr->FileHeader.SizeOfOptionalHeader));
+}
+#else
 #define IMAGE_FIRST_SECTION(ntheader) \
   ((PIMAGE_SECTION_HEADER)(ULONG_PTR)((const BYTE *)&((const IMAGE_NT_HEADERS *)(ntheader))->OptionalHeader + \
                            ((const IMAGE_NT_HEADERS *)(ntheader))->FileHeader.SizeOfOptionalHeader))
+#endif
 
 /* These defines are for the Characteristics bitfield. */
 /* #define IMAGE_SCN_TYPE_REG			0x00000000 - Reserved */
@@ -3782,7 +3794,7 @@ typedef struct _ACL {
 
 typedef enum _ACL_INFORMATION_CLASS
 {
-  AclRevisionInformation = 1, 
+  AclRevisionInformation = 1,
   AclSizeInformation
 } ACL_INFORMATION_CLASS;
 

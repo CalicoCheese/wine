@@ -358,7 +358,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
-    if (target_cpu != CPU_x86 && target_cpu != CPU_x86_32on64)
+    if (target.cpu != CPU_x86 && target.cpu != CPU_x86_32on64)
         odp->flags &= ~(FLAG_THISCALL | FLAG_FASTCALL);
 
     if (!(token = GetToken(1)))

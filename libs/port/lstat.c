@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf)

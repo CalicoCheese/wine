@@ -183,11 +183,6 @@ extern struct target target;
 extern enum target_cpu target_cpu;
 extern enum target_platform target_platform;
 
-static inline unsigned int get_ptr_size(void)
-{
-    return get_target_ptr_size( target );
-}
-
 static inline int is_pe(void)
 {
     return target.platform == PLATFORM_MINGW || target.platform == PLATFORM_WINDOWS;
@@ -293,11 +288,15 @@ extern const char *get_link_name( const ORDDEF *odp );
 extern int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const void *) );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
+extern unsigned int get_ptr_size(void);
+extern unsigned int get_host_ptr_size(void);
 extern unsigned int get_args_size( const ORDDEF *odp );
 extern const char *asm_name( const char *func );
+extern const char *thunk32_name( const char *func );
 extern const char *func_declaration( const char *func );
 extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
+extern const char *get_asm_host_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
 extern const char *get_asm_export_section(void);
 extern const char *get_asm_rodata_section(void);
@@ -395,5 +394,6 @@ extern char *arch_option;
 extern const char *float_abi_option;
 extern int thumb_mode;
 extern int needs_get_pc_thunk;
+extern int needs_invoke32;
 
 #endif  /* __WINE_BUILD_H */

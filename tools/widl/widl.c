@@ -791,15 +791,15 @@ int main(int argc,char *argv[])
       }
   }
 
-  switch (target_cpu)
+  switch (target.cpu)
   {
   case CPU_i386:
   case CPU_x86_32on64:
-      if (pointer_size == 8) target_cpu = CPU_x86_64;
+      if (pointer_size == 8) target.cpu = CPU_x86_64;
       else pointer_size = 4;
       break;
   case CPU_x86_64:
-      if (pointer_size == 4) target_cpu = CPU_i386;
+      if (pointer_size == 4) target.cpu = CPU_i386;
       else pointer_size = 8;
       break;
   case CPU_ARM64:

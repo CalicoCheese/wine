@@ -365,6 +365,7 @@ static inline BOOL __wine_dbg_IsBadStringPtrW(const WCHAR * HOSTPTR str,ULONGLON
 {
     return IsBadStringPtrW(str, max);
 }
+#endif
 
 static inline const char *wine_dbgstr_wn( const WCHAR * HOSTPTR str, int n )
 {

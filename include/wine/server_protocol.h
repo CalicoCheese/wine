@@ -5424,7 +5424,101 @@ struct resume_process_reply
     struct reply_header __header;
 };
 
+enum esync_type
+{
+    ESYNC_SEMAPHORE = 1,
+    ESYNC_AUTO_EVENT,
+    ESYNC_MANUAL_EVENT,
+    ESYNC_MUTEX,
+    ESYNC_AUTO_SERVER,
+    ESYNC_MANUAL_SERVER,
+    ESYNC_QUEUE,
+};
 
+
+struct create_esync_request
+{
+    struct request_header __header;
+    unsigned int access;
+    int          initval;
+    int          type;
+    int          max;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
+};
+struct create_esync_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    int          type;
+    unsigned int shm_idx;
+    char __pad_20[4];
+};
+
+struct open_esync_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    int          type;
+    /* VARARG(name,unicode_str); */
+    char __pad_28[4];
+};
+struct open_esync_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    int          type;
+    unsigned int shm_idx;
+    char __pad_20[4];
+};
+
+
+struct get_esync_read_fd_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_esync_read_fd_reply
+{
+    struct reply_header __header;
+    int          type;
+    unsigned int shm_idx;
+};
+
+
+struct get_esync_write_fd_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_esync_write_fd_reply
+{
+    struct reply_header __header;
+};
+
+
+struct esync_msgwait_request
+{
+    struct request_header __header;
+    int          in_msgwait;
+};
+struct esync_msgwait_reply
+{
+    struct reply_header __header;
+};
+
+
+struct get_esync_apc_fd_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_esync_apc_fd_reply
+{
+    struct reply_header __header;
+};
 
 struct get_next_thread_request
 {

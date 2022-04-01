@@ -25,7 +25,6 @@
 #ifdef __i386_on_x86_64__
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <errno.h>
 #include <signal.h>

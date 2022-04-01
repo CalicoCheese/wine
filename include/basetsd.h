@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _BASETSD_H_
-#define _BASETSD_H_
+#ifndef BASETSD_H
+#define BASETSD_H
 
 #include "wine/winheader_enter.h"
 
@@ -38,7 +38,7 @@ extern "C" {
  * 64-bit.
  */
 
-#if (defined(__x86_64__) || !defined(__i386_on_x86_64__)) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if ((defined(__x86_64__) && !defined(__i386_on_x86_64__)) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
 #define _WIN64
 #endif
 
@@ -59,7 +59,7 @@ extern "C" {
 #    define __int32 int
 #  endif
 #  ifndef __int64
-#    if defined(_WIN64) || defined(__i386_on_x86_64__) && !defined(__MINGW64__)
+#    if (defined(_WIN64) || defined(__i386_on_x86_64__)) && !defined(__MINGW64__)
 #      define __int64 long
 #    else
 #      define __int64 long long
@@ -142,15 +142,13 @@ typedef unsigned __int64 ULONG_HOSTPTR;
 
 #define __int3264 __int32
 
-#ifdef WINE_NO_LONG_TYPES
 typedef long          INT_PTR, *PINT_PTR;
 typedef unsigned long UINT_PTR, *PUINT_PTR;
-#else
-typedef int           INT_PTR, *PINT_PTR;
-typedef unsigned int  UINT_PTR, *PUINT_PTR;
-#endif
 typedef long          LONG_PTR, *PLONG_PTR;
 typedef unsigned long ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR     DWORD_PTR, *PDWORD_PTR;
+
+typedef ULONG_PTR ULONG_HOSTPTR;
 
 #endif
 
@@ -318,7 +316,6 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
 
-typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
 #define MINLONGLONG             ((LONGLONG)~MAXLONGLONG)
@@ -330,10 +327,6 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 #if defined(__i386__) || defined(__i386_on_x86_64__)
 # undef  WORDS_BIGENDIAN
 #elif defined(__x86_64__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
-# define WORDS_BIGENDIAN
-#elif defined(__powerpc64__)
 # undef  WORDS_BIGENDIAN
 #elif defined(__powerpc__)
 # define WORDS_BIGENDIAN
@@ -361,4 +354,4 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
 #include "wine/winheader_exit.h"
 
-#endif /* !defined(_BASETSD_H_) */
+#endif /* !defined(BASETSD_H) */

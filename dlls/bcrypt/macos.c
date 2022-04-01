@@ -23,7 +23,6 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H

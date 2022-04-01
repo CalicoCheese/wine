@@ -407,17 +407,17 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         strarray_add( &flags, opts->unix_lib ? "-dynamiclib" : "-bundle" );
         strarray_add( &flags, "-multiply_defined" );
         strarray_add( &flags, "suppress" );
-        if (opts->target_cpu == CPU_POWERPC)
+        if (opts->target.cpu == CPU_POWERPC)
         {
-            strarray_add( flags, "-read_only_relocs" );
-            strarray_add( flags, "warning" );
+            strarray_add( &flags, "-read_only_relocs" );
+            strarray_add( &flags, "warning" );
         }
-        if (opts->target_cpu == CPU_x86_32on64)
+        if (opts->target.cpu == CPU_x86_32on64)
         {
-            strarray_add( flags, "-sectcreate" );
-            strarray_add( flags, "WINE_32on64" );
-            strarray_add( flags, "WINE_32on64" );
-            strarray_add( flags, "/dev/null" );
+            strarray_add( &flags, "-sectcreate" );
+            strarray_add( &flags, "WINE_32on64" );
+            strarray_add( &flags, "WINE_32on64" );
+            strarray_add( &flags, "/dev/null" );
         }
         if (opts->image_base)
         {
@@ -574,7 +574,7 @@ static char *get_lib_dir( struct options *opts )
     struct stat st;
     size_t build_len, target_len;
 
-    bit_suffix = opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64 ? "64" : opts->target_cpu == CPU_x86_32on64 ? "32on64" : "32";
+    bit_suffix = opts->target.cpu == CPU_x86_64 || opts->target.cpu == CPU_ARM64 ? "64" : opts->target.cpu == CPU_x86_32on64 ? "32on64" : "32";
     other_bit_suffix = get_target_ptr_size( opts->target ) == 8 ? "32" : "64";
     winecrt0 = strmake( "/wine%s/libwinecrt0.a", get_arch_dir( opts->target ));
     build_multiarch = get_multiarch_dir( get_default_target() );
@@ -622,7 +622,7 @@ static char *get_lib_dir( struct options *opts )
             while (p > buffer && *p != '/') p--;
             if (*p != '/') break;
 
-            /* try s/$build_cpu/$target_cpu/ on multiarch */
+            /* try s/$build_cpu/$target.cpu/ on multiarch */
             if (get_default_target().cpu != opts->target.cpu &&
                 !memcmp( p, build_multiarch, build_len ) && p[build_len] == '/')
             {
@@ -737,12 +737,12 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(&comp_args, "-fno-PIC");
     }
 
-    if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
+    if (opts->target.cpu == CPU_x86_64 || opts->target.cpu == CPU_ARM64)
     {
-        strarray_add(comp_args, "-DWIN64");
-        strarray_add(comp_args, "-D_WIN64");
-        strarray_add(comp_args, "-D__WIN64");
-        strarray_add(comp_args, "-D__WIN64__");
+        strarray_add(&comp_args, "-DWIN64");
+        strarray_add(&comp_args, "-D_WIN64");
+        strarray_add(&comp_args, "-D__WIN64");
+        strarray_add(&comp_args, "-D__WIN64__");
     }
 
     if (get_target_ptr_size( opts->target ) == 8)
@@ -776,12 +776,12 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(&comp_args, "-D__fastcall=__attribute__((__fastcall__))");
             break;
         case CPU_x86_32on64:
-            strarray_add(comp_args, "-D__stdcall=__attribute__((stdcall32))");
-            strarray_add(comp_args, "-D__cdecl=__attribute__((cdecl32))");
-            strarray_add(comp_args, "-D_stdcall=__attribute__((stdcall32))");
-            strarray_add(comp_args, "-D_cdecl=__attribute__((cdecl32))");
-            strarray_add(comp_args, "-D__fastcall=__attribute__((fastcall32))");
-            strarray_add(comp_args, "-D_fastcall=__attribute__((fastcall32))");
+            strarray_add(&comp_args, "-D__stdcall=__attribute__((stdcall32))");
+            strarray_add(&comp_args, "-D__cdecl=__attribute__((cdecl32))");
+            strarray_add(&comp_args, "-D_stdcall=__attribute__((stdcall32))");
+            strarray_add(&comp_args, "-D_cdecl=__attribute__((cdecl32))");
+            strarray_add(&comp_args, "-D__fastcall=__attribute__((fastcall32))");
+            strarray_add(&comp_args, "-D_fastcall=__attribute__((fastcall32))");
             break;
         case CPU_ARM:
             strarray_add(&comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
@@ -1799,24 +1799,24 @@ int main(int argc, char **argv)
                     }
 		    else if (strcmp("-m32", opts.args.str[i]) == 0)
                     {
-                        if (opts.target_cpu == CPU_x86_64 || opts.target_cpu == CPU_x86_32on64)
-                            opts.target_cpu = CPU_i386;
+                        if (opts.target.cpu == CPU_x86_64 || opts.target.cpu == CPU_x86_32on64)
+                            opts.target.cpu = CPU_i386;
                         set_target_ptr_size( &opts.target, 4 );
                         opts.force_pointer_size = 4;
 			raw_linker_arg = 1;
                     }
 		    else if (strcmp("-m64", opts.args.str[i]) == 0)
                     {
-                        if (opts.target_cpu == CPU_x86 || opts.target_cpu == CPU_x86_32on64)
-                            opts.target_cpu = CPU_x86_64;
+                        if (opts.target.cpu == CPU_x86 || opts.target.cpu == CPU_x86_32on64)
+                            opts.target.cpu = CPU_x86_64;
                         set_target_ptr_size( &opts.target, 8 );
                         opts.force_pointer_size = 8;
 			raw_linker_arg = 1;
                     }
-            else if (strcmp("-mwine32", opts.args->base[i]) == 0)
+            else if (strcmp("-mwine32", opts.args.str[i]) == 0)
                     {
-                        if (opts.target_cpu == CPU_x86_64 || opts.target_cpu == CPU_i386)
-                            opts.target_cpu = CPU_x86_32on64;
+                        if (opts.target.cpu == CPU_x86_64 || opts.target.cpu == CPU_i386)
+                            opts.target.cpu = CPU_x86_32on64;
                         opts.force_pointer_size = 8;
                         raw_linker_arg = 1;
                     }

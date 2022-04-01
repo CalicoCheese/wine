@@ -28,8 +28,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
+#define WINE_LIST_HOSTADDRSPACE
 #include "build.h"
 
 #define __ASM_EXTRA_DIST "16"
@@ -473,6 +473,27 @@ static void add_import_func( struct import *imp, const char *name, const char *e
     imp->nb_imports++;
 }
 
+static struct import_func *find_import_func( struct import *imp, const char *name, const char *export_name,
+                                             int ordinal, int hint )
+{
+    int i;
+    for (i = 0; i < imp->nb_imports; i++)
+    {
+        if ((imp->imports[i].name && !name) || (!imp->imports[i].name && name))
+            continue;
+        if (name && strcmp( imp->imports[i].name, name ))
+            continue;
+        if ((imp->imports[i].export_name && !export_name) || (!imp->imports[i].export_name && export_name))
+            continue;
+        if (export_name && strcmp( imp->imports[i].export_name, export_name ))
+            continue;
+
+        if (imp->imports[i].ordinal == ordinal && imp->imports[i].hint == hint)
+            return imp->imports + i;
+    }
+    return NULL;
+}
+
 /* add an import for an undefined function of the form __wine$func$ */
 static void add_undef_import( const char *name, int is_ordinal )
 {
@@ -514,19 +535,19 @@ static int has_stubs( const DLLSPEC *spec )
 static void add_extra_undef_symbols( DLLSPEC *spec )
 {
     add_extra_ld_symbol( spec->init_func );
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
         add_extra_ld_symbol( thunk32_name(spec->init_func) );
     if (spec->type == SPEC_WIN16) add_extra_ld_symbol( "DllMain" );
     if (has_stubs( spec ))
     {
         add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
-        if (target_cpu == CPU_x86_32on64)
+        if (target.cpu == CPU_x86_32on64)
             add_extra_ld_symbol( thunk32_name("__wine_spec_unimplemented_stub") );
     }
-    if (delayed_imports.count) 
+    if (delayed_imports.count)
     {
         add_extra_ld_symbol( "__wine_spec_delay_load" );
-        if (target_cpu == CPU_x86_32on64)
+        if (target.cpu == CPU_x86_32on64)
             add_extra_ld_symbol( thunk32_name("__wine_spec_delay_load") );
     }
 }
@@ -599,7 +620,7 @@ static void check_undefined_exports( DLLSPEC *spec )
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
         if (odp->flags & FLAG_SYSCALL) continue;
-        if (target_cpu == CPU_x86_32on64 && odp->type != TYPE_EXTERN)
+        if (target.cpu == CPU_x86_32on64 && odp->type != TYPE_EXTERN)
             check_name = thunk32_name( odp->link_name );
         else
             check_name = odp->link_name;
@@ -648,7 +669,7 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
         if (odp->flags & FLAG_FORWARD) continue;
         if (odp->flags & FLAG_SYSCALL) continue;
         output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
-        if (target_cpu == CPU_x86_32on64 && odp->type != TYPE_EXTERN)
+        if (target.cpu == CPU_x86_32on64 && odp->type != TYPE_EXTERN)
             output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( thunk32_name( get_link_name( odp ))));
     }
     for (j = 0; j < extra_ld_symbols.count; j++)
@@ -732,7 +753,7 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
     char thunk_prefix[16];
     size_t thunk_prefix_len;
 
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
     {
         strcpy( thunk_prefix, thunk32_name("") );
         thunk_prefix_len = strlen( thunk_prefix );
@@ -798,17 +819,17 @@ int is_undefined( const char *name )
 /* output the get_pc thunk if needed */
 void output_get_pc_thunk(void)
 {
-    assert( target.cpu == CPU_i386 || target_cpu == CPU_x86_32on64);
+    assert( target.cpu == CPU_i386 || target.cpu == CPU_x86_32on64);
     output( "\n\t.text\n" );
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
     output( "%s:\n", asm_name("__wine_spec_get_pc_thunk_eax") );
     output_cfi( ".cfi_startproc" );
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
         output( "\t.code32\n" );
     output( "\tmovl (%%esp),%%eax\n" );
     output( "\tret\n" );
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
         output( "\t.code64\n" );
     output( "\tmovl (%%esp),%%eax\n" );
     output( "\tret\n" );
@@ -817,7 +838,7 @@ void output_get_pc_thunk(void)
 }
 
 /* output a single import thunk */
-static void output_import_thunk( const char *name, const char *table, int pos )
+static void output_import_thunk( const char *name, const char *table, int pos, int nb_imports )
 {
     output( "\n\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration(name) );
@@ -884,7 +905,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
 
 static void output_32bit_thunk( const char *name, const char *table, int pos )
 {
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
     {
         const char *thunk_name = thunk32_name(name);
         char *asm_thunk_name = xstrdup(asm_name(thunk_name));
@@ -927,7 +948,7 @@ int has_imports(void)
 /* output the import table of a Win32 module */
 static void output_immediate_imports(void)
 {
-    int i, j, k, table_count;
+    int i, j, k, table_count = ((target.cpu == CPU_x86_32on64) ? 2 : 1);
 
     struct import *import;
 
@@ -951,7 +972,7 @@ static void output_immediate_imports(void)
         output_rva( ".L__wine_spec_import_name_%s", import->c_name ); /* Name */
         output_rva( ".L__wine_spec_import_data_ptrs + %d", j * get_ptr_size() );  /* FirstThunk */
         j += import->nb_imports + 1;
-        if (target_cpu == CPU_x86_32on64) j += import->nb_imports + 1;
+        if (target.cpu == CPU_x86_32on64) j += import->nb_imports + 1;
     }
     output( "\t.long 0\n" );     /* OriginalFirstThunk */
     output( "\t.long 0\n" );     /* TimeDateStamp */
@@ -1036,11 +1057,12 @@ static void output_immediate_import_thunks(void)
         {
             struct import_func *func = &import->imports[j];
             output_import_thunk( func->name ? func->name : func->export_name,
-                                 ".L__wine_spec_import_data_ptrs", pos );
-        }   output_32bit_thunk( func->name ? func->name : func->export_name,
+                                 ".L__wine_spec_import_data_ptrs", pos, import->nb_imports);
+            output_32bit_thunk( func->name ? func->name : func->export_name,
                                 ".L__wine_spec_import_data_ptrs", pos );
+        }
         pos += get_ptr_size();
-        if (target_cpu == CPU_x86_32on64) pos += (import->nb_imports + 1) * get_ptr_size();
+        if (target.cpu == CPU_x86_32on64) pos += (import->nb_imports + 1) * get_ptr_size();
     }
     output_function_size( import_thunks );
 }
@@ -1048,7 +1070,7 @@ static void output_immediate_import_thunks(void)
 /* output the delayed import table of a Win32 module */
 static void output_delayed_imports( const DLLSPEC *spec )
 {
-    int j, k, mod, table_count;
+    int j, k, mod, table_count = ((target.cpu == CPU_x86_32on64) ? 2 : 1);
     struct import *import;
 
     if (list_empty( &dll_delayed )) return;
@@ -1076,7 +1098,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
         output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
         output( "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
         j += import->nb_imports;
-        if (target_cpu == CPU_x86_32on64) j += import->nb_imports + 2;
+        if (target.cpu == CPU_x86_32on64) j += import->nb_imports + 2;
         mod++;
     }
     output( "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
@@ -1089,7 +1111,6 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
 
     output( "\n.L__wine_delay_IAT:\n" );
-    table_count = ((target_cpu == CPU_x86_32on64) ? 2 : 1);
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
         for (k = 0; k < table_count; k++)
@@ -1103,7 +1124,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
                 output( "\t%s __wine_delay_imp_%s_%s\n",
                         get_asm_ptr_keyword(), import->c_name, name );
             }
-            if (target_cpu == CPU_x86_32on64) output( "\t%s 0\n", get_asm_ptr_keyword() );
+            if (target.cpu == CPU_x86_32on64) output( "\t%s 0\n", get_asm_ptr_keyword() );
         }
     }
 
@@ -1121,7 +1142,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
                     output( "\t%s .L__wine_delay_data_%s_%s\n",
                             get_asm_ptr_keyword(), import->c_name, func->name );
             }
-            if (target_cpu == CPU_x86_32on64) output( "\t%s 0\n", get_asm_ptr_keyword() );
+            if (target.cpu == CPU_x86_32on64) output( "\t%s 0\n", get_asm_ptr_keyword() );
         }
     }
 
@@ -1347,11 +1368,11 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         {
             struct import_func *func = &import->imports[j];
             output_import_thunk( func->name ? func->name : func->export_name,
-                                 ".L__wine_delay_IAT", pos );
+                                 ".L__wine_delay_IAT", pos, import->nb_imports);
             output_32bit_thunk( func->name ? func->name : func->export_name,
                                 ".L__wine_delay_IAT", pos );
         }
-        if (target_cpu == CPU_x86_32on64) pos += (import->nb_imports + 2) * get_ptr_size();
+        if (target.cpu == CPU_x86_32on64) pos += (import->nb_imports + 2) * get_ptr_size();
     }
     output_function_size( delayed_import_thunks );
 }
@@ -1386,7 +1407,7 @@ static void output_external_link_imports( DLLSPEC *spec )
     for (i = pos = 0; i < ext_link_imports.count; i++)
     {
         char *buffer = strmake( "__wine_spec_ext_link_%s", ext_link_imports.str[i] );
-        output_import_thunk( buffer, ".L__wine_spec_external_links", pos );
+        output_import_thunk( buffer, ".L__wine_spec_external_links", pos, ext_link_imports.count);
         free( buffer );
         pos += get_ptr_size();
     }
@@ -1518,7 +1539,7 @@ void output_stubs( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
     {
         output( "\n/* 32-bit thunk for stub functions */\n\n" );
         for (i = 0; i < spec->nb_entry_points; i++)
@@ -1614,9 +1635,9 @@ static void output_syscall_dispatcher( int count, const char *variant )
     output( "\t%s\n", func_declaration(symbol) );
     output( "%s\n", asm_globl(symbol) );
     output_cfi( ".cfi_startproc" );
-    if (target_cpu == CPU_x86_32on64)
+    if (target.cpu == CPU_x86_32on64)
         output( "\t.code32\n" );
-    switch (target_cpu)
+    switch (target.cpu)
     {
     case CPU_i386:
     case CPU_x86_32on64:
@@ -1732,7 +1753,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output_cfi( ".cfi_def_cfa_register %%ebx" );
         output_cfi( ".cfi_adjust_cfa_offset 0x30\n" );
         output( "\tmovl %%eax,0x18(%%ebx)\n" );
-        if (target_cpu == CPU_x86_32on64)
+        if (target.cpu == CPU_x86_32on64)
         {
             /* 32on64: don't load %gs if it's 0 (see set_full_cpu_context) */
             output( "\tcmpw $0,0x16(%%ebx)\n" );
@@ -1802,7 +1823,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tiret\n" );
         output( "4:\tmovl $0x%x,%%eax\n", invalid_param );
         output( "\tjmp 2b\n" );
-        if (target_cpu == CPU_x86_32on64)
+        if (target.cpu == CPU_x86_32on64)
             output( "\t.code64\n" );
         break;
     case CPU_x86_64:
@@ -2076,7 +2097,7 @@ void output_syscalls( DLLSPEC *spec )
     {
         output_syscall_dispatcher( count, "" );
 
-        switch( target_cpu )
+        switch( target.cpu )
         {
         case CPU_i386:
         case CPU_x86_32on64:
@@ -2097,7 +2118,7 @@ void output_syscalls( DLLSPEC *spec )
         output( ".Lsyscall_table:\n" );
         for (i = 0; i < count; i++)
         {
-            if (target_cpu == CPU_x86_32on64)
+            if (target.cpu == CPU_x86_32on64)
                 output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( thunk32_name( get_link_name( syscalls[i] ))));
             else
                 output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( syscalls[i] )));

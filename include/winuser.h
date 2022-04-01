@@ -4446,7 +4446,6 @@ struct user_api_hook
 
 WINUSERAPI BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new, struct user_api_hook *old);
 WINUSERAPI void WINAPI UnregisterUserApiHook(void);
-WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input );
 #endif
 
 #ifdef __cplusplus

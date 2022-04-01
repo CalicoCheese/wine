@@ -17,7 +17,6 @@
    Boston, MA 02110-1301, USA  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <sys/types.h>
 #include <stdlib.h>

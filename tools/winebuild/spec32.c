@@ -292,7 +292,7 @@ static void output_relay_debug( DLLSPEC *spec )
                 output( "\tret $%u\n", get_args_size( odp ));
             else
                 output( "\tret\n" );
-            if (target_cpu == CPU_x86_32on64)
+            if (target.cpu == CPU_x86_32on64)
                 output( "\t.code64\n" );
             output_cfi( ".cfi_endproc" );
             break;
@@ -305,7 +305,6 @@ static void output_relay_debug( DLLSPEC *spec )
                 for (j = 0; j < odp->u.func.nb_args && !has_float; j++)
                     has_float = is_float_arg( odp, j );
 
-            val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
             output( "\t.align %d\n", get_alignment(4) );
             if (thumb_mode) output( "\t.thumb_func\n" );
             output( ".L__wine_spec_relay_entry_point_%d:\n", i );
@@ -679,7 +678,7 @@ void output_module( DLLSPEC *spec )
     int i;
     unsigned int page_size = get_page_size();
     const char *data_dirs[16] = { NULL };
-
+    const char *init_func;
     /* Reserve some space for the PE header */
 
     switch (target.platform)

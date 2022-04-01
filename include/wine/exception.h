@@ -24,7 +24,6 @@
 #include "wine/winheader_enter.h"
 
 #include <windef.h>
-#include <winternl.h>
 #include <excpt.h>
 
 #ifdef __cplusplus
@@ -107,7 +106,7 @@ typedef struct { int reg; } __wine_jmp_buf;
 #endif
 
 extern int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
-                                                   EXCEPTION_REGISTRATION_RECORD *frame ) DECLSPEC_HIDDEN;
+                                                                                    EXCEPTION_REGISTRATION_RECORD *frame ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
                                                          void (__cdecl *target)(void) ) DECLSPEC_HIDDEN;
@@ -253,7 +252,7 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_push_frame( EXCEPTION_REGIST
     __asm__ __volatile__(".byte 0x64\n\tmovl (0),%0"
                          "\n\tmovl %0,(%1)"
                          "\n\t.byte 0x64\n\tmovl %1,(0)"
-                         : "=&r" (prev) : "r" (frame) : "memory" );
+    : "=&r" (prev) : "r" (frame) : "memory" );
     return prev;
 #else
     NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
@@ -267,7 +266,7 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTR
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__i386_on_x86_64__))
     __asm__ __volatile__(".byte 0x64\n\tmovl %0,(0)"
-                         : : "r" (frame->Prev) : "memory" );
+    : : "r" (frame->Prev) : "memory" );
     return frame->Prev;
 
 #else

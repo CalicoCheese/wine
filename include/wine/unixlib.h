@@ -21,6 +21,8 @@
 #ifndef __WINE_WINE_UNIXLIB_H
 #define __WINE_WINE_UNIXLIB_H
 
+#include <wine/winheader_enter.h>
+
 typedef NTSTATUS (*unixlib_entry_t)( void *args );
 typedef UINT64 unixlib_handle_t;
 
@@ -31,8 +33,8 @@ extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int c
 /* some useful helpers from ntdll */
 extern const char *ntdll_get_build_dir(void);
 extern const char *ntdll_get_data_dir(void);
-extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
-extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
+extern DWORD ntdll_umbstowcs( const char * HOSTPTR src, DWORD srclen, WCHAR * HOSTPTR dst, DWORD dstlen );
+extern int ntdll_wcstoumbs( const WCHAR * HOSTPTR src, DWORD srclen, char * HOSTPTR dst, DWORD dstlen, BOOL strict );
 extern int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
 extern int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 extern NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher );
@@ -164,5 +166,7 @@ static inline SIZE_T ntdll_wcscspn( const WCHAR *str, const WCHAR *reject )
 #define wcsnicmp(s1, s2,n) ntdll_wcsnicmp(s1,s2,n)
 
 #endif /* WINE_UNIX_LIB */
+
+#include <wine/winheader_exit.h>
 
 #endif  /* __WINE_WINE_UNIXLIB_H */

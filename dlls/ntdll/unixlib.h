@@ -21,8 +21,6 @@
 #ifndef __NTDLL_UNIXLIB_H
 #define __NTDLL_UNIXLIB_H
 
-#include "wine/debug.h"
-
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */

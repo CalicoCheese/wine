@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
+#define WINE_LIST_HOSTADDRSPACE
 
 struct pp_entry;	/* forward */
 /*
