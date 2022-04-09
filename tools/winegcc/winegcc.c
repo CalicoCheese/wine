@@ -819,7 +819,15 @@ static void compile(struct options *opts, const char *lang) {
             strarray_add(&comp_args, strmake("%s%s%s", idirafter, root, incl_dirs[j]));
         }
     } else if (opts->wine_objdir)
-        strarray_add(&comp_args, strmake("-I%s/include", opts->wine_objdir));
+    {
+#ifdef HAVE_ILOCAL
+        if (opts->target.cpu == CPU_x86_32on64 && !opts->use_msvcrt)
+            strarray_add(&comp_args, "-ilocal");
+        else
+#endif
+            strarray_add(&comp_args, "-I" );
+        strarray_add(&comp_args, strmake("%s/include", opts->wine_objdir) );
+    }
 
     spawn(opts->prefix, comp_args, 0);
 }
