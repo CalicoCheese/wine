@@ -47,33 +47,6 @@
 static struct strarray tmp_files;
 static const char *output_file_source_name;
 
-static const struct
-{
-    const char *name;
-    enum target_cpu cpu;
-} cpu_names[] =
-{
-    { "i386",    CPU_i386 },
-    { "i486",    CPU_i386 },
-    { "i586",    CPU_i386 },
-    { "i686",    CPU_i386 },
-    { "i786",    CPU_i386 },
-    { "amd64",   CPU_x86_64 },
-    { "x86_64",  CPU_x86_64 },
-    { "x86_32on64",  CPU_x86_32on64 },
-    { "powerpc", CPU_POWERPC },
-    { "arm",     CPU_ARM },
-    { "armv5",   CPU_ARM },
-    { "armv6",   CPU_ARM },
-    { "armv7",   CPU_ARM },
-    { "armv7a",  CPU_ARM },
-    { "arm64",   CPU_ARM64 },
-    { "aarch64", CPU_ARM64 },
-};
-
-static struct strarray tmp_files;
-static const char *output_file_source_name;
-
 /* atexit handler to clean tmp files */
 void cleanup_tmp_files(void)
 {
@@ -865,9 +838,8 @@ unsigned int get_alignment(unsigned int align)
     case CPU_i386:
     case CPU_x86_64:
     case CPU_x86_32on64:
-        if (target_platform != PLATFORM_APPLE) return align;
+        if (target.platform != PLATFORM_APPLE) return align;
         /* fall through */
-    case CPU_POWERPC:
     case CPU_ARM:
     case CPU_ARM64:
         n = 0;
@@ -892,7 +864,6 @@ unsigned int get_ptr_size(void)
     {
     case CPU_i386:
     case CPU_x86_32on64:
-    case CPU_POWERPC:
     case CPU_ARM:
         return 4;
     case CPU_x86_64:
@@ -1093,7 +1064,7 @@ const char *asm_globl( const char *func )
     switch (target.platform)
     {
     case PLATFORM_APPLE:
-        buffer = strmake( "\t.glbal _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:

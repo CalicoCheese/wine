@@ -50,34 +50,6 @@ int data_only = 0;
 
 struct target target = { 0 };
 
-#ifdef __i386__
-enum target_cpu target_cpu = CPU_i386;
-#elif defined(__i386_on_x86_64__)
-enum target_cpu target_cpu = CPU_x86_32on64;
-#elif defined(__x86_64__)
-enum target_cpu target_cpu = CPU_x86_64;
-#elif defined(__powerpc__)
-enum target_cpu target_cpu = CPU_POWERPC;
-#elif defined(__arm__)
-enum target_cpu target_cpu = CPU_ARM;
-#elif defined(__aarch64__)
-enum target_cpu target_cpu = CPU_ARM64;
-#else
-#error Unsupported CPU
-#endif
-
-#ifdef __APPLE__
-enum target_platform target_platform = PLATFORM_APPLE;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-enum target_platform target_platform = PLATFORM_FREEBSD;
-#elif defined(__sun)
-enum target_platform target_platform = PLATFORM_SOLARIS;
-#elif defined(_WIN32)
-enum target_platform target_platform = PLATFORM_WINDOWS;
-#else
-enum target_platform target_platform = PLATFORM_UNSPECIFIED;
-#endif
-
 char *target_alias = NULL;
 
 char *input_file_name = NULL;
@@ -127,21 +99,6 @@ enum exec_mode_values
 };
 
 static enum exec_mode_values exec_mode = MODE_NONE;
-
-static const struct
-{
-    const char *name;
-    enum target_platform platform;
-} platform_names[] =
-{
-    { "macos",   PLATFORM_APPLE },
-    { "darwin",  PLATFORM_APPLE },
-    { "freebsd", PLATFORM_FREEBSD },
-    { "solaris", PLATFORM_SOLARIS },
-    { "mingw32", PLATFORM_WINDOWS },
-    { "windows", PLATFORM_WINDOWS },
-    { "winnt",   PLATFORM_WINDOWS }
-};
 
 /* set the dll file name from the input file name */
 static void set_dll_file_name( const char *name, DLLSPEC *spec )
@@ -213,52 +170,10 @@ static void set_syscall_table( const char *id, DLLSPEC *spec )
 /* set the target CPU and platform */
 static void set_target( const char *name )
 {
-    unsigned int i;
-    char *p, *spec = xstrdup( name );
-
-    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
-
     target_alias = xstrdup( name );
 
-    /* get the CPU part */
-
-    if ((p = strchr( spec, '-' )))
-    {
-        int cpu;
-
-        *p++ = 0;
-        cpu = get_cpu_from_name( spec );
-        if (cpu == -1) fatal_error( "Unrecognized CPU '%s'\n", spec );
-        target_cpu = cpu;
-    }
-    else if (!strcmp( spec, "mingw32" ))
-    {
-        target_cpu = CPU_i386;
-        p = spec;
-    }
-    else
-        fatal_error( "Invalid target specification '%s'\n", name );
-
-    /* get the OS part */
-
-    target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (;;)
-    {
-        for (i = 0; i < ARRAY_SIZE(platform_names); i++)
-        {
-            if (!strncmp( platform_names[i].name, p, strlen(platform_names[i].name) ))
-            {
-                target_platform = platform_names[i].platform;
-                break;
-            }
-        }
-        if (target_platform != PLATFORM_UNSPECIFIED || !(p = strchr( p, '-' ))) break;
-        p++;
-    }
-
-    free( spec );
-
-    if (target.cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
+    if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
+    if (target.cpu == CPU_ARM && is_pe()) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
