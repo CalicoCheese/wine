@@ -302,30 +302,6 @@ static BOOL get_so_file_info( int fd, pe_image_info_t *info )
         case 0x0000000c: info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
         case 0x0100000c: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
-        if (header.macho.magic == 0xfeedfacf && info->cpu == CPU_x86_64)
-        {
-            struct segment_command_64
-            {
-                unsigned int    cmd;
-                unsigned int    cmdsize;
-                char            segname[16];
-            } seg;
-
-            offset.QuadPart = sizeof(header.macho);
-
-            while (header.macho.ncmds--)
-            {
-                if (NtReadFile( handle, 0, NULL, NULL, &io, &seg, sizeof(seg), &offset, 0 ) ||
-                    io.Information < sizeof(seg))
-                    break;
-                if (seg.cmd == 0x19 /*LC_SEGMENT_64*/ && !strcmp(seg.segname, "WINE_32on64"))
-                {
-                    info->cpu = CPU_x86;
-                    break;
-                }
-                offset.QuadPart += seg.cmdsize;
-            }
-        }
         if (header.macho.filetype == 8) return TRUE;
     }
     return FALSE;
@@ -355,12 +331,6 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
         if (is_builtin_path( attr->ObjectName, &info->machine ))
         {
             TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
-            /* assume current arch */
-#if defined(__i386__) || defined(__x86_64__) || defined(__i386_on_x86_64__)
-            info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
-#else
-            info->cpu = client_cpu;
-#endif
             return STATUS_SUCCESS;
         }
         return status;
@@ -525,7 +495,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
     char * HOSTPTR wineloader = NULL;
     const char * HOSTPTR loader = NULL;
 
-    if (!wine_is_64bit() ^ !is_child_64bit) loader = get_alternate_loader( &wineloader );
+    if (!wine_is_64bit() ^ !is_machine_64bit(pe_info->machine)) loader = get_alternate_loader( &wineloader );
 
     if (wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL ) &&
         isatty(0) && is_unix_console_handle( params->hStdInput ))
