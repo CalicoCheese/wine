@@ -37,12 +37,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/winheader_enter.h"
-#include "wine/hostptraddrspace_enter.h"
 #include "wine/debug.h"
-
-#include "wine/winheader_exit.h"
-#include "wine/hostptraddrspace_exit.h"
 
 #include "unixlib.h"
 
