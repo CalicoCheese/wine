@@ -92,7 +92,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 #define u64_to_user_ptr(u) ((void *)(uintptr_t)(u))
-
 union unix_sockaddr
 {
     struct sockaddr addr;
@@ -109,10 +108,10 @@ union unix_sockaddr
 struct async_recv_ioctl
 {
     struct async_fileio io;
-    void *control;
-    struct WS_sockaddr *addr;
-    int *addr_len;
-    DWORD *ret_flags;
+    void * HOSTPTR control;
+    struct WS_sockaddr * HOSTPTR addr;
+    int * HOSTPTR addr_len;
+    DWORD * HOSTPTR ret_flags;
     int unix_flags;
     unsigned int count;
     struct iovec iov[1];
@@ -121,7 +120,7 @@ struct async_recv_ioctl
 struct async_send_ioctl
 {
     struct async_fileio io;
-    const struct WS_sockaddr *addr;
+    const struct WS_sockaddr * HOSTPTR addr;
     int addr_len;
     int unix_flags;
     unsigned int sent_len;
@@ -134,7 +133,7 @@ struct async_transmit_ioctl
 {
     struct async_fileio io;
     HANDLE file;
-    char *buffer;
+    char * HOSTPTR buffer;
     unsigned int buffer_size;   /* allocated size of buffer */
     unsigned int read_len;      /* amount of valid data currently in the buffer */
     unsigned int head_cursor;   /* amount of header data already sent */
@@ -143,8 +142,8 @@ struct async_transmit_ioctl
     unsigned int tail_cursor;   /* amount of tail data already sent */
     unsigned int file_len;      /* total file length to send */
     DWORD flags;
-    const char *head;
-    const char *tail;
+    const char * HOSTPTR head;
+    const char * HOSTPTR tail;
     unsigned int head_len;
     unsigned int tail_len;
     LARGE_INTEGER offset;
@@ -196,6 +195,7 @@ static NTSTATUS sock_errno_to_status( int err )
     }
 }
 
+#include <wine/hostaddrspace_enter.h>
 static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrlen, union unix_sockaddr *uaddr )
 {
     memset( uaddr, 0, sizeof(*uaddr) );
@@ -518,6 +518,7 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
     return 0;
 }
 #endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+#include <wine/hostaddrspace_exit.h>
 
 struct cmsghdr_32
 {
@@ -534,7 +535,7 @@ static size_t cmsg_align_32( size_t len )
 
 /* we assume that cmsg_data does not require translation, which is currently
  * true for all messages */
-static int wow64_translate_control( const WSABUF *control64, struct afd_wsabuf_32 *control32 )
+static int wow64_translate_control( const WSABUF *control64, struct afd_wsabuf_32 * HOSTPTR control32 )
 {
     char *const buf32 = ULongToPtr(control32->buf);
     const ULONG max_len = control32->len;
@@ -665,7 +666,7 @@ static BOOL async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
             return TRUE;
 
         *status = try_recv( fd, async, info );
-        TRACE( "got status %#x, %#lx bytes read\n", *status, *info );
+        TRACE( "got status %#x, %#x bytes read\n", *status, *info );
         if (needs_close) close( fd );
 
         if (*status == STATUS_DEVICE_NOT_READY)
@@ -675,9 +676,9 @@ static BOOL async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
     return TRUE;
 }
 
-static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                           int fd, const void *buffers_ptr, unsigned int count, WSABUF *control,
-                           struct WS_sockaddr *addr, int *addr_len, DWORD *ret_flags, int unix_flags, int force_async )
+static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK * io,
+                           int fd, const void * HOSTPTR buffers_ptr, unsigned int count, WSABUF * HOSTPTR control,
+                           struct WS_sockaddr * HOSTPTR addr, int * HOSTPTR addr_len, DWORD * HOSTPTR ret_flags, int unix_flags, int force_async )
 {
     struct async_recv_ioctl *async;
     ULONG_PTR information;
@@ -704,7 +705,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     async->count = count;
     if (in_wow64_call())
     {
-        const struct afd_wsabuf_32 *buffers = buffers_ptr;
+        const struct afd_wsabuf_32 * HOSTPTR buffers = buffers_ptr;
 
         for (i = 0; i < count; ++i)
         {
@@ -714,7 +715,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     }
     else
     {
-        const WSABUF *buffers = buffers_ptr;
+        const WSABUF * HOSTPTR buffers = buffers_ptr;
 
         for (i = 0; i < count; ++i)
         {
@@ -730,7 +731,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
     for (i = 0; i < count; ++i)
     {
-        if (!virtual_check_buffer_for_write( async->iov[i].iov_base, async->iov[i].iov_len ))
+        if (!virtual_check_buffer_for_write( ADDRSPACECAST(void *, async->iov[i].iov_base), async->iov[i].iov_len ))
         {
             release_fileio( &async->io );
             return STATUS_ACCESS_VIOLATION;
@@ -772,8 +773,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     return status;
 }
 
-
-static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
+static NTSTATUS try_send( int fd, struct async_send_ioctl * HOSTPTR async )
 {
     union unix_sockaddr unix_addr;
     struct msghdr hdr;
@@ -831,7 +831,7 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
         ret -= async->iov[async->iov_cursor++].iov_len;
     if (async->iov_cursor < async->count)
     {
-        async->iov[async->iov_cursor].iov_base = (char *)async->iov[async->iov_cursor].iov_base + ret;
+        async->iov[async->iov_cursor].iov_base = (char * HOSTPTR)async->iov[async->iov_cursor].iov_base + ret;
         async->iov[async->iov_cursor].iov_len -= ret;
         return STATUS_DEVICE_NOT_READY;
     }
@@ -864,10 +864,10 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 }
 
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                           IO_STATUS_BLOCK *io, int fd, const void *buffers_ptr, unsigned int count,
-                           const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
+                           IO_STATUS_BLOCK *io, int fd, const void * HOSTPTR buffers_ptr, unsigned int count,
+                           const struct WS_sockaddr * HOSTPTR addr, unsigned int addr_len, int unix_flags, int force_async )
 {
-    struct async_send_ioctl *async;
+    struct async_send_ioctl * async;
     HANDLE wait_handle;
     DWORD async_size;
     NTSTATUS status;
@@ -882,7 +882,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     async->count = count;
     if (in_wow64_call())
     {
-        const struct afd_wsabuf_32 *buffers = buffers_ptr;
+        const struct afd_wsabuf_32 * HOSTPTR buffers = buffers_ptr;
 
         for (i = 0; i < count; ++i)
         {
@@ -892,7 +892,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     }
     else
     {
-        const WSABUF *buffers = buffers_ptr;
+        const WSABUF * HOSTPTR buffers = buffers_ptr;
 
         for (i = 0; i < count; ++i)
         {
@@ -939,7 +939,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     return status;
 }
 
-static ssize_t do_send( int fd, const void *buffer, size_t len, int flags )
+static ssize_t do_send( int fd, const void * HOSTPTR buffer, size_t len, int flags )
 {
     ssize_t ret;
     while ((ret = send( fd, buffer, len, flags )) < 0 && errno == EINTR);
@@ -1079,7 +1079,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
 
     async->file = ULongToHandle( params->file );
     async->buffer_size = params->buffer_size ? params->buffer_size : 65536;
-    if (!(async->buffer = malloc( async->buffer_size )))
+    if (!(async->buffer = RtlAllocateHeap(GetProcessHeap(), 0, async->buffer_size )))
     {
         release_fileio( &async->io );
         return STATUS_NO_MEMORY;
@@ -1091,9 +1091,9 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     async->tail_cursor = 0;
     async->file_len = params->file_len;
     async->flags = params->flags;
-    async->head = u64_to_user_ptr(params->head_ptr);
+    async->head = ADDRSPACECAST(void * HOSTPTR, params->head_ptr);
     async->head_len = params->head_len;
-    async->tail = u64_to_user_ptr(params->tail_ptr);
+    async->tail = ADDRSPACECAST(void * HOSTPTR, params->tail_ptr);
     async->tail_len = params->tail_len;
     async->offset = params->offset;
 
@@ -1306,7 +1306,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_RECVMSG:
         {
             struct afd_recvmsg_params *params = in_buffer;
-            unsigned int *ws_flags = u64_to_user_ptr(params->ws_flags_ptr);
+            unsigned int * HOSTPTR ws_flags = ADDRSPACECAST(unsigned int * HOSTPTR, params->ws_flags_ptr);
             int unix_flags = 0;
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
@@ -1324,9 +1324,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 unix_flags |= MSG_PEEK;
             if (*ws_flags & WS_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
-            status = sock_recv( handle, event, apc, apc_user, io, fd, u64_to_user_ptr(params->buffers_ptr),
-                                params->count, u64_to_user_ptr(params->control_ptr),
-                                u64_to_user_ptr(params->addr_ptr), u64_to_user_ptr(params->addr_len_ptr),
+            status = sock_recv( handle, event, apc, apc_user, io, fd, ADDRSPACECAST(void * HOSTPTR, params->buffers_ptr),
+                                params->count, ADDRSPACECAST(void * HOSTPTR, params->control_ptr),
+            ADDRSPACECAST(void * HOSTPTR, params->addr_ptr), ADDRSPACECAST(void * HOSTPTR, params->addr_len_ptr),
                                 ws_flags, unix_flags, params->force_async );
             if (needs_close) close( fd );
             return status;
@@ -1352,8 +1352,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 WARN( "ignoring MSG_PARTIAL\n" );
             if (params->ws_flags & ~(WS_MSG_OOB | WS_MSG_PARTIAL))
                 FIXME( "unknown flags %#x\n", params->ws_flags );
-            status = sock_send( handle, event, apc, apc_user, io, fd, u64_to_user_ptr( params->buffers_ptr ), params->count,
-                                u64_to_user_ptr( params->addr_ptr ), params->addr_len, unix_flags, params->force_async );
+            status = sock_send( handle, event, apc, apc_user, io, fd, ADDRSPACECAST(void * HOSTPTR, params->buffers_ptr), params->count,
+                    ADDRSPACECAST(void * HOSTPTR, params->addr_ptr), params->addr_len, unix_flags, params->force_async );
             if (needs_close) close( fd );
             return status;
         }

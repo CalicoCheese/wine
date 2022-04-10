@@ -29,12 +29,13 @@ struct _DISPATCHER_CONTEXT;
 struct unix_funcs
 {
     /* loader functions */
-    NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
+    NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module, BOOL *is_hybrid );
     void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
     /* other Win32 API functions */
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
+    void *        (CDECL *dlsym_unix_ntdll)( const char *func );
 #ifdef __aarch64__
     TEB *         (WINAPI *NtCurrentTeb)(void);
 #endif

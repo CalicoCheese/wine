@@ -115,11 +115,18 @@ void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,P
 void     (WINAPI *pKiUserCallbackDispatcher)(ULONG,void*,ULONG) = NULL;
 void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
 void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
+ULONG    (WINAPI *pRtlFindClearBitsAndSet)(PRTL_BITMAP lpBits, ULONG ulCount, ULONG ulHint) = NULL;
 void     (WINAPI *p__wine_ctrl_routine)(void*);
 #ifdef __i386_on_x86_64__
 void *   (WINAPI *pRtlAllocateHeap)( HANDLE heap, ULONG flags, SIZE_T size ) = NULL;
 BOOLEAN  (WINAPI *pRtlFreeHeap)( HANDLE heap, ULONG flags, void *ptr ) = NULL;
 #endif
+void     (WINAPI *pLdrInitializeThunk_stdcall32)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
+static void LdrInitializeThunk_stdcall64(CONTEXT *context, void** unknown2, ULONG_PTR unknown3, ULONG_PTR unknown4)
+{
+    pLdrInitializeThunk_stdcall32(context, unknown2, unknown3, unknown4);
+}
+
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
@@ -588,7 +595,7 @@ static void set_system_dll_path(void)
 
     if (path && *path)
     {
-        char *path_copy = strdup(path);
+        char * HOSTPTR path_copy = strdup(path);
         for (p = strtok( path_copy, ":" ); p; p = strtok( NULL, ":" ))
             system_dll_paths[count++] = strdup( p );
         free( path_copy );
@@ -676,24 +683,11 @@ static void init_paths( char * HOSTPTR * HOSTPTR argv )
     set_config_dir();
 }
 
-#ifdef __i386_on_x86_64__
-static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-static char wine_version[128];
-static char wine_build_id[128];
-
-/* Initialize string buffers for 32on64 mode */
-static void init_strings(void)
-{
-    extern const char wine_build[];
-    strcpy(wine_version, PACKAGE_VERSION);
-    strcpy(wine_build_id, wine_build);
-}
-#endif
-
 /* return whether the OS needs to use a 64-bit process to emulate 32-bit Wine */
 int wine_needs_32on64(void)
 {
 #ifdef __APPLE__
+#include <sys/utsname.h>
     static int result = -1;
     struct utsname name;
     unsigned major, minor;
@@ -753,7 +747,7 @@ static NTSTATUS loader_exec( const char * HOSTPTR loader, char * HOSTPTR * HOSTP
 
     if (build_dir)
     {
-        argv[1] = build_path( build_dir, (cpu == CPU_x86_64) ? "loader/wine64" : wine_needs_32on64() ? "loader/wine32on64" : "loader/wine" );
+        argv[1] = build_path( build_dir, (machine == IMAGE_FILE_MACHINE_AMD64) ? "loader/wine64" : wine_needs_32on64() ? "loader/wine32on64" : "loader/wine" );
         preloader_exec( argv );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
@@ -1372,7 +1366,7 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
 static NTSTATUS dlopen_dll( const char * HOSTPTR so_name, UNICODE_STRING *nt_name, void **ret_module,
                             pe_image_info_t *image_info, BOOL prefer_native )
 {
-    void *module, *handle;
+    void *module, * HOSTPTR handle;
     const IMAGE_NT_HEADERS *nt;
 
     callback_module = (void *)1;
@@ -1445,7 +1439,7 @@ NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **disp
     if (id > 3) return STATUS_INVALID_PARAMETER;
     if (info->limit != table->ServiceLimit)
     {
-        ERR( "syscall count mismatch %u / %lu\n", info->limit, table->ServiceLimit );
+        ERR( "syscall count mismatch %u / %u\n", info->limit, table->ServiceLimit );
         NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
     }
     info->dispatcher = __wine_syscall_dispatcher;
@@ -1473,7 +1467,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module, BOOL 
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING redir;
     pe_image_info_t info;
-    char *unix_name;
+    char * HOSTPTR unix_name;
     NTSTATUS status;
     DWORD len;
 
@@ -1500,24 +1494,6 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module, BOOL 
     free( unix_name );
     free( redir.Buffer );
     return status;
-}
-
-
-/* check a PE library architecture */
-static BOOL is_valid_binary( HMODULE module, const SECTION_IMAGE_INFORMATION *info )
-{
-#if defined(__i386__) || defined(__i386_on_x86_64__)
-    return info->Machine == IMAGE_FILE_MACHINE_I386;
-#elif defined(__arm__)
-    return info->Machine == IMAGE_FILE_MACHINE_ARM ||
-           info->Machine == IMAGE_FILE_MACHINE_THUMB ||
-           info->Machine == IMAGE_FILE_MACHINE_ARMNT;
-#elif defined(__x86_64__)
-    /* we don't support 32-bit IL-only builtins yet */
-    return info->Machine == IMAGE_FILE_MACHINE_AMD64;
-#elif defined(__aarch64__)
-    return info->Machine == IMAGE_FILE_MACHINE_ARM64;
-#endif
 }
 
 /* check if the library is the correct architecture */
@@ -1599,7 +1575,7 @@ static NTSTATUS open_dll_file( const char * HOSTPTR name, OBJECT_ATTRIBUTES *att
 /***********************************************************************
  *           open_builtin_pe_file
  */
-static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
+static NTSTATUS open_builtin_pe_file( const char * HOSTPTR name, OBJECT_ATTRIBUTES *attr, void **module,
                                       SIZE_T *size, SECTION_IMAGE_INFORMATION *image_info,
                                       WORD machine, BOOL prefer_native, BOOL *is_hybrid)
 {
@@ -1760,7 +1736,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         }
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
-        status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
+        status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native, is_hybrid );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
@@ -1937,8 +1913,8 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 /***********************************************************************
  *           load_main_exe
  */
-NTSTATUS load_main_exe( const WCHAR * HOSTPTR dos_name, const char * HOSTPTR unix_name, const WCHAR *curdir,
-                        WCHAR **image, void **module )
+NTSTATUS load_main_exe( const WCHAR * HOSTPTR dos_name, const char * HOSTPTR unix_name, const WCHAR * HOSTPTR curdir,
+                        WCHAR * HOSTPTR * HOSTPTR image, void **module )
 {
     enum loadorder loadorder = LO_INVALID;
     UNICODE_STRING nt_name;
@@ -1953,9 +1929,9 @@ NTSTATUS load_main_exe( const WCHAR * HOSTPTR dos_name, const char * HOSTPTR uni
     if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
     {
         if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
-        init_unicode_string( &nt_name, *image );
+        init_unicode_string( &nt_name, ADDRSPACECAST(WCHAR *, *image) );
         loadorder = get_load_order( &nt_name );
-        status = open_main_image( *image, module, &main_image_info, loadorder );
+        status = open_main_image( ADDRSPACECAST(WCHAR *, *image), module, &main_image_info, loadorder );
         if (status != STATUS_DLL_NOT_FOUND) return status;
         free( *image );
     }
@@ -1972,10 +1948,10 @@ NTSTATUS load_main_exe( const WCHAR * HOSTPTR dos_name, const char * HOSTPTR uni
     if ((status = get_full_path( dos_name, curdir, image ))) goto failed;
     free( tmp );
 
-    init_unicode_string( &nt_name, *image );
+    init_unicode_string( &nt_name, ADDRSPACECAST(WCHAR *, *image) );
     if (loadorder == LO_INVALID) loadorder = get_load_order( &nt_name );
 
-    status = open_main_image( *image, module, &main_image_info, loadorder );
+    status = open_main_image( ADDRSPACECAST(WCHAR *, *image), module, &main_image_info, loadorder );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
@@ -1999,7 +1975,7 @@ failed:
  *
  * Load start.exe as main image.
  */
-NTSTATUS load_start_exe( WCHAR **image, void **module )
+NTSTATUS load_start_exe( WCHAR * HOSTPTR * HOSTPTR image, void **module )
 {
     static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
     UNICODE_STRING nt_name;
@@ -2009,7 +1985,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
     *image = malloc( sizeof("\\??\\C:\\windows\\system32\\start.exe") * sizeof(WCHAR) );
     wcscpy( *image, get_machine_wow64_dir( current_machine ));
     wcscat( *image, startW );
-    init_unicode_string( &nt_name, *image );
+    init_unicode_string( &nt_name, ADDRSPACECAST(WCHAR *, *image) );
     status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE, NULL);
     if (status)
     {
@@ -2227,7 +2203,7 @@ static void load_wow64_ntdll( USHORT machine )
 
     wcscpy( path, get_machine_wow64_dir( machine ));
     wcscat( path, ntdllW );
-    init_unicode_string( &nt_name, path );
+    init_unicode_string( &nt_name, ADDRSPACECAST(WCHAR *, path) );
     status = find_builtin_dll( &nt_name, &module, &size, &info, machine, FALSE, NULL);
     switch (status)
     {
@@ -2302,6 +2278,7 @@ static struct unix_funcs unix_funcs =
     init_builtin_dll,
     unwind_builtin_dll,
     RtlGetSystemTimePrecise,
+    dlsym_unix_ntdll,
 #ifdef __aarch64__
     NtCurrentTeb,
 #endif
@@ -2356,7 +2333,6 @@ static void hook(void *to_hook, const void *replace)
 static void start_main_thread(void)
 {
     SYSTEM_SERVICE_TABLE syscall_table = { (ULONG_PTR *)syscalls, NULL, ARRAY_SIZE(syscalls), syscall_args };
-    BOOL suspend;
     NTSTATUS status;
     TEB *teb = virtual_alloc_first_teb();
 
@@ -2567,9 +2543,6 @@ static void apple_create_wine_thread( void * HOSTPTR arg )
  */
 static void apple_main_thread(void)
 {
-    CFRunLoopSourceContext source_context = { 0 };
-    CFRunLoopSourceRef source;
-
     if (!pthread_main_np()) return;
 
     /* Multi-processing Services can get confused about the main thread if the
@@ -2721,7 +2694,7 @@ void __wine_main( int argc, char * HOSTPTR * HOSTPTR argv, char * HOSTPTR * HOST
         if (pre_exec())
         {
             static char noexec[] = "WINELOADERNOEXEC=1";
-            char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
+            char * HOSTPTR * HOSTPTR new_argv = malloc( (argc + 2) * sizeof(*argv) );
 
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
             putenv( noexec );

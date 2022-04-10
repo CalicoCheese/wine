@@ -54,7 +54,7 @@ struct debug_info
     unsigned int str_pos;       /* current position in strings buffer */
     unsigned int out_pos;       /* current position in output buffer */
     char         strings[1020]; /* buffer for temporary strings */
-    char         output[1020];  /* current output line */
+    char         output [1020]; /* current output line */
 };
 
 C_ASSERT( sizeof(struct debug_info) == 0x800 );
@@ -64,7 +64,7 @@ static struct debug_info initial_info;  /* debug info for initial thread */
 static unsigned char default_flags = (1 << __WINE_DBCL_ERR) | (1 << __WINE_DBCL_FIXME);
 static int nb_debug_options = -1;
 static int options_size;
-static struct __wine_debug_channel *debug_options;
+static struct __wine_debug_channel * HOSTPTR debug_options;
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
@@ -270,7 +270,7 @@ const char * __cdecl __wine_dbg_strdup( const char *str )
     assert( n <= sizeof(info->strings) );
     if (pos + n > sizeof(info->strings)) pos = 0;
     info->str_pos = pos + n;
-    return memcpy( info->strings + pos, str, n );
+    return ADDRSPACECAST(const char * WIN32PTR, memcpy( info->strings + pos, str, n ));
 }
 
 /***********************************************************************
@@ -294,7 +294,7 @@ int __cdecl __wine_dbg_output( const char *str )
     if (end)
     {
         ret += append_output( info, str, end + 1 - str );
-        __wine_dbg_write( info->output, info->out_pos );
+        write( 2, info->output, info->out_pos );
         info->out_pos = 0;
         str = end + 1;
     }
@@ -357,7 +357,7 @@ void dbg_init(void)
 
     if (nb_debug_options == -1) init_options();
 
-    options = (struct __wine_debug_channel *)((char *)peb + (is_win64 ? 2 : 1) * page_size);
+    options = ADDRSPACECAST(struct __wine_debug_channel *, ((char *)peb + (is_win64 ? 2 : 1) * page_size));
     memcpy( options, debug_options, nb_debug_options * sizeof(*options) );
     free( debug_options );
     debug_options = options;

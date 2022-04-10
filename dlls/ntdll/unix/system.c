@@ -581,7 +581,7 @@ static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
 
     *max_len *= 2;
-    if (!(new_data = realloc( *pdata, *max_len*sizeof(*new_data) ))) return FALSE;
+    if (!(new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *pdata, *max_len*sizeof(*new_data) ))) return FALSE;
     *pdata = new_data;
     return TRUE;
 }
@@ -590,7 +590,7 @@ static BOOL grow_logical_proc_ex_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *new_dataex;
     DWORD new_len = *max_len * 2;
-    if (!(new_dataex = realloc( *pdataex, new_len * sizeof(*new_dataex) ))) return FALSE;
+    if (!(new_dataex = RtlReAllocateHeap(GetProcessHeap(), 0, *pdataex, new_len * sizeof(*new_dataex) ))) return FALSE;
     memset( new_dataex + *max_len, 0, (new_len - *max_len) * sizeof(*new_dataex) );
     *pdataex = new_dataex;
     *max_len = new_len;
@@ -1267,13 +1267,13 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     count = peb->NumberOfProcessors;
 
     cpu_info_size = 3 * sizeof(*proc_info);
-    if (!(proc_info_buffer = malloc(cpu_info_size)))
+    if (!(proc_info_buffer = RtlAllocateHeap(GetProcessHeap(), 0, cpu_info_size)))
         return STATUS_NO_MEMORY;
 
     if ((status = create_logical_proc_info(NULL, (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **)&proc_info_buffer,
             &cpu_info_size, RelationAll)))
     {
-        free(proc_info_buffer);
+        RtlFreeHeap(GetProcessHeap(), 0, proc_info_buffer);
         return status;
     }
 
@@ -1341,7 +1341,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
         proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
     }
 
-    free(proc_info_buffer);
+    RtlFreeHeap(GetProcessHeap(), 0, proc_info_buffer);
 
     return STATUS_SUCCESS;
 }
@@ -2427,7 +2427,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
         thread_info_size = sizeof(SYSTEM_THREAD_INFORMATION);
 
     *len = 0;
-    if (size && !(buffer = malloc( size ))) return STATUS_NO_MEMORY;
+    if (size && !(buffer = RtlAllocateHeap(GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
 
     SERVER_START_REQ( list_processes )
     {
@@ -2446,7 +2446,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
                   + (total_name_len + process_count) * sizeof(WCHAR)
                   + total_thread_count * thread_info_size;
 
-        free( buffer );
+        RtlFreeHeap(GetProcessHeap(), 0, buffer );
         return ret;
     }
 
@@ -2529,7 +2529,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
     }
 
     if (*len > size) ret = STATUS_INFO_LENGTH_MISMATCH;
-    free( buffer );
+    RtlFreeHeap(GetProcessHeap(), 0, buffer );
     return ret;
 }
 
@@ -2634,7 +2634,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             ret = STATUS_INFO_LENGTH_MISMATCH;
             break;
         }
-        if (!(sppi = calloc( out_cpus, sizeof(*sppi) )))
+        if (!(sppi = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, out_cpus * sizeof(*sppi))))
         {
             ret = STATUS_NO_MEMORY;
             break;
@@ -2747,7 +2747,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
 
-        free( sppi );
+        RtlFreeHeap(GetProcessHeap(), 0, sppi );
         break;
     }
 
@@ -2803,7 +2803,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         }
 
         num_handles = (size - FIELD_OFFSET( SYSTEM_HANDLE_INFORMATION, Handle )) / sizeof(SYSTEM_HANDLE_ENTRY);
-        if (!(handle_info = malloc( sizeof(*handle_info) * num_handles ))) return STATUS_NO_MEMORY;
+        if (!(handle_info = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*handle_info) * num_handles ))) return STATUS_NO_MEMORY;
 
         SERVER_START_REQ( get_system_handles )
         {
@@ -2832,7 +2832,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         }
         SERVER_END_REQ;
 
-        free( handle_info );
+        RtlFreeHeap(GetProcessHeap(), 0, handle_info );
         break;
     }
 
@@ -3022,7 +3022,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
         num_handles = (size - FIELD_OFFSET( SYSTEM_HANDLE_INFORMATION_EX, Handles ))
                       / sizeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX);
-        if (!(handle_info = malloc( sizeof(*handle_info) * num_handles ))) return STATUS_NO_MEMORY;
+        if (!(handle_info = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*handle_info) * num_handles ))) return STATUS_NO_MEMORY;
 
         SERVER_START_REQ( get_system_handles )
         {
@@ -3051,7 +3051,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         }
         SERVER_END_REQ;
 
-        free( handle_info );
+        RtlFreeHeap(GetProcessHeap(), 0, handle_info );
         break;
     }
 
@@ -3062,7 +3062,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         /* Each logical processor may use up to 7 entries in returned table:
          * core, numa node, package, L1i, L1d, L2, L3 */
         len = 7 * peb->NumberOfProcessors;
-        buf = malloc( len * sizeof(*buf) );
+        buf = RtlAllocateHeap(GetProcessHeap(), 0, len * sizeof(*buf) );
         if (!buf)
         {
             ret = STATUS_NO_MEMORY;
@@ -3078,7 +3078,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-        free( buf );
+        RtlFreeHeap(GetProcessHeap(), 0, buf );
         break;
     }
 
@@ -3245,7 +3245,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
         }
 
         len = 3 * sizeof(*buf);
-        if (!(buf = malloc( len )))
+        if (!(buf = RtlAllocateHeap(GetProcessHeap(), 0, len )))
         {
             ret = STATUS_NO_MEMORY;
             break;
@@ -3260,7 +3260,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-        free( buf );
+        RtlFreeHeap(GetProcessHeap(), 0, buf );
         break;
     }
 

@@ -1554,7 +1554,7 @@ void call_raise_user_exception_dispatcher(void)
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context, NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     void **stack = (void **)frame->esp;
@@ -1563,7 +1563,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     *(--stack) = context;
     *(--stack) = rec;
     frame->esp = (ULONG)stack;
-    frame->eip = (ULONG)pKiUserExceptionDispatcher;
+    frame->eip = (ULONG)dispatcher;
     return STATUS_SUCCESS;
 }
 

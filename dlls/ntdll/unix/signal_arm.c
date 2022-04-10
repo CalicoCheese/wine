@@ -667,7 +667,7 @@ void call_raise_user_exception_dispatcher(void)
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context, NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
     DWORD lr = frame->lr;
@@ -677,7 +677,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     if (status) return status;
     frame->r0 = (DWORD)rec;
     frame->r1 = (DWORD)context;
-    frame->pc = (DWORD)pKiUserExceptionDispatcher;
+    frame->pc = (DWORD)dispatcher;
     frame->lr = lr;
     frame->sp = sp;
     frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;

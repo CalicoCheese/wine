@@ -371,8 +371,9 @@ static int wait_select_reply( void *cookie )
  */
 static NTSTATUS invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTATUS status )
 {
-    return call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
-                                     wine_server_get_ptr( apc->func ), status );
+    call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
+                                     wine_server_get_ptr( apc->func ), pKiUserApcDispatcher );
+    return 0;
 }
 
 
@@ -1440,7 +1441,7 @@ void process_exit_wrapper( int status )
  */
 size_t server_init_process(void)
 {
-    const char *arch = getenv( "WINEARCH" );
+    const char * HOSTPTR arch = getenv( "WINEARCH" );
     const char * HOSTPTR env_socket = getenv( "WINESERVERSOCKET" );
     obj_handle_t version;
     unsigned int i;
@@ -1751,7 +1752,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
         NtCurrentTeb()->ExceptionCode = ret;
-        call_raise_user_exception_dispatcher();
+        call_raise_user_exception_dispatcher(pKiRaiseUserExceptionDispatcher);
     }
     return ret;
 }

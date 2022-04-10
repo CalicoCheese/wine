@@ -114,10 +114,10 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 #include "wine/server.h"
+#include "unix_private.h"
 #define WINE_LIST_HOSTADDRSPACE
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -231,8 +231,6 @@ static mode_t start_umask;
 
 /* at some point we may want to allow Winelib apps to set this */
 static const BOOL is_case_sensitive = FALSE;
-
-static struct file_identity windir;
 
 static pthread_mutex_t dir_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1236,7 +1234,7 @@ static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer 
 {
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
-    const WCHAR * HOSTPTR p, * HOSTPTR ext, * HOSTPTR hash_end, * HOSTPTR end = name + length;
+    const WCHAR * HOSTPTR p, * HOSTPTR ext, * HOSTPTR end = name + length;
     LPWSTR dst;
     unsigned short hash;
     int i;
@@ -2481,7 +2479,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
     if (needs_close) close( fd );
     if (cwd != -1) close( cwd );
-    TRACE( "=> %x (%ld)\n", status, io->Information );
+    TRACE( "=> %x (%u)\n", status, io->Information );
     return status;
 }
 
@@ -2494,7 +2492,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
  * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
  */
 static NTSTATUS find_file_in_dir( char * HOSTPTR unix_name, int pos, const WCHAR *name, int length,
-                                  BOOLEAN check_case, BOOLEAN *is_win_dir )
+                                  BOOLEAN check_case )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_name_8_dot_3;
@@ -2662,7 +2660,7 @@ static BOOL replace_path( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *str, ULONG pr
     replace_len = wcslen( replace );
     str->Length = (len + replace_len - match_len) * sizeof(WCHAR);
     str->MaximumLength = str->Length + sizeof(WCHAR);
-    if (!(p = str->Buffer = malloc( str->MaximumLength ))) return FALSE;
+    if (!(p = str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, str->MaximumLength ))) return FALSE;
 
     memcpy( p, name, prefix_len * sizeof(WCHAR) );
     p += prefix_len;
@@ -2742,7 +2740,7 @@ BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
             /* redirect everything else */
             redir->Length = sizeof(syswow64dirW) + len * sizeof(WCHAR);
             redir->MaximumLength = redir->Length + sizeof(WCHAR);
-            if (!(redir->Buffer = malloc( redir->MaximumLength ))) return FALSE;
+            if (!(redir->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, redir->MaximumLength ))) return FALSE;
             memcpy( redir->Buffer, syswow64dirW, sizeof(syswow64dirW) );
             memcpy( redir->Buffer + ARRAY_SIZE(syswow64dirW), name, len * sizeof(WCHAR) );
             redir->Buffer[redir->Length / sizeof(WCHAR)] = 0;
@@ -3108,7 +3106,7 @@ done:
         *unix_name_ret = unix_name;
 
         nt_name->MaximumLength = (strlen(unix_name) + 1) * sizeof(WCHAR);
-        if ((nt_name->Buffer = malloc( nt_name->MaximumLength )))
+        if ((nt_name->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, nt_name->MaximumLength )))
         {
             DWORD i, len = ntdll_umbstowcs( unix_name, strlen(unix_name), nt_name->Buffer, strlen(unix_name) );
             nt_name->Buffer[len] = 0;
@@ -3446,13 +3444,13 @@ NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
     if (buffer)
     {
         struct stat st1, st2;
-        char *name = buffer;
+        char * HOSTPTR name = buffer;
 
         /* remove dosdevices prefix for z: drive if it points to the Unix root */
         if (!strncmp( buffer, config_dir, strlen(config_dir) ) &&
             !strncmp( buffer + strlen(config_dir), "/dosdevices/z:/", 15 ))
         {
-            char *p = buffer + strlen(config_dir) + 14;
+            char * HOSTPTR p = buffer + strlen(config_dir) + 14;
             *p = 0;
             if (!stat( buffer, &st1 ) && !stat( "/", &st2 ) &&
                 st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
@@ -3585,7 +3583,7 @@ NTSTATUS unix_to_nt_file_name( const char * HOSTPTR name, WCHAR * HOSTPTR *nt )
 /******************************************************************
  *           wine_unix_to_nt_file_name
  */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
+NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
 {
     WCHAR * HOSTPTR nt_name = NULL;
     NTSTATUS status;
@@ -3611,9 +3609,9 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_
  */
 NTSTATUS get_full_path( const WCHAR * HOSTPTR name, const WCHAR * HOSTPTR curdir, WCHAR * HOSTPTR *path )
 {
-    static const WCHAR HOSTPTR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
-    static const WCHAR HOSTPTR devW[] = {'\\','?','?','\\',0};
-    static const WCHAR HOSTPTR unixW[] = {'u','n','i','x'};
+    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
+    static const WCHAR devW[] = {'\\','?','?','\\',0};
+    static const WCHAR unixW[] = {'u','n','i','x'};
     WCHAR * HOSTPTR ret, root[] = {'\\','?','?','\\','C',':','\\',0};
     NTSTATUS status = STATUS_SUCCESS;
     const WCHAR * HOSTPTR prefix;
@@ -3627,10 +3625,10 @@ NTSTATUS get_full_path( const WCHAR * HOSTPTR name, const WCHAR * HOSTPTR curdir
             {
                 char *unix_name;
                 name += 4;
-                unix_name = malloc( wcslen(name) * 3 + 1 );
+                unix_name = RtlAllocateHeap(GetProcessHeap(), 0, wcslen(name) * 3 + 1 );
                 ntdll_wcstoumbs( name, wcslen(name) + 1, unix_name, wcslen(name) * 3 + 1, FALSE );
                 status = unix_to_nt_file_name( unix_name, path );
-                free( unix_name );
+                RtlFreeHeap(GetProcessHeap(), 0, unix_name);
                 return status;
             }
             prefix = devW;
@@ -3721,11 +3719,11 @@ void CDECL set_show_dot_files( BOOL enable )
  *
  * Helper for NtCreateFile that takes a Unix path.
  */
-NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
+NTSTATUS open_unix_file( HANDLE *handle, const char * HOSTPTR unix_name, ACCESS_MASK access,
                          OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                          ULONG options, void *ea_buffer, ULONG ea_length )
 {
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
     NTSTATUS status;
     data_size_t len;
 
@@ -3859,7 +3857,7 @@ NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRI
 {
     NTSTATUS status;
     data_size_t len;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
 
     TRACE( "%p %08x %p %p %08x %08x %08x %p\n",
            handle, access, attr, io, options, quota, msg_size, timeout );
@@ -3894,7 +3892,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
 {
     NTSTATUS status;
     data_size_t len;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
 
     *handle = 0;
     if (!attr) return STATUS_INVALID_PARAMETER;
@@ -4227,7 +4225,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 char *tmpbuf;
                 ULONG size = info->MaximumMessageSize ? info->MaximumMessageSize : 0x10000;
                 if (size > 0x10000) size = 0x10000;
-                if ((tmpbuf = malloc( size )))
+                if ((tmpbuf = RtlAllocateHeap(GetProcessHeap(), 0, size )))
                 {
                     if (!server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
                     {
@@ -4236,7 +4234,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                         info->NextMessageSize = (res >= 0) ? res : MAILSLOT_NO_MESSAGE;
                         if (needs_close) close( fd );
                     }
-                    free( tmpbuf );
+                    RtlFreeHeap(GetProcessHeap(), 0, tmpbuf);
                 }
             }
         }
@@ -4244,7 +4242,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     case FileNameInformation:
         {
             FILE_NAME_INFORMATION *info = ptr;
-            char *unix_name;
+            char * HOSTPTR unix_name;
 
             if (!(status = server_get_unix_name( handle, &unix_name )))
             {
@@ -4630,20 +4628,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     io->Information = 0;
     return io->u.Status = status;
 }
-
-
-/***********************************************************************
- *                  Asynchronous file I/O                              *
- */
-
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
-
-struct async_fileio
-{
-    async_callback_t    *callback; /* must be the first field */
-    struct async_fileio *next;
-    HANDLE               handle;
-};
 
 struct async_fileio_read
 {
@@ -6879,7 +6863,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         ULONG size = 32 * (sizeof(struct object_type_info) + 16 * sizeof(WCHAR));
         ULONG i, count, pos, total, align = sizeof(DWORD_PTR) - 1;
 
-        buffer = malloc( size );
+        buffer = RtlAllocateHeap( GetProcessHeap(), 0, size);
         SERVER_START_REQ( get_object_types )
         {
             wine_server_set_reply( req, buffer, size );
@@ -6904,7 +6888,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         }
         else if (status == STATUS_BUFFER_OVERFLOW) FIXME( "size %u too small\n", size );
 
-        free( buffer );
+        RtlFreeHeap(GetProcessHeap(), 0, buffer);
         break;
     }
 

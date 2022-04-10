@@ -382,7 +382,7 @@ NTSTATUS WINAPI NtCreateEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_
 {
     NTSTATUS ret;
     data_size_t len;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
 
     *handle = 0;
 
@@ -558,7 +558,7 @@ NTSTATUS WINAPI NtCreateMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT
 {
     NTSTATUS ret;
     data_size_t len;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
 
     *handle = 0;
 
@@ -1846,7 +1846,7 @@ NTSTATUS WINAPI NtSetIoCompletion( HANDLE handle, ULONG_PTR key, ULONG_PTR value
 {
     NTSTATUS ret;
 
-    TRACE( "(%p, %lx, %lx, %x, %lx)\n", handle, key, value, status, count );
+    TRACE( "(%p, %x, %x, %x, %x)\n", handle, key, value, status, count );
 
     SERVER_START_REQ( add_completion )
     {
@@ -2141,8 +2141,8 @@ NTSTATUS WINAPI NtRequestWaitReplyPort( HANDLE handle, LPC_MESSAGE *msg_in, LPC_
     if (msg_in)
         TRACE("datasize %u msgsize %u type %u ranges %u client %p/%p msgid %lu size %lu data %s\n",
               msg_in->DataSize, msg_in->MessageSize, msg_in->MessageType, msg_in->VirtualRangesOffset,
-              msg_in->ClientId.UniqueProcess, msg_in->ClientId.UniqueThread, msg_in->MessageId,
-              msg_in->SectionSize, debugstr_an( (const char *)msg_in->Data, msg_in->DataSize ));
+              msg_in->ClientId.UniqueProcess, msg_in->ClientId.UniqueThread, (unsigned long)msg_in->MessageId,
+              (unsigned long) msg_in->SectionSize, debugstr_an( (const char *)msg_in->Data, msg_in->DataSize ));
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -2349,7 +2349,7 @@ union tid_alert_entry
 };
 
 #define TID_ALERT_BLOCK_SIZE (65536 / sizeof(union tid_alert_entry))
-static union tid_alert_entry *tid_alert_blocks[4096];
+static union tid_alert_entry * HOSTPTR tid_alert_blocks[4096];
 
 static unsigned int handle_to_index( HANDLE handle, unsigned int *block_idx )
 {
@@ -2358,10 +2358,10 @@ static unsigned int handle_to_index( HANDLE handle, unsigned int *block_idx )
     return idx % TID_ALERT_BLOCK_SIZE;
 }
 
-static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
+static union tid_alert_entry * HOSTPTR get_tid_alert_entry( HANDLE tid )
 {
     unsigned int block_idx, idx = handle_to_index( tid, &block_idx );
-    union tid_alert_entry *entry;
+    union tid_alert_entry * HOSTPTR entry;
 
     if (block_idx > ARRAY_SIZE(tid_alert_blocks))
     {
@@ -2372,9 +2372,9 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
     if (!tid_alert_blocks[block_idx])
     {
         static const size_t size = TID_ALERT_BLOCK_SIZE * sizeof(union tid_alert_entry);
-        void *ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
+        void * HOSTPTR ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
         if (ptr == MAP_FAILED) return NULL;
-        if (InterlockedCompareExchangePointer( (void **)&tid_alert_blocks[block_idx], ptr, NULL ))
+        if (InterlockedCompareExchangePointer( (void * HOSTPTR *)&tid_alert_blocks[block_idx], ptr, NULL ))
             munmap( ptr, size ); /* someone beat us to it */
     }
 
@@ -2387,7 +2387,7 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 
         if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 ))
             return NULL;
-        if (InterlockedCompareExchange( (int *)&entry->sem, sem, 0 ))
+        if (InterlockedCompareExchange( (int * HOSTPTR)&entry->sem, sem, 0 ))
             semaphore_destroy( mach_task_self(), sem );
     }
 #else
@@ -2416,7 +2416,7 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
  */
 NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 {
-    union tid_alert_entry *entry = get_tid_alert_entry( tid );
+    union tid_alert_entry * HOSTPTR entry = get_tid_alert_entry( tid );
 
     TRACE( "%p\n", tid );
 
@@ -2471,7 +2471,7 @@ static LONGLONG update_timeout( ULONGLONG end )
  */
 NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEGER *timeout )
 {
-    union tid_alert_entry *entry = get_tid_alert_entry( NtCurrentTeb()->ClientId.UniqueThread );
+    union tid_alert_entry * HOSTPTR entry = get_tid_alert_entry( NtCurrentTeb()->ClientId.UniqueThread );
     semaphore_t sem;
     ULONGLONG end;
     kern_return_t ret;

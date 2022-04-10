@@ -315,7 +315,7 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
 {
     NTSTATUS status;
     HANDLE mapping;
-    char *unix_name;
+    char * HOSTPTR unix_name;
 
     *handle = 0;
     memset( info, 0, sizeof(*info) );
@@ -427,7 +427,7 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     NTSTATUS status;
     HANDLE handle;
     int fd = -1;
-    char *unix_name;
+    char * HOSTPTR unix_name;
 
     if (!(nt_name.Buffer = get_nt_pathname( &params->CurrentDirectory.DosPath ))) return -1;
     nt_name.Length = wcslen( nt_name.Buffer ) * sizeof(WCHAR);
@@ -486,7 +486,7 @@ static BOOL is_unix_console_handle( HANDLE handle )
  *           spawn_process
  */
 static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                               int unixdir, char *winedebug, const pe_image_info_t *pe_info )
+                               int unixdir, char * HOSTPTR winedebug, const pe_image_info_t *pe_info )
 {
     NTSTATUS status = STATUS_SUCCESS;
     int stdin_fd = -1, stdout_fd = -1;
@@ -555,7 +555,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 /***********************************************************************
  *           __wine_unix_spawnvp
  */
-NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait )
+NTSTATUS WINAPI __wine_unix_spawnvp( char * HOSTPTR const argv[], int wait )
 {
     pid_t pid, wret;
     int fd[2], status, err;
@@ -713,7 +713,7 @@ done:
     return status;
 }
 
-static NTSTATUS alloc_handle_list( const PS_ATTRIBUTE *handles_attr, obj_handle_t **handles, data_size_t *handles_len )
+static NTSTATUS alloc_handle_list( const PS_ATTRIBUTE *handles_attr, obj_handle_t * HOSTPTR * HOSTPTR handles, data_size_t *handles_len )
 {
     SIZE_T count, i;
     HANDLE *src;
@@ -749,7 +749,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     NTSTATUS status;
     BOOL success = FALSE;
     HANDLE file_handle, process_info = 0, process_handle = 0, thread_handle = 0;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
     data_size_t attr_len;
     char * HOSTPTR winedebug = NULL;
     startup_info_t * HOSTPTR startup_info = NULL;
@@ -763,7 +763,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     SIZE_T i, attr_count = (ps_attr->TotalLength - sizeof(ps_attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
     const PS_ATTRIBUTE *handles_attr = NULL, *jobs_attr = NULL;
     data_size_t handles_size, jobs_size;
-    obj_handle_t *handles, *jobs;
+    obj_handle_t * HOSTPTR handles, * HOSTPTR jobs;
 
     if (thread_flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER)
     {
@@ -801,7 +801,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
             break;
         default:
             if (ps_attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT)
-                FIXME( "unhandled input attribute %lx\n", ps_attr->Attributes[i].Attribute );
+                FIXME( "unhandled input attribute %x\n", ps_attr->Attributes[i].Attribute );
             break;
         }
     }
@@ -982,7 +982,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         case PS_ATTRIBUTE_TEB_ADDRESS:
         default:
             if (!(ps_attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT))
-                FIXME( "unhandled output attribute %lx\n", ps_attr->Attributes[i].Attribute );
+                FIXME( "unhandled output attribute %x\n", ps_attr->Attributes[i].Attribute );
             break;
         }
     }

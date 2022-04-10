@@ -703,7 +703,7 @@ void call_raise_user_exception_dispatcher(void)
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context, NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*))
 {
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
     ULONG64 fp = frame->fp;
@@ -714,7 +714,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     if (status) return status;
     frame->x[0] = (ULONG64)rec;
     frame->x[1] = (ULONG64)context;
-    frame->pc   = (ULONG64)pKiUserExceptionDispatcher;
+    frame->pc   = (ULONG64)dispatcher;
     frame->fp   = fp;
     frame->lr   = lr;
     frame->sp   = sp;

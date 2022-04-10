@@ -77,7 +77,7 @@ NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
 {
     NTSTATUS ret;
     data_size_t len;
-    struct object_attributes *objattr;
+    struct object_attributes * HOSTPTR objattr;
 
     *key = 0;
     if (attr->Length != sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
@@ -661,8 +661,8 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
     NTSTATUS ret;
     HANDLE key;
     data_size_t len;
-    struct object_attributes *objattr;
-    char *unix_name;
+    struct object_attributes * HOSTPTR objattr;
+    char * HOSTPTR unix_name;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *file;
 
