@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
- #ifdef __i386_on_x86_64__
+#ifdef __i386_on_x86_64__
 #if defined(__WINE_WINE_RBTREE_H) && defined(WINE_RBTREE_HOSTADDRSPACE) && defined(WINE_RBTREE_HOSTADDRSPACE_DISABLED)
 #error "rbtree.h was previously included without WINE_RBTREE_HOSTADDRSPACE but it's now defined"
 #endif
@@ -44,11 +44,8 @@
 #define WINE_RBTREE_HOSTADDRSPACE_DISABLED
 #endif
 
-#ifndef __WINE_WINE_RBTREE_H
-#define __WINE_WINE_RBTREE_H
-
 #define RB_ENTRY_VALUE(element, type, field) \
-    ((type *)((char *)(element) - offsetof(type, field)))
+    TRUNCCAST(type *, (uintptr_t)(element) - offsetof(type, field))
 
 struct rb_entry
 {
@@ -435,9 +432,9 @@ static inline void rb_replace(struct rb_tree *tree, struct rb_entry *dst, struct
 #define wine_rb_remove rb_remove
 #define wine_rb_remove_key rb_remove_key
 #define wine_rb_replace rb_replace
-#define WINE_RB_ENTRY_VALUE RB_ENTRY_VALUE
-#define WINE_RB_FOR_EACH_ENTRY RB_FOR_EACH_ENTRY
-#define WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR RB_FOR_EACH_ENTRY_DESTRUCTOR
+#define WINE_RB_ENTRY_VALUE(element, type, field) RB_ENTRY_VALUE(element, type, field)
+#define WINE_RB_FOR_EACH_ENTRY(elem, tree, type, field) RB_FOR_EACH_ENTRY(elem, tree, type, field)
+#define WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(elem, elem2, tree, type, field) RB_FOR_EACH_ENTRY_DESTRUCTOR(elem, elem2, tree, type, field)
 
 #ifdef WINE_RBTREE_HOSTADDRSPACE
 #include <wine/hostaddrspace_exit.h>
