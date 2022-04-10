@@ -35,12 +35,6 @@
 #include <stdint.h>
 #include <wine/32on64utils.h>
 
-struct list
-{
-    struct list *next;
-    struct list *prev;
-};
-
 #ifdef WINE_LIST_HOSTADDRSPACE
 #include <wine/hostaddrspace_enter.h>
 #define WINE_LIST_HOSTADDRSPACE_ENABLED
@@ -48,6 +42,12 @@ struct list
 #include <wine/winheader_enter.h>
 #define WINE_LIST_HOSTADDRSPACE_DISABLED
 #endif
+
+struct list
+{
+    struct list *next;
+    struct list *prev;
+};
 
 /* Define a list like so:
  *
