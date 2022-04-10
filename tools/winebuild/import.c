@@ -28,8 +28,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "wine/list.h"
 #define WINE_LIST_HOSTADDRSPACE
+#include "wine/list.h"
 #include "build.h"
 
 #define __ASM_EXTRA_DIST "16"
