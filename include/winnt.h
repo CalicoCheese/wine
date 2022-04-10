@@ -1134,8 +1134,6 @@ typedef struct _XSAVE_FORMAT {
     BYTE Reserved4[96];      /* 1a0 */
 } XSAVE_FORMAT, *PXSAVE_FORMAT;
 
-/* x86-64 context definitions */
-#if defined(__x86_64__) && !defined(__i386_on_x86_64__)
 typedef struct _AMD64_RUNTIME_FUNCTION
 {
     DWORD BeginAddress;
@@ -1242,6 +1240,9 @@ typedef struct DECLSPEC_ALIGN(16) _AMD64_CONTEXT {
     DWORD64 LastExceptionToRip;   /* 4c0 */
     DWORD64 LastExceptionFromRip; /* 4c8 */
 } AMD64_CONTEXT;
+
+/* x86-64 context definitions */
+#if defined(__x86_64__) && !defined(__i386_on_x86_64__)
 
 #define CONTEXT_CONTROL CONTEXT_AMD64_CONTROL
 #define CONTEXT_INTEGER CONTEXT_AMD64_INTEGER
@@ -6338,16 +6339,16 @@ static FORCEINLINE long InterlockedAdd( long volatile *dest, long val )
 #pragma intrinsic(_InterlockedExchangePointer)
 
 void *_InterlockedCompareExchangePointer(void *volatile*,void*,void*);
-void *_InterlockedExchangePointer(void *volatile*,void*);
+void * HOSTPTR _InterlockedExchangePointer(void *volatile * HOSTPTR,void * HOSTPTR);
 
 #else
 
-static FORCEINLINE void * WINAPI InterlockedCompareExchangePointer( void *volatile *dest, void *xchg, void *compare )
+static FORCEINLINE void * WINAPI InterlockedCompareExchangePointer( void *volatile * dest, void * xchg, void * compare )
 {
     return (void *)_InterlockedCompareExchange( (long volatile*)dest, (long)xchg, (long)compare );
 }
 
-static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *dest, void *val )
+static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile * HOSTPTR dest, void * HOSTPTR val )
 {
     return (void *)_InterlockedExchange( (long volatile*)dest, (long)val );
 }
@@ -6405,17 +6406,17 @@ static FORCEINLINE BOOLEAN WINAPI BitScanReverse(DWORD *index, DWORD mask)
     return mask != 0;
 }
 
-static FORCEINLINE LONG WINAPI InterlockedAdd( LONG volatile *dest, LONG val )
+static FORCEINLINE LONG WINAPI InterlockedAdd( LONG volatile * HOSTPTR dest, LONG val )
 {
     return __sync_add_and_fetch( dest, val );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
+static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile * HOSTPTR dest, LONG val )
 {
     return __sync_fetch_and_and( dest, val );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
+static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile * HOSTPTR dest, LONG xchg, LONG compare )
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
@@ -6424,13 +6425,19 @@ static FORCEINLINE void * WINAPI InterlockedCompareExchangePointer( void *volati
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
+#if defined(__i386_on_x86_64__)
+static FORCEINLINE void * HOSTPTR WINAPI InterlockedCompareExchangePointer( void * HOSTPTR volatile * HOSTPTR dest, void * HOSTPTR xchg, void * HOSTPTR compare ) __attribute__((overloadable))
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+#endif
 
 static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
+static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile * HOSTPTR dest, LONG val )
 {
     LONG ret;
 #if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
@@ -6444,41 +6451,41 @@ static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG va
     return ret;
 }
 
-static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile * HOSTPTR dest, LONG incr )
 {
     return __sync_fetch_and_add( dest, incr );
 }
 
-static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAdd64( LONGLONG volatile *dest, LONGLONG incr )
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAdd64( LONGLONG volatile * HOSTPTR dest, LONGLONG incr )
 {
     return __sync_fetch_and_add( dest, incr );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
+static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile * HOSTPTR dest )
 {
     return __sync_add_and_fetch( dest, 1 );
 }
 
-static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile *dest )
+static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile * HOSTPTR dest )
 {
     return __sync_add_and_fetch( dest, 1 );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
+static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile * HOSTPTR dest )
 {
     return __sync_add_and_fetch( dest, -1 );
 }
 
-static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile *dest )
+static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile * HOSTPTR dest )
 {
     return __sync_add_and_fetch( dest, -1 );
 }
 
-static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *dest, void *val )
+static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
 {
-    void *ret;
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
-    ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
+    PVOID ret;
+#if defined(__i386_on_x86_64__)
+    __asm__ __volatile__( "lock; xchgl %0,(%1)" : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
 #elif defined(__x86_64__)
     __asm__ __volatile__( "lock; xchgq %0,(%1)" : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
 #elif defined(__i386__)
@@ -6488,13 +6495,21 @@ static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *des
 #endif
     return ret;
 }
+#if defined(__i386_on_x86_64__)
+static FORCEINLINE void * HOSTPTR WINAPI InterlockedExchangePointer( PVOID volatile * HOSTPTR dest, void * HOSTPTR val ) __attribute__((overloadable))
+{
+    void * HOSTPTR ret;
+    __asm__ __volatile__( "lock; xchgq %0,(%1)" : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+    return ret;
+}
+#endif
 
-static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
+static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile * HOSTPTR dest, LONG val )
 {
     return __sync_fetch_and_or( dest, val );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedXor( LONG volatile *dest, LONG val )
+static FORCEINLINE LONG WINAPI InterlockedXor( LONG volatile * HOSTPTR dest, LONG val )
 {
     return __sync_fetch_and_xor( dest, val );
 }
